@@ -1,2 +1,2 @@
-# ani-blue
+# animatch
 An ai driven anime recommender website.
