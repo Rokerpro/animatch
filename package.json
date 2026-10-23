@@ -2,15 +2,12 @@
   "name": "animatch",
   "private": true,
   "description": "AniMatch - AI Anime Recommendation Engine",
-  "workspaces": [
-    "frontend"
-  ],
   "scripts": {
-    "dev": "npm --prefix frontend run dev",
+    "dev": "make dev",
     "build": "npm --prefix frontend run build",
-    "test": "npm --prefix frontend test",
-    "lint": "npm --prefix frontend run lint",
-    "format": "npm --prefix frontend run format",
+    "test": "make test",
+    "lint": "make lint",
+    "format": "make format",
     "format:check": "npm --prefix frontend run format:check"
   }
 }

@@ -28,14 +28,14 @@ dev:
 	@echo "==> Starting AniMatch full stack in development mode..."
 	@trap 'kill 0' SIGINT SIGTERM EXIT; \
 		(cd backend && .venv/bin/uvicorn app.main:app --reload --host 0.0.0.0 --port 8000) & \
-		(cd frontend && npm run dev) & \
+		(cd frontend && npx vite) & \
 		wait
 
 dev-backend:
 	@cd backend && .venv/bin/uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 dev-frontend:
-	@cd frontend && npm run dev
+	@cd frontend && npx vite
 
 test: test-backend test-frontend
 
