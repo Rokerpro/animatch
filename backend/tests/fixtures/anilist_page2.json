@@ -1,0 +1,235 @@
+{
+  "data": {
+    "Page": {
+      "pageInfo": {
+        "total": 10,
+        "currentPage": 2,
+        "lastPage": 2,
+        "hasNextPage": false,
+        "perPage": 5
+      },
+      "media": [
+        {
+          "id": 110270,
+          "idMal": 40010,
+          "title": {
+            "romaji": "Ishuzoku Reviewers",
+            "english": "Interspecies Reviewers",
+            "native": "異種族レビュアーズ"
+          },
+          "synonyms": ["Reviewers"],
+          "description": "Beauty is truly in the eye of the beholder when it comes to magical brothels.",
+          "coverImage": {
+            "large": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx110270.jpg",
+            "extraLarge": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx110270.jpg"
+          },
+          "bannerImage": null,
+          "format": "TV",
+          "episodes": 12,
+          "duration": 24,
+          "status": "FINISHED",
+          "season": "WINTER",
+          "seasonYear": 2020,
+          "averageScore": 73,
+          "popularity": 70000,
+          "isAdult": true,
+          "source": "MANGA",
+          "studios": {
+            "nodes": [
+              {
+                "name": "Passione"
+              }
+            ]
+          },
+          "genres": ["Comedy", "Ecchi", "Fantasy"],
+          "tags": [
+            {
+              "id": 2001,
+              "name": "Prostitution",
+              "category": "Theme-Mature",
+              "isAdult": true,
+              "rank": 95
+            }
+          ],
+          "updatedAt": 1675000000
+        },
+        {
+          "id": 20,
+          "idMal": 20,
+          "title": {
+            "romaji": "NARUTO",
+            "english": "Naruto",
+            "native": "NARUTO -ナルト-"
+          },
+          "synonyms": ["Naruto Shippuuden Prequel"],
+          "description": "Moments prior to Naruto Uzumaki's birth, the Nine-Tails attacked the Hidden Leaf.",
+          "coverImage": {
+            "large": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx20.jpg",
+            "extraLarge": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx20.jpg"
+          },
+          "bannerImage": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/20.jpg",
+          "format": "TV",
+          "episodes": 220,
+          "duration": 23,
+          "status": "FINISHED",
+          "season": "FALL",
+          "seasonYear": 2002,
+          "averageScore": 79,
+          "popularity": 450000,
+          "isAdult": false,
+          "source": "MANGA",
+          "studios": {
+            "nodes": [
+              {
+                "name": "Studio Pierrot"
+              }
+            ]
+          },
+          "genres": ["Action", "Adventure", "Comedy"],
+          "tags": [
+            {
+              "id": 200,
+              "name": "Ninja",
+              "category": "Theme-Action",
+              "isAdult": false,
+              "rank": 92
+            }
+          ],
+          "updatedAt": 1698000000
+        },
+        {
+          "id": 1535,
+          "idMal": 1535,
+          "title": {
+            "romaji": "Death Note",
+            "english": "Death Note",
+            "native": "DEATH NOTE"
+          },
+          "synonyms": ["DN"],
+          "description": "A shinigami, as a god of death, can kill any person.",
+          "coverImage": {
+            "large": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx1535.jpg",
+            "extraLarge": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx1535.jpg"
+          },
+          "bannerImage": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/1535.jpg",
+          "format": "TV",
+          "episodes": 37,
+          "duration": 23,
+          "status": "FINISHED",
+          "season": "FALL",
+          "seasonYear": 2006,
+          "averageScore": 84,
+          "popularity": 520000,
+          "isAdult": false,
+          "source": "MANGA",
+          "studios": {
+            "nodes": [
+              {
+                "name": "MADHOUSE"
+              }
+            ]
+          },
+          "genres": ["Mystery", "Psychological", "Supernatural", "Thriller"],
+          "tags": [
+            {
+              "id": 300,
+              "name": "Detective",
+              "category": "Theme-Mystery",
+              "isAdult": false,
+              "rank": 90
+            }
+          ],
+          "updatedAt": 1699000000
+        },
+        {
+          "id": 9253,
+          "idMal": 9253,
+          "title": {
+            "romaji": "Steins;Gate",
+            "english": "Steins;Gate",
+            "native": "STEINS;GATE"
+          },
+          "synonyms": ["S;G"],
+          "description": "Eccentric scientist Rintarou Okabe invents a microwave that turns bananas to gel and sends texts into the past.",
+          "coverImage": {
+            "large": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx9253.jpg",
+            "extraLarge": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx9253.jpg"
+          },
+          "bannerImage": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/9253.jpg",
+          "format": "TV",
+          "episodes": 24,
+          "duration": 24,
+          "status": "FINISHED",
+          "season": "SPRING",
+          "seasonYear": 2011,
+          "averageScore": 89,
+          "popularity": 380000,
+          "isAdult": false,
+          "source": "VISUAL_NOVEL",
+          "studios": {
+            "nodes": [
+              {
+                "name": "White Fox"
+              }
+            ]
+          },
+          "genres": ["Drama", "Psychological", "Sci-Fi", "Thriller"],
+          "tags": [
+            {
+              "id": 305,
+              "name": "Time Travel",
+              "category": "Theme-Sci-Fi",
+              "isAdult": false,
+              "rank": 98
+            }
+          ],
+          "updatedAt": 1701000000
+        },
+        {
+          "id": 21,
+          "idMal": 21,
+          "title": {
+            "romaji": "ONE PIECE",
+            "english": "One Piece",
+            "native": "ONE PIECE"
+          },
+          "synonyms": ["OP"],
+          "description": "Gol D. Roger was known as the 'Pirate King', the strongest and most infamous being.",
+          "coverImage": {
+            "large": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx21.jpg",
+            "extraLarge": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx21.jpg"
+          },
+          "bannerImage": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/21.jpg",
+          "format": "TV",
+          "episodes": 1100,
+          "duration": 24,
+          "status": "RELEASING",
+          "season": "FALL",
+          "seasonYear": 1999,
+          "averageScore": 87,
+          "popularity": 420000,
+          "isAdult": false,
+          "source": "MANGA",
+          "studios": {
+            "nodes": [
+              {
+                "name": "Toei Animation"
+              }
+            ]
+          },
+          "genres": ["Action", "Adventure", "Comedy", "Fantasy"],
+          "tags": [
+            {
+              "id": 400,
+              "name": "Pirates",
+              "category": "Theme-Adventure",
+              "isAdult": false,
+              "rank": 99
+            }
+          ],
+          "updatedAt": 1702000000
+        }
+      ]
+    }
+  }
+}

@@ -38,6 +38,8 @@ htmlcov/
 *.sqlite
 *.sqlite3
 *.db
+.sync_state.json
+backend/.sync_state.json
 
 # Node / Frontend
 node_modules/

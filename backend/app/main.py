@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.anime import router as anime_router
 from app.api.health import router as health_router
 from app.core.config import settings, setup_logging
 
@@ -41,6 +42,7 @@ def create_app() -> FastAPI:
 
     # Mount API routes
     app.include_router(health_router, prefix="/api")
+    app.include_router(anime_router, prefix="/api")
 
     return app
 
