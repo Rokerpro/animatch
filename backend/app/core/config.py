@@ -1,7 +1,7 @@
 import logging
 import sys
 
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -42,15 +42,36 @@ class Settings(BaseSettings):
     )
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440
+    SESSION_COOKIE_NAME: str = "access_token"
+    CSRF_COOKIE_NAME: str = "csrf_token"
+    COOKIE_SAMESITE: str = "lax"
+
+    # Frontend URL (for OAuth redirects)
+    FRONTEND_URL: str = "http://localhost:5173"
 
     # Google OAuth (Optional)
     GOOGLE_CLIENT_ID: str = ""
     GOOGLE_CLIENT_SECRET: str = ""
-    GOOGLE_REDIRECT_URI: str = "http://localhost:8000/api/v1/auth/google/callback"
+    GOOGLE_REDIRECT_URI: str = "http://localhost:8000/api/auth/google/callback"
 
     # Gemini LLM
     GEMINI_API_KEY: str = ""
     GEMINI_MODEL: str = "gemini-2.5-flash"
+
+    @model_validator(mode="after")
+    def validate_production_security(self) -> "Settings":
+        placeholder = (
+            "change-this-in-production-to-a-secure-random-secret-key-at-least-32-chars"
+        )
+        if self.ENVIRONMENT == "production" and (
+            not self.JWT_SECRET_KEY
+            or placeholder == self.JWT_SECRET_KEY
+            or len(self.JWT_SECRET_KEY) < 32
+        ):
+            raise ValueError(
+                "In production mode, JWT_SECRET_KEY must be set, cannot equal the placeholder, and must be at least 32 characters long."
+            )
+        return self
 
     model_config = SettingsConfigDict(
         env_file=".env",

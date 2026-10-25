@@ -48,7 +48,50 @@ Key environment variables:
 - `JWT_SECRET_KEY`: Secret key for signing session JWT cookies.
 - `CORS_ORIGINS`: Allowed origins (defaults to `["http://localhost:5173"]`).
 - `GEMINI_API_KEY`: Google Gemini API key (for LLM discovery layer).
-- `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`: Optional Google OAuth credentials (mocked in tests).
+- `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`: Optional Google OAuth credentials.
+
+### Google OAuth Setup (Optional)
+Email and password authentication works out of the box without Google credentials. To enable Google Sign-In:
+1. Navigate to the [Google Cloud Console Credentials Page](https://console.cloud.google.com/apis/credentials).
+2. Create an **OAuth 2.0 Client ID** with Application type **Web application**.
+3. Under **Authorized redirect URIs**, add:
+   - `http://localhost:8000/api/auth/google/callback` (for local development)
+   - `https://your-production-domain.com/api/auth/google/callback` (for production)
+4. Copy the generated Client ID and Client Secret into your `.env` file:
+   ```env
+   GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+   GOOGLE_CLIENT_SECRET=your-google-client-secret
+   GOOGLE_REDIRECT_URI=http://localhost:8000/api/auth/google/callback
+   FRONTEND_URL=http://localhost:5173
+   ```
+5. If Google credentials are not set, endpoints return a clean 400 "not configured" response and automated tests mock the provider.
+
+---
+
+## 🔐 Accounts and Authentication (Phase 3)
+
+The API provides secure session-based authentication:
+- **Password Security**: Argon2 hashing (`argon2-cffi`), minimum 10 characters, rejection of common weak passwords, and constant-time dummy verification for non-existent users to defend against timing attacks.
+- **Session Management**: Signed HS256 JWT stored in an `httpOnly`, `SameSite=Lax`, and `Secure` (in production) cookie (`access_token`).
+- **CSRF Defense**: Double-submit cookie pattern (`csrf_token` cookie + `X-CSRF-Token` header) enforced on all state-changing endpoints (`POST`, `PATCH`, `DELETE`).
+- **Rate Limiting**: Sliding-window rate limiter on login and registration tracking failed attempts per IP and per email with lockout and `Retry-After` backoff.
+- **Account Linking**: Safe Google OAuth account linking requiring `email_verified == True` from Google.
+
+### Auth Endpoints
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/api/auth/register` | Register with email + password (sets session & CSRF cookies) |
+| `POST` | `/api/auth/login` | Login with email + password |
+| `POST` | `/api/auth/logout` | Logout and clear session cookies (requires CSRF) |
+| `GET` | `/api/auth/csrf` | Obtain / refresh CSRF token |
+| `GET` | `/api/auth/me` | Fetch authenticated user profile |
+| `PATCH` | `/api/auth/me` | Update `display_name` and `show_mature` preferences (requires CSRF) |
+| `DELETE` | `/api/auth/me` | Delete account and all associated data (requires CSRF) |
+| `GET` | `/api/auth/google/login` | Redirect to Google OAuth authorization |
+| `GET` | `/api/auth/google/callback` | OAuth callback, safe verified linking & session issuance |
+
+---
+
 
 ### 3. Development Server
 
