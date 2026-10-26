@@ -1,0 +1,251 @@
+{
+  "_comment": "AniMatch quiz definition v1. Each answer's 'weights' keys MUST exist in the vector index vocabulary (genres or tags). 'length' and 'era' answers use soft_penalty constraints, not vector weights — see recs/quiz.py for the penalty formula.",
+  "questions": [
+    {
+      "id": "mood",
+      "label": "What mood are you in?",
+      "answers": [
+        {
+          "id": "cozy",
+          "label": "Cozy / relaxing",
+          "weights": {
+            "genres": {},
+            "tags": { "Iyashikei": 1.5, "Slow Life": 1.2, "Healing": 1.0, "CGDCT": 0.8 }
+          }
+        },
+        {
+          "id": "epic",
+          "label": "Epic / action-packed",
+          "weights": {
+            "genres": { "Action": 1.4, "Adventure": 1.0 },
+            "tags": { "War": 1.0, "Battles": 1.2, "Super Power": 0.8 }
+          }
+        },
+        {
+          "id": "emotional",
+          "label": "Emotional / thought-provoking",
+          "weights": {
+            "genres": { "Drama": 1.3 },
+            "tags": { "Tragedy": 1.2, "Coming of Age": 1.0, "Grief": 0.9 }
+          }
+        },
+        {
+          "id": "funny",
+          "label": "Funny / light-hearted",
+          "weights": {
+            "genres": { "Comedy": 1.5 },
+            "tags": { "Parody": 1.0, "Slapstick": 0.9, "Cute Boys Doing Cute Things": 0.7 }
+          }
+        },
+        {
+          "id": "tense",
+          "label": "Tense / thrilling",
+          "weights": {
+            "genres": { "Thriller": 1.2, "Mystery": 1.0 },
+            "tags": { "Psychological": 1.3, "Survival": 1.1, "Mind Games": 1.0 }
+          }
+        }
+      ]
+    },
+    {
+      "id": "pacing",
+      "label": "How do you like your story paced?",
+      "answers": [
+        {
+          "id": "slow",
+          "label": "Slow and deliberate",
+          "weights": {
+            "genres": {},
+            "tags": { "Iyashikei": 0.8, "Slow Life": 1.2, "Atmospheric": 0.9 }
+          }
+        },
+        {
+          "id": "balanced",
+          "label": "Balanced",
+          "weights": {
+            "genres": {},
+            "tags": {}
+          }
+        },
+        {
+          "id": "fast",
+          "label": "Fast-paced / action",
+          "weights": {
+            "genres": { "Action": 0.8 },
+            "tags": { "Fast-paced": 1.3, "Battles": 0.9, "High Stakes Game": 0.8 }
+          }
+        }
+      ]
+    },
+    {
+      "id": "tone",
+      "label": "What tone appeals to you most?",
+      "answers": [
+        {
+          "id": "dark",
+          "label": "Dark / gritty",
+          "weights": {
+            "genres": { "Psychological": 1.3, "Horror": 1.0 },
+            "tags": { "Dark Fantasy": 1.2, "Tragedy": 1.0, "Mature Themes": 0.9 }
+          }
+        },
+        {
+          "id": "hopeful",
+          "label": "Hopeful / uplifting",
+          "weights": {
+            "genres": { "Adventure": 0.8 },
+            "tags": { "Redemption": 1.1, "Found Family": 1.0, "Friendship": 0.8 }
+          }
+        },
+        {
+          "id": "comedic",
+          "label": "Comedic / satirical",
+          "weights": {
+            "genres": { "Comedy": 1.5 },
+            "tags": { "Parody": 1.2, "Meta": 0.8 }
+          }
+        },
+        {
+          "id": "romantic",
+          "label": "Romantic",
+          "weights": {
+            "genres": { "Romance": 1.5 },
+            "tags": { "Love Triangle": 0.9, "Confession": 0.8 }
+          }
+        }
+      ]
+    },
+    {
+      "id": "themes",
+      "label": "Which themes interest you?",
+      "answers": [
+        {
+          "id": "fantasy",
+          "label": "Fantasy / magic",
+          "weights": {
+            "genres": { "Fantasy": 1.5 },
+            "tags": { "Magic": 1.2, "Isekai": 1.0, "Mythology": 0.8 }
+          }
+        },
+        {
+          "id": "sci_fi",
+          "label": "Sci-fi / technology",
+          "weights": {
+            "genres": { "Sci-Fi": 1.5 },
+            "tags": { "Space": 1.1, "Mecha": 0.9, "Cyberpunk": 1.0, "Time Travel": 0.9 }
+          }
+        },
+        {
+          "id": "mystery",
+          "label": "Mystery / detective",
+          "weights": {
+            "genres": { "Mystery": 1.5 },
+            "tags": { "Detective": 1.2, "Crime": 1.0, "Conspiracy": 0.9 }
+          }
+        },
+        {
+          "id": "sports",
+          "label": "Sports / competition",
+          "weights": {
+            "genres": { "Sports": 1.5 },
+            "tags": { "Team Sports": 1.0, "Competition": 0.9 }
+          }
+        },
+        {
+          "id": "slice_of_life",
+          "label": "Slice of life / everyday",
+          "weights": {
+            "genres": { "Slice of Life": 1.5 },
+            "tags": { "School Life": 0.9, "Daily Life": 1.1 }
+          }
+        }
+      ]
+    },
+    {
+      "id": "intensity",
+      "label": "How intense do you like it?",
+      "answers": [
+        {
+          "id": "chill",
+          "label": "Chill and low-stakes",
+          "weights": {
+            "genres": { "Slice of Life": 0.8 },
+            "tags": { "Iyashikei": 1.2, "Moe": 0.8, "Healing": 1.0 }
+          }
+        },
+        {
+          "id": "moderate",
+          "label": "Some tension, some calm",
+          "weights": {
+            "genres": {},
+            "tags": {}
+          }
+        },
+        {
+          "id": "intense",
+          "label": "High tension throughout",
+          "weights": {
+            "genres": { "Action": 1.0, "Thriller": 0.9 },
+            "tags": { "Psychological": 1.3, "Survival": 1.1, "Gore": 0.8 }
+          }
+        }
+      ]
+    },
+    {
+      "id": "length",
+      "label": "How long a series are you looking for?",
+      "_constraint_type": "soft_episode_penalty",
+      "_comment": "These answers produce a soft score penalty for titles outside the range, NOT a hard filter and NOT injected into the feature vector. Penalty formula: penalty = QUIZ_CONSTRAINT_WEIGHT * clamp(violation_ratio, 0, 1), where violation_ratio = excess_episodes / max_ep or shortfall / min_ep. See recs/quiz.py.",
+      "answers": [
+        {
+          "id": "short",
+          "label": "Short (1–13 episodes)",
+          "constraint": { "max_episodes": 13 }
+        },
+        {
+          "id": "medium",
+          "label": "Medium (14–26 episodes)",
+          "constraint": { "min_episodes": 14, "max_episodes": 26 }
+        },
+        {
+          "id": "long",
+          "label": "Long (27+ episodes)",
+          "constraint": { "min_episodes": 27 }
+        },
+        {
+          "id": "any",
+          "label": "No preference",
+          "constraint": {}
+        }
+      ]
+    },
+    {
+      "id": "era",
+      "label": "Any era preference?",
+      "_constraint_type": "soft_year_penalty",
+      "_comment": "Same soft-penalty mechanism as length. See recs/quiz.py.",
+      "answers": [
+        {
+          "id": "classic",
+          "label": "Classic (pre-2005)",
+          "constraint": { "max_year": 2004 }
+        },
+        {
+          "id": "modern",
+          "label": "Modern (2005–2015)",
+          "constraint": { "min_year": 2005, "max_year": 2015 }
+        },
+        {
+          "id": "recent",
+          "label": "Recent (2016+)",
+          "constraint": { "min_year": 2016 }
+        },
+        {
+          "id": "any",
+          "label": "No preference",
+          "constraint": {}
+        }
+      ]
+    }
+  ]
+}

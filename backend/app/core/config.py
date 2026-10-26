@@ -58,6 +58,32 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str = ""
     GEMINI_MODEL: str = "gemini-2.5-flash"
 
+    # Recommendation Engine
+    REC_GENRE_DIM_WEIGHT: float = 3.0
+    REC_TAG_DIM_WEIGHT: float = 2.0
+    REC_FORMAT_DIM_WEIGHT: float = 1.0
+
+    REC_WEIGHT_SIMILAR: float = 0.5
+    REC_WEIGHT_QUIZ: float = 0.3
+    REC_WEIGHT_PROFILE: float = 0.2
+
+    REC_ALPHA: float = 0.6
+    REC_QUALITY_WEIGHT: float = 0.15
+
+    REC_MMR_LAMBDA: float = 0.7
+    REC_CANDIDATE_POOL: int = 200
+
+    REC_MIN_SCORE: int = 50
+    REC_MIN_POPULARITY: int = 100
+
+    REC_COLD_START_K: int = 10
+
+    REC_QUIZ_SOFT_PENALTY_EPISODES: float = 0.15
+    REC_QUIZ_SOFT_PENALTY_YEAR: float = 0.15
+
+    REC_DEFAULT_N: int = 10
+    REC_MAX_N: int = 50
+
     @model_validator(mode="after")
     def validate_production_security(self) -> "Settings":
         placeholder = (

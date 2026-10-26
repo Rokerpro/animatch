@@ -6,6 +6,7 @@ from sqlalchemy import (
     Column,
     DateTime,
     ForeignKey,
+    Index,
     Integer,
     String,
     Table,
@@ -15,6 +16,29 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.session import Base
+
+# ---------------------------------------------------------------------------
+# Relation edge table — stores ALL AniList relation edges for franchise grouping.
+# related_id has NO foreign-key constraint intentionally: we store edges to titles
+# that may not (yet) be in the catalog so connected-component franchise detection
+# works across the full graph, not just the synced subset.
+# ---------------------------------------------------------------------------
+anime_relations = Table(
+    "anime_relations",
+    Base.metadata,
+    Column(
+        "anime_id",
+        Integer,
+        ForeignKey("anime.id", ondelete="CASCADE"),
+        nullable=False,
+    ),
+    Column("related_id", Integer, nullable=False),  # no FK — may be outside catalog
+    Column("rel_type", String(30), nullable=False),
+    # Composite PK prevents duplicate edges
+    Column("__pk", Integer, primary_key=True, autoincrement=True),
+    Index("ix_anime_relations_anime_id", "anime_id"),
+    Index("ix_anime_relations_related_id", "related_id"),
+)
 
 # Association table for Anime <-> Genre
 anime_genres = Table(
@@ -124,6 +148,11 @@ class Anime(Base):
     source: Mapped[str | None] = mapped_column(String(50), nullable=True)
     main_studio: Mapped[str | None] = mapped_column(String(255), nullable=True)
     updated_at_anilist: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # franchise_id: set by the catalog sync's connected-component pass over
+    # anime_relations edges.  All members of the same franchise (prequel/sequel/
+    # parent/side-story/spin-off/alternative chain) share the same franchise_id
+    # (= the minimum AniList id in the component).  NULL means no known relations.
+    franchise_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
     synced_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),

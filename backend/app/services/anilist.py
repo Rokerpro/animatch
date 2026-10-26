@@ -72,6 +72,15 @@ query GetMediaPage(
         rank
       }
       updatedAt
+      relations {
+        edges {
+          relationType
+          node {
+            id
+            type
+          }
+        }
+      }
     }
   }
 }
@@ -270,6 +279,20 @@ class AniListClient:
                 if t.get("name")
             ]
 
+            # Relations: keep ALL edge types but only ANIME-type nodes.
+            # Downstream, catalog_sync stores every edge so the Union-Find franchise
+            # algorithm can run on the full graph (including nodes outside catalog).
+            raw_relations = (item.get("relations") or {}).get("edges") or []
+            relations: list[dict[str, Any]] = [
+                {
+                    "related_id": edge["node"]["id"],
+                    "rel_type": edge.get("relationType") or "OTHER",
+                }
+                for edge in raw_relations
+                if (edge.get("node") or {}).get("type") == "ANIME"
+                and (edge.get("node") or {}).get("id") is not None
+            ]
+
             parsed_anime = {
                 "id": item["id"],
                 "id_mal": item.get("idMal"),
@@ -294,6 +317,7 @@ class AniListClient:
                 "updated_at_anilist": item.get("updatedAt"),
                 "genres": genres,
                 "tags": tags,
+                "relations": relations,
             }
             parsed_items.append(parsed_anime)
 

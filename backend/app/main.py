@@ -9,7 +9,10 @@ from starlette.middleware.sessions import SessionMiddleware
 from app.api.anime import router as anime_router
 from app.api.auth import router as auth_router
 from app.api.health import router as health_router
+from app.api.recs import router as recs_router
 from app.core.config import settings, setup_logging
+from app.db.session import AsyncSessionLocal
+from app.recs.engine import rebuild_index_from_db
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +33,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             "In production mode, JWT_SECRET_KEY must be set, cannot equal the placeholder, and must be at least 32 characters long."
         )
     logger.info(f"Starting {settings.APP_NAME} in {settings.ENVIRONMENT} mode")
+
+    # Initialise in-memory vector index if database exists
+    try:
+        async with AsyncSessionLocal() as session:
+            await rebuild_index_from_db(session)
+    except Exception as exc:
+        logger.warning("Could not initialize vector index on startup: %s", exc)
+
     yield
     logger.info(f"Shutting down {settings.APP_NAME}")
 
@@ -65,6 +76,7 @@ def create_app() -> FastAPI:
     app.include_router(health_router, prefix="/api")
     app.include_router(anime_router, prefix="/api")
     app.include_router(auth_router, prefix="/api")
+    app.include_router(recs_router, prefix="/api")
 
     return app
 
