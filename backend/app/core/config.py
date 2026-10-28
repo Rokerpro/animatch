@@ -68,10 +68,19 @@ class Settings(BaseSettings):
     REC_WEIGHT_PROFILE: float = 0.2
 
     REC_ALPHA: float = 0.6
-    REC_QUALITY_WEIGHT: float = 0.15
+    # Quality is a small additive bonus so relevance clearly leads.
+    # Formula: final = minmax_sim + REC_QUALITY_WEIGHT * quality_pct
+    REC_QUALITY_WEIGHT: float = 0.1
 
-    REC_MMR_LAMBDA: float = 0.7
-    REC_CANDIDATE_POOL: int = 200
+    # MMR parameters
+    # REC_MMR_LAMBDA: balance between relevance (1.0) and diversity (0.0).
+    REC_MMR_LAMBDA: float = 0.8
+    # REC_TOP_CANDIDATES: blended cosine is min-max scaled over this many candidates
+    # before quality is added and MMR is run.
+    REC_TOP_CANDIDATES: int = 200
+    # REC_MMR_POOL: MMR is run only over this many top-relevance candidates.
+    # Items outside this pool are never pulled in by MMR (movement cap).
+    REC_MMR_POOL: int = 40
 
     REC_MIN_SCORE: int = 50
     REC_MIN_POPULARITY: int = 100
@@ -80,6 +89,11 @@ class Settings(BaseSettings):
 
     REC_QUIZ_SOFT_PENALTY_EPISODES: float = 0.15
     REC_QUIZ_SOFT_PENALTY_YEAR: float = 0.15
+
+    # Minimum number of shared salient features (genres + non-spoiler tags
+    # with rank >= 60 on both titles) required for a recommendation to be shown.
+    # Results with fewer are dropped; we return fewer than N rather than padding.
+    REC_MIN_SALIENT_FEATURES: int = 2
 
     REC_DEFAULT_N: int = 10
     REC_MAX_N: int = 50

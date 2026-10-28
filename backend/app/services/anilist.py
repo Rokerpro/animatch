@@ -70,6 +70,8 @@ query GetMediaPage(
         category
         isAdult
         rank
+        isMediaSpoiler
+        isGeneralSpoiler
       }
       updatedAt
       relations {
@@ -274,6 +276,10 @@ class AniListClient:
                     "category": t.get("category"),
                     "is_adult": bool(t.get("isAdult", False)),
                     "rank": int(t.get("rank") or 0),
+                    "is_spoiler": bool(
+                        t.get("isMediaSpoiler", False)
+                        or t.get("isGeneralSpoiler", False)
+                    ),
                 }
                 for t in item.get("tags") or []
                 if t.get("name")

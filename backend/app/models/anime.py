@@ -75,6 +75,7 @@ anime_tags = Table(
         primary_key=True,
     ),
     Column("rank", Integer, nullable=False, default=0),
+    Column("is_spoiler", Boolean, nullable=False, default=False),
 )
 
 

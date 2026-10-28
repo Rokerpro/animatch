@@ -24,6 +24,12 @@ class RecResult(AnimeCard):
 
     reason: str = ""
     similarity: float = Field(default=0.0, ge=0.0, le=1.0)
+    raw_cosine: float | None = None
+    rank_sim: float | None = None
+    rank_taste: float | None = None
+    quality_score: float | None = None
+    final_score: float | None = None
+    pre_mmr_rank: int | None = None
     explanation: ExplanationSchema = Field(default_factory=ExplanationSchema)
 
 

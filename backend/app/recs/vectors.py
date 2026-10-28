@@ -68,12 +68,21 @@ class AnimeRecord:
     average_score: int | None
     popularity: int
     episodes: int | None
-    season_year: int | None
-    is_adult: bool
-    genres: list[str]
-    tags: list[str]  # names only (rank encoded in vector)
-    tag_ranks: dict[str, float]  # tag_name -> rank/100
-    format: str | None
+    duration: int | None = None
+    season_year: int | None = None
+    status: str | None = (
+        None  # AniList status string, e.g. "FINISHED", "NOT_YET_RELEASED"
+    )
+    is_adult: bool = False
+    genres: list[str] = field(default_factory=list)
+    tags: list[str] = field(default_factory=list)  # names only (rank encoded in vector)
+    tag_ranks: dict[str, float] = field(default_factory=dict)  # tag_name -> rank/100
+    raw_tag_ranks: dict[str, int] = field(
+        default_factory=dict
+    )  # tag_name -> rank 0-100
+    tag_spoilers: set[str] = field(default_factory=set)  # set of spoiler tag names
+    format: str | None = None
+    has_prequel: bool = False
     quality_pct: float = 0.0
 
 
@@ -111,6 +120,9 @@ class VectorIndex:
     tag_end: int = 0
     format_start: int = 0
     format_end: int = 0
+
+    # Canonical entry point anime ID per franchise in catalog: franchise_id -> anime_id
+    franchise_entry_points: dict[int, int] = field(default_factory=dict)
 
     def __len__(self) -> int:
         return len(self.records)
@@ -173,15 +185,24 @@ class VectorIndex:
 
             # Tag block: value = rank/100
             tag_ranks: dict[str, float] = {}
+            raw_tag_ranks: dict[str, int] = {}
+            tag_spoilers: set[str] = set()
             for t in item.get("tags") or []:
                 if isinstance(t, dict):
-                    tname, trank = t["name"], float(t.get("rank", 0)) / 100.0
+                    tname = t["name"]
+                    raw_r = int(t.get("rank", 0))
+                    trank = float(raw_r) / 100.0
+                    if t.get("is_spoiler"):
+                        tag_spoilers.add(tname)
                 else:
-                    tname, trank = t, 0.0
+                    tname = t
+                    raw_r = 0
+                    trank = 0.0
                 j = tag_idx.get(tname)
                 if j is not None:
                     raw_tag[row_i, j] = trank
                 tag_ranks[tname] = trank
+                raw_tag_ranks[tname] = raw_r
 
             # Format block (one-hot)
             fmt = (item.get("format") or "OTHER").upper()
@@ -208,12 +229,17 @@ class VectorIndex:
                     average_score=item.get("average_score"),
                     popularity=item.get("popularity") or 0,
                     episodes=item.get("episodes"),
+                    duration=item.get("duration"),
                     season_year=item.get("season_year"),
+                    status=item.get("status"),
                     is_adult=bool(item.get("is_adult", False)),
                     genres=list(item.get("genres") or []),
                     tags=tag_names,
                     tag_ranks=tag_ranks,
+                    raw_tag_ranks=raw_tag_ranks,
+                    tag_spoilers=tag_spoilers,
                     format=item.get("format"),
+                    has_prequel=bool(item.get("has_prequel", False)),
                 )
             )
 
@@ -274,6 +300,40 @@ class VectorIndex:
         fs = te
         fe = fs + F
 
+        # --- Compute franchise entry points (one entry point per franchise) ---
+        from collections import defaultdict
+
+        franchise_members: dict[int, list[AnimeRecord]] = defaultdict(list)
+        for rec in records:
+            if rec.franchise_id is not None:
+                franchise_members[rec.franchise_id].append(rec)
+
+        franchise_entry_points: dict[int, int] = {}
+        for fid, members in franchise_members.items():
+            # Entry-point rule: earliest-aired TV title (by season_year);
+            # if no TV title, the earliest movie; if no movie, the earliest title.
+            # We do NOT use has_prequel / story-order relations to pick the entry
+            # point — only the absolute start date decides.
+
+            # 1. Format preference: TV -> MOVIE -> any
+            tv_cands = [m for m in members if (m.format or "").upper() == "TV"]
+            if tv_cands:
+                cands = tv_cands
+            else:
+                movie_cands = [
+                    m for m in members if (m.format or "").upper() == "MOVIE"
+                ]
+                cands = movie_cands if movie_cands else members
+
+            # 2. Sort by earliest season_year (None = 9999 sentinel), then lowest id
+            cands.sort(
+                key=lambda m: (
+                    m.season_year if m.season_year is not None else 9999,
+                    m.id,
+                )
+            )
+            franchise_entry_points[fid] = cands[0].id
+
         index = cls(
             all_genres=all_genres,
             all_tags=all_tags,
@@ -288,6 +348,7 @@ class VectorIndex:
             tag_end=te,
             format_start=fs,
             format_end=fe,
+            franchise_entry_points=franchise_entry_points,
         )
         logger.info(
             "VectorIndex built: %d items, %d genres, %d tags, %d dims",

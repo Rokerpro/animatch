@@ -227,16 +227,116 @@ def recs_demo(
                 typer.echo("⚠️ No recommendations found.")
                 return
 
-            header = f"{'#':<3} | {'Sim':<6} | {'Title':<40} | {'Year':<6} | {'Genres':<25} | {'Reason'}"
+            header = (
+                f"{'#':<3} | {'PreMMR':<6} | {'Final':<6} | {'RawCos':<6} | {'Quality':<7} | "
+                f"{'Title':<35} | {'Year':<5} | {'Fmt':<7} | {'Reason'}"
+            )
             typer.echo(header)
-            typer.echo("-" * len(header))
+            typer.echo("-" * 125)
+            mmr_changes: list[str] = []
             for i, r in enumerate(results, 1):
-                t_name = (r.title_english or r.title_romaji or "Unknown")[:38]
+                t_name = (r.title_english or r.title_romaji or "Unknown")[:33]
                 year_str = str(r.year) if r.year else "N/A"
-                genres_str = ", ".join(r.genres[:3])[:23]
-                typer.echo(
-                    f"{i:<3} | {r.similarity:<6.3f} | {t_name:<40} | {year_str:<6} | {genres_str:<25} | {r.reason}"
+                fmt_str = (r.format or "N/A")[:7]
+                final_str = (
+                    f"{r.final_score:.4f}"
+                    if r.final_score is not None
+                    else f"{r.similarity:.4f}"
                 )
+                pre_mmr_str = (
+                    f"#{r.pre_mmr_rank}" if r.pre_mmr_rank is not None else "N/A"
+                )
+                raw_cos_str = (
+                    f"{r.raw_cosine:.4f}" if r.raw_cosine is not None else "N/A"
+                )
+                quality_str = (
+                    f"{r.quality_score:.4f}" if r.quality_score is not None else "N/A"
+                )
+
+                mmr_note = ""
+                if r.pre_mmr_rank is not None and r.pre_mmr_rank != i:
+                    mmr_note = f" [MMR: #{r.pre_mmr_rank}→#{i}]"
+                    mmr_changes.append(
+                        f"'{t_name}' moved from pre-MMR #{r.pre_mmr_rank} to #{i}"
+                    )
+
+                reason_str = r.reason or "(no reason)"
+                typer.echo(
+                    f"{i:<3} | {pre_mmr_str:<6} | {final_str:<6} | {raw_cos_str:<6} | {quality_str:<7} | "
+                    f"{t_name:<35} | {year_str:<5} | {fmt_str:<7} | {reason_str}{mmr_note}"
+                )
+
+            typer.echo("-" * 125)
+            if mmr_changes:
+                typer.echo(
+                    f"🔄 MMR Diversity adjustments ({len(mmr_changes)} reordered):"
+                )
+                for change in mmr_changes:
+                    typer.echo(f"   • {change}")
+            else:
+                typer.echo(
+                    "🔄 MMR Diversity: top candidates selected in original score order without position changes."
+                )
+
+    asyncio.run(_run())
+
+
+@app.command("explain-pair")
+def explain_pair(
+    id_a: Annotated[
+        int,
+        typer.Argument(help="First anime AniList ID."),
+    ],
+    id_b: Annotated[
+        int,
+        typer.Argument(help="Second anime AniList ID."),
+    ],
+    top_k: Annotated[
+        int,
+        typer.Option(
+            "--top-k",
+            "-k",
+            help="Number of top contributing features to show.",
+            min=1,
+            max=50,
+        ),
+    ] = 10,
+) -> None:
+    """Show the top-k contributing features (query × item weighted dot-product) for a pair.
+
+    Useful for diagnosing spurious high-similarity pairs, e.g.:
+      animatch-cli explain-pair 21459 98478  # Fate/Zero vs Laid-Back Camp
+    """
+    from app.db.session import AsyncSessionLocal
+    from app.recs.engine import explain_pair_debug, rebuild_index_from_db
+
+    async def _run() -> None:
+        async with AsyncSessionLocal() as session:
+            index = await rebuild_index_from_db(session)
+            if index.is_empty():
+                typer.echo("❌ Catalog index is empty. Please run sync-catalog first.")
+                return
+
+            rows, cosine, title_a, title_b = explain_pair_debug(
+                id_a, id_b, index, top_k
+            )
+            if not rows:
+                typer.echo(f"❌ One or both IDs not found in catalog: {id_a}, {id_b}")
+                return
+
+            typer.echo(
+                f"\n🔍 Feature contributions: {title_a!r} (id={id_a}) vs {title_b!r} (id={id_b})"
+            )
+            typer.echo(f"   Raw cosine similarity: {cosine:.4f}\n")
+            header = f"{'#':<3} | {'Block':<7} | {'Feature':<35} | {'Contrib':>8} | {'A-weight':>9} | {'B-weight':>9}"
+            typer.echo(header)
+            typer.echo("-" * 80)
+            for i, row in enumerate(rows, 1):
+                typer.echo(
+                    f"{i:<3} | {row['block']:<7} | {row['feature']:<35} | "
+                    f"{row['contrib']:>8.5f} | {row['q_val']:>9.5f} | {row['i_val']:>9.5f}"
+                )
+            typer.echo("-" * 80)
 
     asyncio.run(_run())
 

@@ -237,6 +237,7 @@ class CatalogSyncService:
                             "anime_id": aid,
                             "tag_id": tid,
                             "rank": t_item.get("rank", 0),
+                            "is_spoiler": bool(t_item.get("is_spoiler", False)),
                         }
                     )
 
