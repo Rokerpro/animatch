@@ -75,3 +75,10 @@ class UserResponse(BaseModel):
     show_mature: bool
     taste_profile: dict[str, Any] | None = None
     created_at: datetime
+
+
+class AuthProvidersResponse(BaseModel):
+    """Schema indicating which external auth providers are configured."""
+
+    google: bool
+

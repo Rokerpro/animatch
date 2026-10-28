@@ -673,3 +673,14 @@ async def test_cookie_flags_in_production(client: AsyncClient):
         assert "httponly" in access_cookie_header.lower()
         assert "samesite=lax" in access_cookie_header.lower()
         assert "secure" in access_cookie_header.lower()
+
+
+@pytest.mark.asyncio
+async def test_get_auth_providers(client: AsyncClient):
+    """GET /api/auth/providers returns configured status for OAuth providers."""
+    res = await client.get("/api/auth/providers")
+    assert res.status_code == 200
+    data = res.json()
+    assert "google" in data
+    assert isinstance(data["google"], bool)
+

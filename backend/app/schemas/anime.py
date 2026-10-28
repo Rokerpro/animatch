@@ -39,6 +39,12 @@ class AnimeCard(BaseSchema):
     genres: list[str] = Field(default_factory=list)
 
 
+class TagDetail(BaseSchema):
+    name: str
+    rank: int = 0
+    is_spoiler: bool = False
+
+
 class AnimeDetail(AnimeCard):
     synopsis: str | None = None
     season: str | None = None
@@ -48,6 +54,7 @@ class AnimeDetail(AnimeCard):
     id_mal: int | None = None
     synonyms: list[str] = Field(default_factory=list)
     tags: list[str] = Field(default_factory=list)
+    tag_details: list[TagDetail] = Field(default_factory=list)
 
 
 class AnimeListResponse(BaseSchema):

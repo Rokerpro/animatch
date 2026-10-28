@@ -294,6 +294,15 @@ async def test_anime_detail_full_and_404(client: AsyncClient, seeded_catalog: No
     assert "Magic" in data["tags"]
     assert "Fantasy" in data["genres"]
     assert data["idMal"] == 52991
+    assert "tagDetails" in data
+    assert isinstance(data["tagDetails"], list)
+    assert len(data["tagDetails"]) > 0
+    first_tag = data["tagDetails"][0]
+    assert "name" in first_tag
+    assert "rank" in first_tag
+    assert "isSpoiler" in first_tag
+    assert isinstance(first_tag["isSpoiler"], bool)
+
 
 
 @pytest.mark.asyncio

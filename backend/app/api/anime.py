@@ -17,6 +17,7 @@ from app.schemas.anime import (
     AnimeListResponse,
     FiltersResponse,
     PageInfo,
+    TagDetail,
 )
 
 router = APIRouter(tags=["anime"])
@@ -66,9 +67,16 @@ def serialize_anime_card(anime: Anime) -> AnimeCard:
     )
 
 
-def serialize_anime_detail(anime: Anime) -> AnimeDetail:
+def serialize_anime_detail(
+    anime: Anime, tag_details: list[TagDetail] | None = None
+) -> AnimeDetail:
     """Serializes an Anime ORM model into full AnimeDetail schema."""
     card = serialize_anime_card(anime)
+    tags_list = (
+        [td.name for td in tag_details]
+        if tag_details is not None
+        else [t.name for t in anime.tags]
+    )
     return AnimeDetail(
         **card.model_dump(),
         synopsis=anime.description,
@@ -78,7 +86,8 @@ def serialize_anime_detail(anime: Anime) -> AnimeDetail:
         source=anime.source,
         id_mal=anime.id_mal,
         synonyms=anime.synonyms or [],
-        tags=[t.name for t in anime.tags],
+        tags=tags_list,
+        tag_details=tag_details or [],
     )
 
 
@@ -391,4 +400,17 @@ async def get_anime_detail(
                 detail=f"Anime with id {id} not found",
             )
 
-    return serialize_anime_detail(anime)
+    tag_stmt = (
+        select(Tag.name, anime_tags.c.rank, anime_tags.c.is_spoiler)
+        .join(anime_tags, anime_tags.c.tag_id == Tag.id)
+        .where(anime_tags.c.anime_id == id)
+        .order_by(anime_tags.c.rank.desc())
+    )
+    tag_res = await db.execute(tag_stmt)
+    tag_rows = tag_res.all()
+    tag_details = [
+        TagDetail(name=row[0], rank=row[1], is_spoiler=row[2])
+        for row in tag_rows
+    ]
+
+    return serialize_anime_detail(anime, tag_details=tag_details)

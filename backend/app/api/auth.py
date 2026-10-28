@@ -20,6 +20,7 @@ from app.core.security import (
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.user import (
+    AuthProvidersResponse,
     GoogleLinkRequest,
     UserLoginRequest,
     UserRegisterRequest,
@@ -100,6 +101,12 @@ async def get_csrf_token(response: Response) -> dict[str, str]:
         path="/",
     )
     return {"csrf_token": csrf_token}
+
+
+@router.get("/providers", response_model=AuthProvidersResponse)
+async def get_auth_providers() -> AuthProvidersResponse:
+    """Returns which external authentication providers are configured."""
+    return AuthProvidersResponse(google=is_google_oauth_configured())
 
 
 @router.post(
