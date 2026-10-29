@@ -1,29 +1,53 @@
-import React from "react";
+import type { ReactNode } from "react";
 import { Routes, Route } from "react-router-dom";
 import { Navbar } from "./components/Navbar";
-import { HomePage } from "./pages/HomePage";
+import { ToastProvider } from "./components/ToastProvider";
+import { AuthProvider } from "./auth/AuthContext";
+import { BrowsePage } from "./pages/BrowsePage";
+import { AnimeDetailPage } from "./pages/AnimeDetailPage";
+import { LoginPage, RegisterPage, SettingsPage } from "./pages/AuthPages";
 
-/**
- * Main Application Component:
- * Wraps pages in the common dark shell and mounts the React Router routes.
- */
-export const App: React.FC = () => {
+function AniListFooter() {
   return (
-    <div className="flex min-h-screen flex-col bg-surface-base text-content-primary">
+    <footer className="app-footer">
+      <p>Anime data provided by <a href="https://anilist.co" rel="noreferrer">AniList</a>.</p>
+    </footer>
+  );
+}
+
+function PageShell({ children }: { children: ReactNode }) {
+  return (
+    <div className="app-shell">
+      <a className="skip-link" href="#main-content">
+        Skip to content
+      </a>
       <Navbar />
-      <main className="flex-1">
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-        </Routes>
+      <main className="app-main" id="main-content">
+        {children}
       </main>
-      <footer className="border-t border-surface-border py-8 text-center text-xs text-content-muted">
-        <p>
-          AniMatch &copy; {new Date().getFullYear()} &mdash; AI Anime
-          Recommendation Engine
-        </p>
-      </footer>
+      <AniListFooter />
     </div>
   );
-};
+}
+
+export function App() {
+  return (
+    <ToastProvider>
+      <AuthProvider>
+        <PageShell>
+          <Routes>
+            <Route path="/" element={<BrowsePage />} />
+            <Route path="/browse" element={<BrowsePage />} />
+            <Route path="/anime/:id" element={<AnimeDetailPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="*" element={<p className="browse-page">Page not found</p>} />
+          </Routes>
+        </PageShell>
+      </AuthProvider>
+    </ToastProvider>
+  );
+}
 
 export default App;

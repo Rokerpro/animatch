@@ -5,26 +5,22 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Design token: base backgrounds (dark, sleek, minimal)
         surface: {
-          base: "#09090b", // Deep near-black background
-          raised: "#121217", // Elevated cards and search panels
-          overlay: "#181820", // Modals and dropdown menus
-          border: "#272732", // Subtle boundaries
+          base: "#0d0d11",
+          raised: "#141419",
+          overlay: "#1a1a22",
+          border: "#202028",
         },
-        // Design token: single restrained violet/indigo accent
-        // WCAG AA compliant: contrast ratio > 6:1 against #09090b
         accent: {
-          DEFAULT: "#8B7CF6",
-          hover: "#7C3AED",
-          light: "#A78BFA",
-          muted: "rgba(139, 124, 246, 0.15)",
+          ui: "#7c65c1",
+          hover: "#6a56aa",
+          text: "#9d8bdc",
+          subtle: "rgba(124, 101, 193, 0.12)",
         },
-        // Typography tokens
         content: {
-          primary: "#F4F4F5", // High contrast crisp reading text
-          secondary: "#A1A1AA", // Muted metadata, subtext
-          muted: "#71717A", // Subtle labels
+          primary: "#eeeeee",
+          secondary: "#9494a0",
+          muted: "#5e5e6e",
         },
       },
       fontFamily: {
@@ -37,9 +33,7 @@ export default {
           "sans-serif",
         ],
       },
-      transitionDuration: {
-        DEFAULT: "200ms", // 150-250ms subtle transitions as specified
-      },
+      transitionDuration: { DEFAULT: "200ms" },
     },
   },
   plugins: [],

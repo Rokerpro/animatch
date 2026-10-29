@@ -82,3 +82,9 @@ class AuthProvidersResponse(BaseModel):
 
     google: bool
 
+
+class CsrfTokenResponse(BaseModel):
+    """Double-submit CSRF value returned alongside its browser cookie."""
+
+    csrf_token: str
+

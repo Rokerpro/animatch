@@ -12,6 +12,14 @@ from app.core.rate_limit import auth_rate_limiter
 from app.models.user import User
 
 
+@pytest.mark.asyncio
+async def test_csrf_endpoint_returns_named_token(client: AsyncClient):
+    response = await client.get("/api/auth/csrf")
+    assert response.status_code == 200
+    assert response.json()["csrf_token"]
+    assert settings.CSRF_COOKIE_NAME in response.cookies
+
+
 @pytest.fixture(autouse=True)
 def reset_rate_limiter():
     """Resets rate limiter state before every test."""

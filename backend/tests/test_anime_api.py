@@ -2,6 +2,9 @@
 
 import pytest
 from httpx import AsyncClient
+from sqlalchemy import update
+
+from app.models.anime import anime_tags
 
 
 @pytest.mark.asyncio
@@ -302,6 +305,26 @@ async def test_anime_detail_full_and_404(client: AsyncClient, seeded_catalog: No
     assert "rank" in first_tag
     assert "isSpoiler" in first_tag
     assert isinstance(first_tag["isSpoiler"], bool)
+
+
+@pytest.mark.asyncio
+async def test_anime_detail_returns_spoiler_tag_flag(
+    client: AsyncClient, seeded_catalog: None, db_session
+):
+    """A spoiler flag stored on the anime/tag association is included in detail JSON."""
+    await db_session.execute(
+        update(anime_tags)
+        .where(anime_tags.c.anime_id == 154587)
+        .values(is_spoiler=True)
+    )
+    await db_session.commit()
+
+    response = await client.get("/api/anime/154587")
+
+    assert response.status_code == 200
+    tags = response.json()["tagDetails"]
+    assert tags
+    assert any(tag["isSpoiler"] is True for tag in tags)
 
 
 

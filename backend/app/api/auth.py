@@ -21,6 +21,7 @@ from app.db.session import get_db
 from app.models.user import User
 from app.schemas.user import (
     AuthProvidersResponse,
+    CsrfTokenResponse,
     GoogleLinkRequest,
     UserLoginRequest,
     UserRegisterRequest,
@@ -86,8 +87,8 @@ def clear_auth_cookies(response: Response) -> None:
     )
 
 
-@router.get("/csrf")
-async def get_csrf_token(response: Response) -> dict[str, str]:
+@router.get("/csrf", response_model=CsrfTokenResponse)
+async def get_csrf_token(response: Response) -> CsrfTokenResponse:
     """Generates and sets a new CSRF token cookie."""
     csrf_token = generate_csrf_token()
     is_prod = settings.ENVIRONMENT == "production"
@@ -100,7 +101,7 @@ async def get_csrf_token(response: Response) -> dict[str, str]:
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         path="/",
     )
-    return {"csrf_token": csrf_token}
+    return CsrfTokenResponse(csrf_token=csrf_token)
 
 
 @router.get("/providers", response_model=AuthProvidersResponse)
