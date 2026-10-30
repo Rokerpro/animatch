@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import type { FiltersResponse } from "../api/types";
+import { MultiSelectFilter } from "./MultiSelectFilter";
 type FilterState = { genres: string[]; format: string; yearMin: string; yearMax: string; sort: string; tags: string[]; minScore: string; maxEpisodes: string; status: string };
 const defaults: FilterState = { genres: [], format: "", yearMin: "", yearMax: "", sort: "popularity", tags: [], minScore: "", maxEpisodes: "", status: "" };
 export function FilterBar({ options }: { options?: FiltersResponse }) {
@@ -27,13 +28,13 @@ export function FilterBar({ options }: { options?: FiltersResponse }) {
     ...(state.status ? [{ key: "status" as const, value: state.status }] : []),
   ];
   const controls = <>
-    <label>Genre<select aria-label="Genre" multiple value={state.genres} onChange={(e) => set("genres", Array.from(e.target.selectedOptions, (option) => option.value))}>{(options?.genres ?? []).map((v) => <option key={v}>{v}</option>)}</select></label>
+    <MultiSelectFilter label="Genre" options={options?.genres ?? []} selected={state.genres} onChange={(values) => set("genres", values)} />
     <label>Format<select aria-label="Format" value={state.format} onChange={(e) => set("format", e.target.value)}><option value="">Any</option>{["TV", "MOVIE", "OVA", "ONA", "SPECIAL", "MUSIC"].map((v) => <option key={v}>{v}</option>)}</select></label>
     <label>Year from<input aria-label="Year from" type="number" value={state.yearMin} onChange={(e) => set("yearMin", e.target.value)} placeholder="Any" /></label>
     <label>Year to<input aria-label="Year to" type="number" value={state.yearMax} onChange={(e) => set("yearMax", e.target.value)} placeholder="Any" /></label>
     <label>Sort<select aria-label="Sort" value={state.sort} onChange={(e) => set("sort", e.target.value)}><option value="popularity">Popularity</option><option value="score">Score</option><option value="year">Year</option><option value="title">Title</option></select></label>
     <button className="more-filters-toggle" aria-expanded={more} onClick={() => setMore(!more)}>More filters</button>
-    {more && <div className="more-filters"><label>Tags<select aria-label="Tags" multiple value={state.tags} onChange={(e) => set("tags", Array.from(e.target.selectedOptions, (option) => option.value))}>{(options?.tags ?? []).map((v) => <option key={v}>{v}</option>)}</select></label><label>Minimum score<input aria-label="Minimum score" type="number" min="0" max="100" value={state.minScore} onChange={(e) => set("minScore", e.target.value)} /></label><label>Maximum episodes<input aria-label="Maximum episodes" type="number" min="1" value={state.maxEpisodes} onChange={(e) => set("maxEpisodes", e.target.value)} /></label><label>Status<select aria-label="Status" value={state.status} onChange={(e) => set("status", e.target.value)}><option value="">Any</option>{["FINISHED", "RELEASING", "NOT_YET_RELEASED", "CANCELLED", "HIATUS"].map((v) => <option key={v}>{v}</option>)}</select></label></div>}
+    {more && <div className="more-filters"><MultiSelectFilter label="Tags" options={options?.tags ?? []} selected={state.tags} onChange={(values) => set("tags", values)} /><label>Minimum score<input aria-label="Minimum score" type="number" min="0" max="100" value={state.minScore} onChange={(e) => set("minScore", e.target.value)} /></label><label>Maximum episodes<input aria-label="Maximum episodes" type="number" min="1" value={state.maxEpisodes} onChange={(e) => set("maxEpisodes", e.target.value)} /></label><label>Status<select aria-label="Status" value={state.status} onChange={(e) => set("status", e.target.value)}><option value="">Any</option>{["FINISHED", "RELEASING", "NOT_YET_RELEASED", "CANCELLED", "HIATUS"].map((v) => <option key={v}>{v}</option>)}</select></label></div>}
   </>;
   return <section aria-label="Anime filters" className="filter-section"><button className="mobile-filter-toggle" onClick={() => setDrawer(true)}>Filters</button>
     <div className="filter-controls">{controls}</div>

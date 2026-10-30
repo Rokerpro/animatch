@@ -6,7 +6,7 @@ function LocationText() { const location = useLocation(); return <output>{locati
 describe("FilterBar", () => {
   it("sets URL filters and exposes removable chips and clear all", () => {
     render(<MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/browse"]}><FilterBar options={{ genres: ["Action"], tags: ["Time Loop"] }} /><LocationText /></MemoryRouter>);
-    fireEvent.change(screen.getByLabelText("Genre"), { target: { value: "Action" } });
+    fireEvent.click(screen.getByLabelText("Action"));
     expect(screen.getByText("?genres=Action")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Action/ })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Clear all" }));
