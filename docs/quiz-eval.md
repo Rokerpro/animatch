@@ -26,7 +26,9 @@ Pending local catalog output. No quality judgments are claimed without inspectin
 
 ## Start scoring comparison
 
-Methods A and B are printed side by side by every start demo. Method A blends raw cosine scores from the quiz vector and the normalized liked-title vector. Method B first rank-normalizes each liked-title score across eligible candidates, averages those ranks, and adds a small bonus for candidates ranking in the top quartile for at least two liked titles. It also rank-normalizes quiz scores before blending. Thus `REC_START_LIKED_WEIGHT` (default `0.7`) is the actual share of the liked signal in Method B's blend. The default is currently B (`REC_START_METHOD=B`), pending review of mixed-taste outputs; this is not a validated quality conclusion. Inspect whether B over-rewards candidates fitting multiple seeds or whether A's vector average blurs distinct tastes.
+Methods A and B are printed side by side by every start demo. Method A blends raw cosine scores from the quiz vector and the normalized liked-title vector. Method B first rank-normalizes each liked-title score across eligible candidates, averages those ranks, and adds a small bonus for candidates ranking in the top quartile for at least two liked titles. It also rank-normalizes quiz scores before blending. Thus `REC_START_LIKED_WEIGHT` (default `0.7`) is the actual share of the liked signal in Method B's blend. The default is Method A (`REC_START_METHOD=A`) because it favors focused tastes and stronger direct matches; B can bridge mixed tastes, but the live-catalog evaluation showed weaker matches. Use the appended output to assess cases where B helps.
+
+The SQLite FTS table stores title and synonym text with apostrophes removed after normalizing ASCII and typographic apostrophes. Existing databases rebuild `anime_fts` and its triggers through Alembic revision `d7f13a8c4b20_normalize_title_fts`; no duplicate title index is created.
 Liked: ['Attack on Titan', 'Death Note', 'Laid-Back Camp']; quiz-set=None; scoring methods A and B
 
 Method A

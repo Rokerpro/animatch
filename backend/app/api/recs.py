@@ -107,16 +107,17 @@ async def post_quiz_recommendations(
         include_mature = True
 
     n = max(1, min(payload.n, settings.REC_MAX_N))
+    quiz_vec, _, _ = build_quiz_vector(payload.answers, index)
     results = recommend_from_quiz(
         answers=payload.answers,
         n=n,
         include_mature=include_mature,
         index=index,
+        query_vec=quiz_vec,
     )
 
     stored = False
     if current_user:
-        quiz_vec, _, _ = build_quiz_vector(payload.answers, index)
         taste_prof = dict(current_user.taste_profile or {})
         taste_prof["quiz_prior_vec"] = [float(x) for x in quiz_vec]
         taste_prof["quiz_answers"] = payload.answers

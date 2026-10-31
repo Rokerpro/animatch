@@ -48,6 +48,13 @@ class Explanation:
     reason: str = ""
 
 
+def is_salient_tag(name: str) -> bool:
+    """Return whether a tag is eligible for salient gates and explanations."""
+    return name.casefold() not in {
+        stoplisted.casefold() for stoplisted in settings.REC_SALIENT_TAG_STOPLIST
+    }
+
+
 def _top_contributions(
     query_vec: np.ndarray,
     item_vec: np.ndarray,
@@ -92,13 +99,12 @@ def _top_contributions(
     max_t = t_contribs.max() if len(t_contribs) > 0 else 0.0
     t_threshold = mean_t if max_t > mean_t else -1.0
     tag_hits = []
-    stoplist = {name.casefold() for name in settings.REC_SALIENT_TAG_STOPLIST}
     for j in range(len(index.all_tags)):
         c = t_contribs[j]
         if c <= t_threshold or c <= 0:
             continue
         tname = index.all_tags[j]
-        if tname.casefold() in stoplist:
+        if not is_salient_tag(tname):
             continue
 
         # Check item constraints
@@ -132,7 +138,6 @@ def shared_salient_features(
     min_tag_rank: int = 60,
 ) -> list[str]:
     """Return shared salient genre/tag features ordered by vector contribution."""
-    stoplist = {name.casefold() for name in settings.REC_SALIENT_TAG_STOPLIST}
     features: list[tuple[str, float]] = []
     for genre in set(query_record.genres) & set(item_record.genres):
         offset = index.genre_start + index.all_genres.index(genre)
@@ -142,14 +147,14 @@ def shared_salient_features(
         for tag, rank in query_record.raw_tag_ranks.items()
         if rank >= min_tag_rank
         and tag not in query_record.tag_spoilers
-        and tag.casefold() not in stoplist
+        and is_salient_tag(tag)
     }
     item_tags = {
         tag
         for tag, rank in item_record.raw_tag_ranks.items()
         if rank >= min_tag_rank
         and tag not in item_record.tag_spoilers
-        and tag.casefold() not in stoplist
+        and is_salient_tag(tag)
     }
     for tag in query_tags & item_tags:
         offset = index.tag_start + index.all_tags.index(tag)
@@ -182,16 +187,14 @@ def count_shared_salient(
         for t, rank in query_record.raw_tag_ranks.items()
         if rank >= min_tag_rank
         and t not in query_record.tag_spoilers
-        and t.casefold()
-        not in {name.casefold() for name in settings.REC_SALIENT_TAG_STOPLIST}
+        and is_salient_tag(t)
     }
     item_tags_ok = {
         t
         for t, rank in item_record.raw_tag_ranks.items()
         if rank >= min_tag_rank
         and t not in item_record.tag_spoilers
-        and t.casefold()
-        not in {name.casefold() for name in settings.REC_SALIENT_TAG_STOPLIST}
+        and is_salient_tag(t)
     }
     shared_tags = seed_tags_ok & item_tags_ok
 
@@ -215,8 +218,7 @@ def count_quiz_salient(
         for t in target_tags
         if item_record.raw_tag_ranks.get(t, 0) >= min_tag_rank
         and t not in item_record.tag_spoilers
-        and t.casefold()
-        not in {name.casefold() for name in settings.REC_SALIENT_TAG_STOPLIST}
+        and is_salient_tag(t)
     }
     return len(shared_genres) + len(shared_tags)
 
@@ -264,8 +266,7 @@ def count_profile_salient(
         for t in pos_tags
         if item_record.raw_tag_ranks.get(t, 0) >= min_tag_rank
         and t not in item_record.tag_spoilers
-        and t.casefold()
-        not in {name.casefold() for name in settings.REC_SALIENT_TAG_STOPLIST}
+        and is_salient_tag(t)
     }
     return len(shared_genres) + len(shared_tags)
 

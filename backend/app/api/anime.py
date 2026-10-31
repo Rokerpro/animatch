@@ -1,14 +1,15 @@
 """Anime catalog endpoints: search, filter, detail, genres, tags."""
 
 import math
+from contextlib import suppress
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import case, exists, func, select, text
+from sqlalchemy import case, exists, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.core.text import sanitize_fts_query
+from app.core.text import normalize_title_search
 from app.db.session import get_db
 from app.models.anime import Anime, Genre, Tag, anime_genres, anime_tags
 from app.schemas.anime import (
@@ -19,6 +20,7 @@ from app.schemas.anime import (
     PageInfo,
     TagDetail,
 )
+from app.services.title_search import normalized_title_column, title_search_clause
 
 router = APIRouter(tags=["anime"])
 
@@ -148,18 +150,12 @@ async def list_anime(
     query = select(Anime)
 
     # 1. Search filter via FTS5
-    clean_q = q.strip().lower() if q and q.strip() else ""
+    clean_q = normalize_title_search(q)
     if clean_q:
-        fts_expr = sanitize_fts_query(clean_q)
-        if fts_expr:
-            try:
-                fts_subquery = text(
-                    "anime.id IN (SELECT rowid FROM anime_fts WHERE anime_fts MATCH :match_q)"
-                )
-                query = query.where(fts_subquery).params(match_q=fts_expr)
-            except Exception:
-                # Malformed queries never cause 500
-                pass
+        fts_clause = title_search_clause(clean_q)
+        if fts_clause is not None:
+            with suppress(Exception):
+                query = query.where(fts_clause)
         else:
             # Fallback substring if no valid alphanumeric tokens
             ilike_pat = f"%{clean_q}%"
@@ -261,10 +257,13 @@ async def list_anime(
 
     # Exact title match boost if search term given
     if clean_q:
+        exact_english = func.lower(normalized_title_column(Anime.title_english))
+        exact_romaji = func.lower(normalized_title_column(Anime.title_romaji))
+        exact_native = func.lower(normalized_title_column(Anime.title_native))
         exact_match_score = case(
-            (func.lower(Anime.title_romaji) == clean_q, 1),
-            (func.lower(Anime.title_english) == clean_q, 1),
-            (func.lower(Anime.title_native) == clean_q, 1),
+            (exact_romaji == clean_q, 1),
+            (exact_english == clean_q, 1),
+            (exact_native == clean_q, 1),
             else_=0,
         )
         order_criteria.append(exact_match_score.desc())

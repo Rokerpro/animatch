@@ -2,8 +2,10 @@
 
 import asyncio
 import logging
+import sys
+import time
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, Any
 
 import typer
 
@@ -18,11 +20,28 @@ app = typer.Typer(
 )
 
 
+def _report_title_not_found(title: str, suggestions: list[Any]) -> None:
+    typer.echo(f"Title not found: {title}")
+    if not suggestions:
+        typer.echo("No close catalog matches found.")
+        return
+    typer.echo("Closest matches:")
+    for anime in suggestions:
+        candidate = (
+            anime.title_english or anime.title_romaji or anime.title_native or "Unknown"
+        )
+        typer.echo(f"  {candidate} (id={anime.id})")
+
+
 @app.command("quiz-demo")
 def quiz_demo() -> None:
     """Print six fixed quiz evaluation sets against the local catalog."""
     from app.db.session import AsyncSessionLocal
     from app.recs.engine import rebuild_index_from_db, recommend_from_quiz
+
+    def progress(message: str) -> None:
+        typer.echo(message)
+        sys.stdout.flush()
 
     sets = [
         (
@@ -101,18 +120,91 @@ def quiz_demo() -> None:
 
     async def _run() -> None:
         async with AsyncSessionLocal() as session:
-            index = await rebuild_index_from_db(session)
+            progress("Building recommendation index from the local catalog...")
+            started = time.perf_counter()
+            try:
+                index = await rebuild_index_from_db(session)
+            except Exception as err:
+                progress(f"quiz-demo failed while building the catalog index: {err}")
+                raise
+            elapsed = time.perf_counter() - started
+            progress(f"Catalog index ready in {elapsed:.1f}s.")
+            if elapsed >= 10:
+                progress(f"Slow catalog index build: took {elapsed:.1f}s.")
             for i, (name, answers) in enumerate(sets, 1):
-                typer.echo(f"\n## {i}. {name}\nChosen answer IDs: {answers}")
-                for rank, result in enumerate(
-                    recommend_from_quiz(
+                started = time.perf_counter()
+                progress(f"\nStarting quiz set {i}/6: {name}; answers={answers}")
+                try:
+                    results = recommend_from_quiz(
                         answers, n=10, include_mature=False, index=index
-                    ),
-                    1,
-                ):
-                    typer.echo(
-                        f"{rank}. {result.title} | {result.year or 'N/A'} | {result.format or 'N/A'} | {', '.join(result.genres)} | {result.reason}"
                     )
+                    for rank, result in enumerate(results, 1):
+                        typer.echo(
+                            f"{rank}. {result.title} | {result.year or 'N/A'} | {result.format or 'N/A'} | {', '.join(result.genres)} | {result.reason}"
+                        )
+                    elapsed = time.perf_counter() - started
+                    progress(
+                        f"Finished quiz set {i}/6 in {elapsed:.1f}s ({len(results)} results)."
+                    )
+                    if elapsed >= 10:
+                        progress(f"Slow quiz set {i}/6: {name} took {elapsed:.1f}s.")
+                except Exception as err:
+                    elapsed = time.perf_counter() - started
+                    progress(
+                        f"quiz-demo failed on quiz set {i}/6 ({name}) after {elapsed:.1f}s: {err}"
+                    )
+
+    asyncio.run(_run())
+
+
+@app.command("quiz-vocab-check")
+def quiz_vocab_check() -> None:
+    """Report quiz vocabulary names missing from the local genre/tag tables."""
+    from difflib import get_close_matches
+
+    from sqlalchemy import select
+
+    from app.db.session import AsyncSessionLocal
+    from app.models.anime import Genre, Tag
+    from app.recs.quiz import load_quiz_data
+
+    quiz = load_quiz_data()
+
+    async def _run() -> None:
+        async with AsyncSessionLocal() as session:
+            genres = set((await session.execute(select(Genre.name))).scalars().all())
+            tags = set((await session.execute(select(Tag.name))).scalars().all())
+            known = {"genres": genres, "tags": tags}
+            known_folded = {
+                category: {name.casefold(): name for name in names}
+                for category, names in known.items()
+            }
+            for question in quiz.get("questions", []):
+                for answer in question.get("answers", []):
+                    typer.echo(
+                        f"{question['id']} / {answer['id']} ({answer.get('label', answer['id'])})"
+                    )
+                    weights = answer.get("weights") or {}
+                    missing_count = 0
+                    for category in ("genres", "tags"):
+                        for name in weights.get(category) or {}:
+                            if name.casefold() in known_folded[category]:
+                                continue
+                            missing_count += 1
+                            closest = get_close_matches(
+                                name,
+                                sorted(known[category]),
+                                n=3,
+                                cutoff=0.25,
+                            )
+                            suggestion = (
+                                ", ".join(closest) if closest else "no close match"
+                            )
+                            typer.echo(
+                                f"  unknown {category[:-1]} '{name}'; closest: {suggestion}"
+                            )
+                    if not missing_count:
+                        typer.echo("  no unknown genres or tags")
 
     asyncio.run(_run())
 
@@ -123,30 +215,21 @@ def start_demo(
     quiz_set: Annotated[int | None, typer.Option("--quiz-set", min=1, max=6)] = None,
 ) -> None:
     """Print top 10 combined recommendations for title names."""
-    from sqlalchemy import select
-
     from app.db.session import AsyncSessionLocal
-    from app.models.anime import Anime
     from app.recs.engine import rebuild_index_from_db, recommend_from_start
+    from app.services.title_search import closest_title_matches, find_title_matches
 
     async def _run() -> None:
         async with AsyncSessionLocal() as session:
             index = await rebuild_index_from_db(session)
             ids: list[int] = []
             for name in liked or []:
-                found = await session.execute(
-                    select(Anime)
-                    .where(
-                        (Anime.title_english.ilike(f"%{name}%"))
-                        | (Anime.title_romaji.ilike(f"%{name}%"))
-                    )
-                    .order_by(Anime.popularity.desc())
-                    .limit(1)
-                )
-                row = found.scalar_one_or_none()
-                if row is None:
-                    typer.echo(f"Title not found: {name}")
+                matches = await find_title_matches(session, name, limit=1)
+                if not matches:
+                    suggestions = await closest_title_matches(session, name, limit=5)
+                    _report_title_not_found(name, suggestions)
                     return
+                row = matches[0]
                 ids.append(row.id)
             quiz = None
             if quiz_set:
@@ -379,6 +462,7 @@ def recs_demo(
     from app.db.session import AsyncSessionLocal
     from app.models.anime import Anime
     from app.recs.engine import rebuild_index_from_db, recommend_similar
+    from app.services.title_search import closest_title_matches, find_title_matches
 
     async def _run() -> None:
         async with AsyncSessionLocal() as session:
@@ -399,21 +483,11 @@ def recs_demo(
                 if not title.strip():
                     typer.echo("❌ Either title or --seed-id must be provided.")
                     return
-                # Search by title (treating apostrophes flexibly)
-                clean_title = title.strip().replace("'", "%").replace("’", "%")
-                pattern = f"%{clean_title}%"
-                res = await session.execute(
-                    select(Anime)
-                    .where(
-                        (Anime.title_english.ilike(pattern))
-                        | (Anime.title_romaji.ilike(pattern))
-                    )
-                    .order_by(Anime.popularity.desc())
-                    .limit(1)
-                )
-                target_anime = res.scalar_one_or_none()
+                matches = await find_title_matches(session, title, limit=1)
+                target_anime = matches[0] if matches else None
                 if not target_anime:
-                    typer.echo(f"❌ No anime matching '{title}' found in catalog.")
+                    suggestions = await closest_title_matches(session, title, limit=5)
+                    _report_title_not_found(title, suggestions)
                     return
 
             display_title = (

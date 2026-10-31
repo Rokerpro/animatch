@@ -7,6 +7,7 @@ import math
 import numpy as np
 import pytest
 
+from app.core.config import settings
 from app.recs.engine import (
     MatureSeedError,
     _blend_start_scores,
@@ -18,6 +19,12 @@ from app.recs.engine import (
     recommend_from_start,
     recommend_similar,
 )
+from app.recs.explain import (
+    build_explanation,
+    count_profile_salient,
+    count_quiz_salient,
+    count_shared_salient,
+)
 from app.recs.quiz import (
     apply_quiz_soft_penalties,
     build_quiz_vector,
@@ -25,6 +32,101 @@ from app.recs.quiz import (
 )
 from app.recs.vectors import VectorIndex
 from app.services.catalog_sync import UnionFind
+
+
+def test_start_scoring_default_is_method_a():
+    assert settings.REC_START_METHOD == "A"
+
+
+def test_generic_tag_stoplist_does_not_count_or_appear_in_reason():
+    generic_tags = [
+        {"name": name, "rank": 95} for name in settings.REC_SALIENT_TAG_STOPLIST
+    ]
+    index = VectorIndex.build(
+        [
+            {
+                "id": 1,
+                "title_english": "First",
+                "franchise_id": 1,
+                "average_score": 80,
+                "popularity": 500,
+                "episodes": 12,
+                "season_year": 2020,
+                "status": "FINISHED",
+                "format": "TV",
+                "genres": ["Drama"],
+                "tags": generic_tags,
+            },
+            {
+                "id": 2,
+                "title_english": "Second",
+                "franchise_id": 2,
+                "average_score": 80,
+                "popularity": 400,
+                "episodes": 12,
+                "season_year": 2021,
+                "status": "FINISHED",
+                "format": "TV",
+                "genres": ["Drama"],
+                "tags": generic_tags,
+            },
+        ]
+    )
+    first, second = index.records
+    assert count_shared_salient(first, second) == 1
+    assert (
+        count_quiz_salient(set(), set(settings.REC_SALIENT_TAG_STOPLIST), second) == 0
+    )
+    assert count_shared_salient(first, second) < settings.REC_MIN_SALIENT_FEATURES
+    generic_only_taste = np.zeros(index.matrix.shape[1], dtype=np.float32)
+    for generic_tag in settings.REC_SALIENT_TAG_STOPLIST:
+        generic_only_taste[index.tag_start + index.all_tags.index(generic_tag)] = 1
+    assert count_profile_salient(generic_only_taste, second, index) == 0
+
+    explanation = build_explanation(
+        query_vec=index.vec(first.id),
+        item_vec=index.vec(second.id),
+        index=index,
+        query_record=first,
+        item_record=second,
+        seed_title=first.title,
+    )
+    assert all(
+        tag not in explanation.reason for tag in settings.REC_SALIENT_TAG_STOPLIST
+    )
+    assert not set(explanation.shared_tags) & set(settings.REC_SALIENT_TAG_STOPLIST)
+
+    generic_only_index = VectorIndex.build(
+        [
+            {
+                "id": 11,
+                "title_english": "Generic seed",
+                "franchise_id": 11,
+                "average_score": 80,
+                "popularity": 500,
+                "episodes": 12,
+                "season_year": 2020,
+                "status": "FINISHED",
+                "format": "TV",
+                "genres": [],
+                "tags": generic_tags,
+            },
+            {
+                "id": 12,
+                "title_english": "Generic candidate",
+                "franchise_id": 12,
+                "average_score": 80,
+                "popularity": 400,
+                "episodes": 12,
+                "season_year": 2021,
+                "status": "FINISHED",
+                "format": "TV",
+                "genres": [],
+                "tags": generic_tags,
+            },
+        ]
+    )
+    assert recommend_from_start(None, [11], n=10, index=generic_only_index) == []
 
 
 def test_method_b_blend_respects_liked_weight():

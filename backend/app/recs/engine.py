@@ -69,6 +69,7 @@ from app.recs.explain import (
     count_profile_salient,
     count_quiz_salient,
     count_shared_salient,
+    is_salient_tag,
     shared_salient_features,
 )
 from app.recs.quiz import (
@@ -800,8 +801,7 @@ def recommend_from_start(
                     for tag in target_tags
                     if rec.raw_tag_ranks.get(tag, 0) >= 60
                     and tag not in rec.tag_spoilers
-                    and tag.casefold()
-                    not in {name.casefold() for name in settings.REC_SALIENT_TAG_STOPLIST}
+                    and is_salient_tag(tag)
                 )
                 if len(genres) + len(tags) < settings.REC_MIN_SALIENT_FEATURES:
                     return False
@@ -881,9 +881,13 @@ def recommend_from_start(
                     feature for _, _, features in matched for feature in features
                 )
             )
-            reason = "Because you liked " + " and ".join(
-                f"{seed.title} ({', '.join(features[:3])})"
-                for _, seed, features in matched
+            reason = (
+                "Because you liked "
+                + " and ".join(
+                    f"{seed.title} ({', '.join(features[:3])})"
+                    for _, seed, features in matched
+                )
+                + "."
             )
             explanation = ExplanationSchema(
                 shared_genres=[feature for feature in shared if feature in rec.genres],
@@ -952,6 +956,7 @@ def recommend_from_quiz(
     n: int = settings.REC_DEFAULT_N,
     include_mature: bool = False,
     index: VectorIndex | None = None,
+    query_vec: np.ndarray | None = None,
 ) -> list[RecResult]:
     """Endpoint 4c: Recommends anime based on quiz answers with soft penalties."""
     if index is None:
@@ -960,7 +965,9 @@ def recommend_from_quiz(
         return []
 
     genre_weights, tag_weights, labels, constraints = parse_quiz_answers(answers)
-    quiz_vec, _, _ = build_quiz_vector(answers, index)
+    quiz_vec = query_vec
+    if quiz_vec is None:
+        quiz_vec, _, _ = build_quiz_vector(answers, index)
 
     candidates = _filter_and_relax_candidates(
         index,

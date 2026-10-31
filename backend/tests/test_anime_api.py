@@ -4,7 +4,7 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy import update
 
-from app.models.anime import anime_tags
+from app.models.anime import Anime, anime_tags
 
 
 @pytest.mark.asyncio
@@ -176,6 +176,41 @@ async def test_fts_exact_title_match_boost(client: AsyncClient, seeded_catalog: 
     items = res.json()["items"]
     assert len(items) > 0
     assert items[0]["id"] == 16498  # Attack on Titan
+
+
+@pytest.mark.asyncio
+async def test_title_search_normalizes_apostrophes_and_punctuation(
+    client: AsyncClient, db_session, seeded_catalog: None
+):
+    target_id = 987654
+    db_session.add(
+        Anime(
+            id=target_id,
+            title_english="Howl's Moving Castle",
+            title_romaji="Hauru no Ugoku Shiro",
+            title_native="ハウルの動く城",
+            synonyms=[],
+            popularity=1000,
+            is_adult=False,
+        )
+    )
+    await db_session.commit()
+
+    for query in (
+        "howl's moving castle",
+        "howl‘s moving castle",
+        "howl’s moving castle",
+        "howlʼs moving castle",
+        "howl`s moving castle",
+        "howls moving castle",
+        "howl",
+        "Howl’s—Moving, Castle!",
+    ):
+        response = await client.get("/api/anime", params={"q": query})
+        assert response.status_code == 200, f"query={query!r}"
+        assert target_id in {
+            item["id"] for item in response.json()["items"]
+        }, f"query={query!r}"
 
 
 @pytest.mark.asyncio

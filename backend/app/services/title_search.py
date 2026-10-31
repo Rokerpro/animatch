@@ -16,8 +16,7 @@ def title_search_clause(query: str | None) -> TextClause | None:
     if not expression:
         return None
     return text(
-        "anime.id IN (SELECT rowid FROM anime_fts "
-        "WHERE anime_fts MATCH :match_q)"
+        "anime.id IN (SELECT rowid FROM anime_fts " "WHERE anime_fts MATCH :match_q)"
     ).bindparams(match_q=expression)
 
 

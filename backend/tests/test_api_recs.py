@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import logging
+import re
+
 import pytest
 from httpx import AsyncClient
 
@@ -39,7 +42,10 @@ def start_index(monkeypatch):
                 "is_adult": anime_id == 7,
                 "format": "TV",
                 "genres": ["Drama", "Mystery"],
-                "tags": [{"name": "Psychological", "rank": 90}],
+                "tags": [
+                    {"name": "Psychological", "rank": 90},
+                    {"name": "Ensemble Cast", "rank": 95},
+                ],
             }
         )
     index = VectorIndex.build(items)
@@ -138,6 +144,51 @@ async def test_recs_start_returns_fewer_than_limit_and_is_deterministic(
     assert first.status_code == 200, f"payload={payload!r}"
     assert len(first.json()) < payload["limit"], f"payload={payload!r}"
     assert first.json() == second.json(), f"payload={payload!r}"
+
+
+@pytest.mark.asyncio
+async def test_start_reason_features_belong_to_each_named_seed(
+    client: AsyncClient, start_index
+):
+    payload = {"liked_ids": [1, 3, 4], "limit": 10}
+    response = await client.post("/api/recs/start", json=payload)
+    assert response.status_code == 200, f"payload={payload!r}"
+    for row in response.json():
+        result_record = start_index.get(row["id"])
+        reason = row["reason"].removeprefix("Because you liked ").rstrip(".")
+        matches = re.findall(r"([^()]+) \(([^()]*)\)", reason)
+        assert matches, f"payload={payload!r}; reason={row['reason']!r}"
+        assert (
+            "Ensemble Cast" not in row["reason"]
+        ), f"payload={payload!r}; reason={row['reason']!r}"
+        for seed_name, feature_text in matches:
+            seed = next(
+                record
+                for record in start_index.records
+                if record.title == seed_name.strip()
+            )
+            for feature in feature_text.split(", "):
+                assert (
+                    feature in seed.genres or feature in seed.tags
+                ), f"payload={payload!r}; seed={seed_name!r}; feature={feature!r}"
+                assert (
+                    feature in result_record.genres or feature in result_record.tags
+                ), f"payload={payload!r}; result={row['id']}; feature={feature!r}"
+
+
+@pytest.mark.asyncio
+async def test_quiz_unknown_vocabulary_warning_is_logged_once(
+    client: AsyncClient, start_index, caplog
+):
+    caplog.set_level(logging.WARNING, logger="app.recs.quiz")
+    response = await client.post("/api/recs/quiz", json={"answers": {"mood": "cozy"}})
+    assert response.status_code == 200
+    warnings = [
+        record
+        for record in caplog.records
+        if "unknown vocabulary terms" in record.getMessage()
+    ]
+    assert len(warnings) == 1
 
 
 @pytest.mark.asyncio

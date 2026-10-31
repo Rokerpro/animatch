@@ -21,45 +21,43 @@ def _normalized(value: str) -> str:
 
 
 def _create_normalized_fts() -> None:
-    op.execute(
-        """CREATE VIRTUAL TABLE anime_fts USING fts5(
+    op.execute("""CREATE VIRTUAL TABLE anime_fts USING fts5(
             title_romaji, title_english, title_native, synonyms,
             tokenize='unicode61'
-        )"""
-    )
+        )""")
     values = ", ".join(
-        [_normalized(f"new.{name}") for name in (
-            "title_romaji",
-            "title_english",
-            "title_native",
-            "synonyms",
-        )]
+        [
+            _normalized(f"new.{name}")
+            for name in (
+                "title_romaji",
+                "title_english",
+                "title_native",
+                "synonyms",
+            )
+        ]
     )
-    op.execute(
-        f"""CREATE TRIGGER anime_ai AFTER INSERT ON anime BEGIN
+    op.execute(f"""CREATE TRIGGER anime_ai AFTER INSERT ON anime BEGIN
             INSERT INTO anime_fts(rowid, title_romaji, title_english, title_native, synonyms)
             VALUES (new.id, {values});
-        END"""
-    )
-    op.execute(
-        """CREATE TRIGGER anime_ad AFTER DELETE ON anime BEGIN
+        END""")
+    op.execute("""CREATE TRIGGER anime_ad AFTER DELETE ON anime BEGIN
             DELETE FROM anime_fts WHERE rowid = old.id;
-        END"""
-    )
-    op.execute(
-        f"""CREATE TRIGGER anime_au AFTER UPDATE ON anime BEGIN
+        END""")
+    op.execute(f"""CREATE TRIGGER anime_au AFTER UPDATE ON anime BEGIN
             DELETE FROM anime_fts WHERE rowid = old.id;
             INSERT INTO anime_fts(rowid, title_romaji, title_english, title_native, synonyms)
             VALUES (new.id, {values});
-        END"""
-    )
+        END""")
     values_for_select = ", ".join(
-        [_normalized(name) for name in (
-            "title_romaji",
-            "title_english",
-            "title_native",
-            "synonyms",
-        )]
+        [
+            _normalized(name)
+            for name in (
+                "title_romaji",
+                "title_english",
+                "title_native",
+                "synonyms",
+            )
+        ]
     )
     op.execute(
         f"""INSERT INTO anime_fts(rowid, title_romaji, title_english, title_native, synonyms)
@@ -84,30 +82,22 @@ def downgrade() -> None:
     op.execute("DROP TRIGGER IF EXISTS anime_ad")
     op.execute("DROP TRIGGER IF EXISTS anime_au")
     op.execute("DROP TABLE IF EXISTS anime_fts")
-    op.execute(
-        """CREATE VIRTUAL TABLE anime_fts USING fts5(
+    op.execute("""CREATE VIRTUAL TABLE anime_fts USING fts5(
             title_romaji, title_english, title_native, synonyms,
             tokenize='unicode61'
-        )"""
-    )
-    op.execute(
-        """CREATE TRIGGER anime_ai AFTER INSERT ON anime BEGIN
+        )""")
+    op.execute("""CREATE TRIGGER anime_ai AFTER INSERT ON anime BEGIN
             INSERT INTO anime_fts(rowid, title_romaji, title_english, title_native, synonyms)
             VALUES (new.id, new.title_romaji, new.title_english, new.title_native, coalesce(new.synonyms, ''));
-        END"""
-    )
-    op.execute(
-        """CREATE TRIGGER anime_ad AFTER DELETE ON anime BEGIN
+        END""")
+    op.execute("""CREATE TRIGGER anime_ad AFTER DELETE ON anime BEGIN
             DELETE FROM anime_fts WHERE rowid = old.id;
-        END"""
-    )
-    op.execute(
-        """CREATE TRIGGER anime_au AFTER UPDATE ON anime BEGIN
+        END""")
+    op.execute("""CREATE TRIGGER anime_au AFTER UPDATE ON anime BEGIN
             DELETE FROM anime_fts WHERE rowid = old.id;
             INSERT INTO anime_fts(rowid, title_romaji, title_english, title_native, synonyms)
             VALUES (new.id, new.title_romaji, new.title_english, new.title_native, coalesce(new.synonyms, ''));
-        END"""
-    )
+        END""")
     op.execute(
         """INSERT INTO anime_fts(rowid, title_romaji, title_english, title_native, synonyms)
             SELECT id, title_romaji, title_english, title_native, coalesce(synonyms, '') FROM anime"""
