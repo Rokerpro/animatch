@@ -94,11 +94,22 @@ class Settings(BaseSettings):
     # with rank >= 60 on both titles) required for a recommendation to be shown.
     # Results with fewer are dropped; we return fewer than N rather than padding.
     REC_MIN_SALIENT_FEATURES: int = 2
+    REC_SALIENT_TAG_STOPLIST: list[str] = [
+        "Male Protagonist",
+        "Female Protagonist",
+        "Primarily Male Cast",
+        "Primarily Female Cast",
+        "Primarily Adult Cast",
+        "Primarily Teen Cast",
+        "Primarily Child Cast",
+        "Ensemble Cast",
+        "Urban",
+    ]
 
     REC_DEFAULT_N: int = 10
     REC_MAX_N: int = 50
 
-    REC_START_METHOD: str = "B"
+    REC_START_METHOD: str = "A"
     REC_START_LIKED_WEIGHT: float = 0.7
 
     @model_validator(mode="after")

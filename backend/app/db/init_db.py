@@ -6,6 +6,20 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 import app.models  # noqa: F401
 from app.db.session import Base
 
+def normalized_fts_value(column: str) -> str:
+    """SQLite expression that removes normalized apostrophes before indexing."""
+    expression = f"coalesce({column}, '')"
+    for mark in ("‘", "’", "ʼ", "`"):
+        expression = f"replace({expression}, '{mark}', char(39))"
+    return f"replace({expression}, char(39), '')"
+
+
+_title_values = [
+    normalized_fts_value(f"new.{column}")
+    for column in ("title_romaji", "title_english", "title_native")
+]
+_synonyms_value = normalized_fts_value("new.synonyms")
+
 FTS5_STATEMENTS = [
     """
     CREATE VIRTUAL TABLE IF NOT EXISTS anime_fts USING fts5(
@@ -19,9 +33,12 @@ FTS5_STATEMENTS = [
     """
     CREATE TRIGGER IF NOT EXISTS anime_ai AFTER INSERT ON anime BEGIN
         INSERT INTO anime_fts(rowid, title_romaji, title_english, title_native, synonyms)
-        VALUES (new.id, new.title_romaji, new.title_english, new.title_native, coalesce(new.synonyms, ''));
+        VALUES (new.id, {_title_values[0]}, {_title_values[1]}, {_title_values[2]}, {_synonyms_value});
     END;
-    """,
+    """.format(
+        _title_values=_title_values,
+        _synonyms_value=_synonyms_value,
+    ),
     """
     CREATE TRIGGER IF NOT EXISTS anime_ad AFTER DELETE ON anime BEGIN
         DELETE FROM anime_fts WHERE rowid = old.id;
@@ -31,9 +48,12 @@ FTS5_STATEMENTS = [
     CREATE TRIGGER IF NOT EXISTS anime_au AFTER UPDATE ON anime BEGIN
         DELETE FROM anime_fts WHERE rowid = old.id;
         INSERT INTO anime_fts(rowid, title_romaji, title_english, title_native, synonyms)
-        VALUES (new.id, new.title_romaji, new.title_english, new.title_native, coalesce(new.synonyms, ''));
+        VALUES (new.id, {_title_values[0]}, {_title_values[1]}, {_title_values[2]}, {_synonyms_value});
     END;
-    """,
+    """.format(
+        _title_values=_title_values,
+        _synonyms_value=_synonyms_value,
+    ),
 ]
 
 

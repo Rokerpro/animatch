@@ -4,6 +4,12 @@ from pathlib import Path
 import pytest
 
 from app.core.config import settings
+from app.main import create_app
+
+
+def test_main_imports_and_builds_app() -> None:
+    app = create_app()
+    assert app.title == settings.APP_NAME
 
 
 def test_vite_proxy_and_backend_port_alignment() -> None:

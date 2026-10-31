@@ -53,6 +53,7 @@ from __future__ import annotations
 
 import logging
 import math
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
@@ -68,6 +69,7 @@ from app.recs.explain import (
     count_profile_salient,
     count_quiz_salient,
     count_shared_salient,
+    shared_salient_features,
 )
 from app.recs.quiz import (
     apply_quiz_soft_penalties,
@@ -349,6 +351,7 @@ def _filter_and_relax_candidates(
     exclude_ids: set[int] | None = None,
     include_mature: bool = False,
     n: int = 10,
+    candidate_filter: Callable[[AnimeRecord], bool] | None = None,
 ) -> list[int]:
     """Filters candidates based on exclusions, format, duration, mature filter,
     unreleased / no-year titles, then relaxes score and popularity floors if
@@ -398,6 +401,9 @@ def _filter_and_relax_candidates(
 
         # Duration filter: exclude under 12 min unless seed is under 12 min
         if not allow_short and rec.duration is not None and rec.duration < 12:
+            continue
+
+        if candidate_filter is not None and not candidate_filter(rec):
             continue
 
         base_candidates.append(idx)
@@ -720,6 +726,19 @@ def recommend_similar(
     return results
 
 
+def _blend_start_scores(
+    quiz_scores: np.ndarray,
+    liked_scores: np.ndarray,
+    liked_weight: float,
+    *,
+    rank_normalize: bool,
+) -> np.ndarray:
+    """Blend comparable quiz/liked scores using the configured liked share."""
+    if rank_normalize:
+        quiz_scores = np.asarray(rank_norm(quiz_scores), dtype=np.float64)
+    return (1.0 - liked_weight) * quiz_scores + liked_weight * liked_scores
+
+
 def recommend_from_start(
     quiz_answers: dict[str, str] | None,
     liked_ids: list[int] | None,
@@ -746,14 +765,61 @@ def recommend_from_start(
     excluded_franchises = {
         s.franchise_id for s in seed_records if s.franchise_id is not None
     }
-    candidates = _filter_and_relax_candidates(
-        index, exclude_ids=excluded, include_mature=include_mature, n=n
+    # Gate on salient shared features before scoring so ineligible items cannot
+    # consume a slot in the top-N/MMR pool. Keep these exact matches for reasons.
+    seed_matches_by_candidate: dict[int, list[tuple[float, AnimeRecord, list[str]]]] = (
+        {}
     )
-    candidates = [
-        i
-        for i in candidates
-        if index.records[i].franchise_id not in excluded_franchises
-    ]
+    quiz_matches_by_candidate: dict[int, tuple[list[str], list[str]]] = {}
+    if seed_records:
+
+        def salient_gate(rec: AnimeRecord) -> bool:
+            if rec.franchise_id is not None and rec.franchise_id in excluded_franchises:
+                return False
+            idx = index.id_to_idx[rec.id]
+            matches: list[tuple[float, AnimeRecord, list[str]]] = []
+            for seed, seed_vec in zip(seed_records, seed_vecs, strict=True):
+                salient = shared_salient_features(
+                    seed, rec, seed_vec, index.matrix[idx], index
+                )
+                if len(salient) >= settings.REC_MIN_SALIENT_FEATURES:
+                    matches.append((float(index.matrix[idx] @ seed_vec), seed, salient))
+            if matches:
+                seed_matches_by_candidate[idx] = matches
+                return True
+            return False
+
+    else:
+        target_genres, target_tags, _, _ = parse_quiz_answers(quiz_answers or {})
+        if target_genres or target_tags:
+
+            def salient_gate(rec: AnimeRecord) -> bool:
+                genres = sorted(set(target_genres) & set(rec.genres))
+                tags = sorted(
+                    tag
+                    for tag in target_tags
+                    if rec.raw_tag_ranks.get(tag, 0) >= 60
+                    and tag not in rec.tag_spoilers
+                    and tag.casefold()
+                    not in {name.casefold() for name in settings.REC_SALIENT_TAG_STOPLIST}
+                )
+                if len(genres) + len(tags) < settings.REC_MIN_SALIENT_FEATURES:
+                    return False
+                quiz_matches_by_candidate[index.id_to_idx[rec.id]] = (genres, tags)
+                return True
+
+        else:
+
+            def salient_gate(rec: AnimeRecord) -> bool:
+                return True
+
+    candidates = _filter_and_relax_candidates(
+        index,
+        exclude_ids=excluded,
+        include_mature=include_mature,
+        n=n,
+        candidate_filter=salient_gate,
+    )
     if not candidates:
         return []
     mat = index.matrix[candidates]
@@ -777,9 +843,12 @@ def recommend_from_start(
             liked_scores += 0.12 * ((normalized >= 0.75).sum(axis=0) >= 2)
         if quiz_vec is not None and np.any(quiz_vec):
             quiz_scores = mat @ quiz_vec
-            raw = (
-                1 - settings.REC_START_LIKED_WEIGHT
-            ) * quiz_scores + settings.REC_START_LIKED_WEIGHT * liked_scores
+            raw = _blend_start_scores(
+                quiz_scores,
+                liked_scores,
+                settings.REC_START_LIKED_WEIGHT,
+                rank_normalize=variant != "A",
+            )
         else:
             raw = liked_scores
     elif quiz_vec is not None:
@@ -804,32 +873,7 @@ def recommend_from_start(
     for idx in selected:
         rec = index.records[idx]
         if seed_records:
-            sims = [
-                (float(index.matrix[idx] @ vec), seed)
-                for seed, vec in zip(seed_records, seed_vecs, strict=True)
-            ]
-            sims.sort(key=lambda pair: (-pair[0], pair[1].id))
-            seed_matches: list[tuple[float, AnimeRecord, list[str]]] = []
-            for _, seed in sims:
-                salient = sorted(set(seed.genres) & set(rec.genres))
-                salient += [
-                    tag
-                    for tag in seed.tags
-                    if tag in rec.tags
-                    and seed.raw_tag_ranks.get(tag, 0) >= 60
-                    and rec.raw_tag_ranks.get(tag, 0) >= 60
-                    and tag not in seed.tag_spoilers
-                    and tag not in rec.tag_spoilers
-                ]
-                if len(salient) >= settings.REC_MIN_SALIENT_FEATURES:
-                    similarity = next(
-                        value
-                        for value, candidate_seed in sims
-                        if candidate_seed.id == seed.id
-                    )
-                    seed_matches.append((similarity, seed, salient))
-            if not seed_matches:
-                continue
+            seed_matches = seed_matches_by_candidate[idx]
             seed_matches.sort(key=lambda match: (-match[0], match[1].id))
             matched = seed_matches[:2]
             shared = list(
@@ -837,17 +881,38 @@ def recommend_from_start(
                     feature for _, _, features in matched for feature in features
                 )
             )
-            reason = f"Because you liked {', '.join(seed.title for _, seed, _ in matched)}: shares {', '.join(shared[:4])}."
-        else:
-            gw, tw, _, _ = parse_quiz_answers(quiz_answers or {})
-            if (gw or tw) and count_quiz_salient(
-                set(gw), set(tw), rec
-            ) < settings.REC_MIN_SALIENT_FEATURES:
-                continue
-            exp = build_explanation(
-                quiz_vec, index.matrix[idx], index, item_record=rec, quiz_answers=labels
+            reason = "Because you liked " + " and ".join(
+                f"{seed.title} ({', '.join(features[:3])})"
+                for _, seed, features in matched
             )
-            reason = exp.reason
+            explanation = ExplanationSchema(
+                shared_genres=[feature for feature in shared if feature in rec.genres],
+                shared_tags=[feature for feature in shared if feature in rec.tags],
+                seed_titles=[seed.title for _, seed, _ in matched],
+            )
+        else:
+            exp = build_explanation(
+                query_vec=quiz_vec,
+                item_vec=index.matrix[idx],
+                index=index,
+                item_record=rec,
+                quiz_answers=labels,
+            )
+            shared_genres, shared_tags = quiz_matches_by_candidate.get(idx, ([], []))
+            matched_features = shared_genres + shared_tags
+            if matched_features and labels:
+                answer_str = ", ".join(labels[:2])
+                reason = (
+                    f"Matches your preference for {answer_str} anime with "
+                    f"{', '.join(matched_features[:4])}."
+                )
+            else:
+                reason = exp.reason
+            explanation = ExplanationSchema(
+                shared_genres=shared_genres,
+                shared_tags=shared_tags,
+                quiz_answers=labels,
+            )
         score = next(c for c in collapsed if c.cand_idx == idx)
         results.append(
             RecResult(
@@ -876,6 +941,7 @@ def recommend_from_start(
                 quality_score=round(score.quality_score, 4),
                 final_score=round(score.final_score, 4),
                 pre_mmr_rank=score.pre_mmr_rank,
+                explanation=explanation,
             )
         )
     return results

@@ -67,8 +67,8 @@ class AnimeRecord:
     franchise_id: int | None
     average_score: int | None
     popularity: int
-    cover_image: str | None = None
     episodes: int | None
+    cover_image: str | None = None
     duration: int | None = None
     season_year: int | None = None
     status: str | None = (

@@ -3,6 +3,18 @@
 import html
 import re
 
+_APOSTROPHE_TRANSLATION = str.maketrans(
+    {"\u2018": "'", "\u2019": "'", "\u02bc": "'", "`": "'"}
+)
+
+
+def normalize_title_search(value: str | None) -> str:
+    """Normalize title punctuation for FTS queries and fuzzy title matching."""
+    if not value:
+        return ""
+    normalized = value.translate(_APOSTROPHE_TRANSLATION).replace("'", "")
+    return re.sub(r"[^\w]+", " ", normalized, flags=re.UNICODE).strip().lower()
+
 
 def strip_html_tags(raw: str | None) -> str | None:
     """Strips HTML tags from text, converts <br> tags to newlines, and unescapes entities."""

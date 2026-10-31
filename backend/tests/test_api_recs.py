@@ -21,6 +21,9 @@ def start_index(monkeypatch):
         (5, 50, "Candidate Five"),
         (6, 60, "Candidate Six"),
         (7, 70, "Mature Seed"),
+        (8, 80, "Candidate Eight"),
+        (9, 90, "Candidate Nine"),
+        (11, 110, "Candidate Eleven"),
     ]:
         items.append(
             {
@@ -64,29 +67,77 @@ async def test_recs_start_validates_input_and_seed_constraints(
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("payload", "expected_excluded_ids"),
+    [
+        pytest.param(
+            {"quiz_answers": {"mood": "tense", "themes": "mystery"}, "limit": 1},
+            None,
+            id="quiz-only",
+        ),
+        # Liked IDs 1, 3, 4 belong to franchises 10, 30, 40. The fixture's
+        # titles in those franchises are IDs 1, 2, 3, 4.
+        pytest.param(
+            {"liked_ids": [1, 3, 4], "limit": 10},
+            {1, 2, 3, 4},
+            id="liked-titles-only",
+        ),
+        pytest.param(
+            {
+                "quiz_answers": {"mood": "tense", "themes": "mystery"},
+                "liked_ids": [1, 3, 4],
+                "limit": 10,
+            },
+            {1, 2, 3, 4},
+            id="quiz-and-liked-titles",
+        ),
+    ],
+)
 async def test_recs_start_accepts_quiz_titles_and_both_and_excludes_franchises(
+    client: AsyncClient,
+    start_index,
+    payload: dict,
+    expected_excluded_ids: set[int] | None,
+):
+    response = await client.post("/api/recs/start", json=payload)
+    assert response.status_code == 200, f"payload={payload!r}"
+    rows = response.json()
+    assert len(rows) <= payload["limit"], f"payload={payload!r}"
+    if expected_excluded_ids is not None:
+        result_ids = {row["id"] for row in rows}
+        assert result_ids.isdisjoint(
+            expected_excluded_ids
+        ), f"payload={payload!r}; expected exclusions={expected_excluded_ids}"
+    assert all(
+        "coverImage" in row and "reason" in row for row in rows
+    ), f"payload={payload!r}"
+    if "quiz_answers" in payload and "liked_ids" not in payload:
+        assert rows, f"payload={payload!r}"
+        assert all(
+            "Matches your preference" in row["reason"] for row in rows
+        ), f"payload={payload!r}"
+
+
+@pytest.mark.asyncio
+async def test_recs_start_returns_requested_limit_when_enough_candidates(
     client: AsyncClient, start_index
 ):
-    quiz = {"mood": "tense", "themes": "mystery"}
-    for payload in (
-        {"quiz_answers": quiz, "limit": 1},
-        {"liked_ids": [1, 3, 4], "limit": 10},
-        {"quiz_answers": quiz, "liked_ids": [1, 3, 4], "limit": 10},
-    ):
-        response = await client.post("/api/recs/start", json=payload)
-        assert response.status_code == 200
-        rows = response.json()
-        assert len(rows) <= payload["limit"]
-        assert all(row["id"] not in {1, 2, 3, 4} for row in rows)
-        assert all("coverImage" in row and "reason" in row for row in rows)
-    title_only = await client.post(
-        "/api/recs/start", json={"liked_ids": [1, 3, 4], "limit": 20}
-    )
-    assert len(title_only.json()) == 2  # Fewer than the requested limit is valid.
+    payload = {"liked_ids": [1, 3, 4], "limit": 4}
+    response = await client.post("/api/recs/start", json=payload)
+    assert response.status_code == 200, f"payload={payload!r}"
+    assert len(response.json()) == 4, f"payload={payload!r}"
+
+
+@pytest.mark.asyncio
+async def test_recs_start_returns_fewer_than_limit_and_is_deterministic(
+    client: AsyncClient, start_index
+):
     payload = {"liked_ids": [1, 3, 4], "limit": 10}
     first = await client.post("/api/recs/start", json=payload)
     second = await client.post("/api/recs/start", json=payload)
-    assert first.json() == second.json()
+    assert first.status_code == 200, f"payload={payload!r}"
+    assert len(first.json()) < payload["limit"], f"payload={payload!r}"
+    assert first.json() == second.json(), f"payload={payload!r}"
 
 
 @pytest.mark.asyncio

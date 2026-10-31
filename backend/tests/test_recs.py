@@ -9,6 +9,7 @@ import pytest
 
 from app.recs.engine import (
     MatureSeedError,
+    _blend_start_scores,
     _relevance_scores,
     build_taste_vector,
     compute_final_score,
@@ -24,6 +25,16 @@ from app.recs.quiz import (
 )
 from app.recs.vectors import VectorIndex
 from app.services.catalog_sync import UnionFind
+
+
+def test_method_b_blend_respects_liked_weight():
+    scores = _blend_start_scores(
+        quiz_scores=np.array([1.0, 0.0]),
+        liked_scores=np.array([0.0, 1.0]),
+        liked_weight=0.7,
+        rank_normalize=True,
+    )
+    assert scores[1] > scores[0]
 
 
 def test_start_recommendations_are_deterministic(sample_catalog):
