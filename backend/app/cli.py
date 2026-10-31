@@ -17,6 +17,218 @@ app = typer.Typer(
     add_completion=False,
 )
 
+
+@app.command("quiz-demo")
+def quiz_demo() -> None:
+    """Print six fixed quiz evaluation sets against the local catalog."""
+    from app.db.session import AsyncSessionLocal
+    from app.recs.engine import rebuild_index_from_db, recommend_from_quiz
+
+    sets = [
+        (
+            "Dark psychological thrillers",
+            {
+                "mood": "tense",
+                "pacing": "balanced",
+                "tone": "dark",
+                "themes": "mystery",
+                "intensity": "intense",
+                "length": "any",
+                "era": "any",
+            },
+        ),
+        (
+            "Cozy slice of life",
+            {
+                "mood": "cozy",
+                "pacing": "slow",
+                "tone": "hopeful",
+                "themes": "slice_of_life",
+                "intensity": "chill",
+                "length": "any",
+                "era": "any",
+            },
+        ),
+        (
+            "Epic fantasy adventure",
+            {
+                "mood": "epic",
+                "pacing": "fast",
+                "tone": "hopeful",
+                "themes": "fantasy",
+                "intensity": "intense",
+                "length": "long",
+                "era": "any",
+            },
+        ),
+        (
+            "Romance and school life",
+            {
+                "mood": "emotional",
+                "pacing": "balanced",
+                "tone": "romantic",
+                "themes": "slice_of_life",
+                "intensity": "moderate",
+                "length": "medium",
+                "era": "any",
+            },
+        ),
+        (
+            "Action-packed shounen",
+            {
+                "mood": "epic",
+                "pacing": "fast",
+                "tone": "hopeful",
+                "themes": "mystery",
+                "intensity": "intense",
+                "length": "long",
+                "era": "any",
+            },
+        ),
+        (
+            "Sci-fi and mecha",
+            {
+                "mood": "epic",
+                "pacing": "fast",
+                "tone": "dark",
+                "themes": "sci_fi",
+                "intensity": "intense",
+                "length": "medium",
+                "era": "any",
+            },
+        ),
+    ]
+
+    async def _run() -> None:
+        async with AsyncSessionLocal() as session:
+            index = await rebuild_index_from_db(session)
+            for i, (name, answers) in enumerate(sets, 1):
+                typer.echo(f"\n## {i}. {name}\nChosen answer IDs: {answers}")
+                for rank, result in enumerate(
+                    recommend_from_quiz(
+                        answers, n=10, include_mature=False, index=index
+                    ),
+                    1,
+                ):
+                    typer.echo(
+                        f"{rank}. {result.title} | {result.year or 'N/A'} | {result.format or 'N/A'} | {', '.join(result.genres)} | {result.reason}"
+                    )
+
+    asyncio.run(_run())
+
+
+@app.command("start-demo")
+def start_demo(
+    liked: Annotated[list[str] | None, typer.Option("--liked")] = None,
+    quiz_set: Annotated[int | None, typer.Option("--quiz-set", min=1, max=6)] = None,
+) -> None:
+    """Print top 10 combined recommendations for title names."""
+    from sqlalchemy import select
+
+    from app.db.session import AsyncSessionLocal
+    from app.models.anime import Anime
+    from app.recs.engine import rebuild_index_from_db, recommend_from_start
+
+    async def _run() -> None:
+        async with AsyncSessionLocal() as session:
+            index = await rebuild_index_from_db(session)
+            ids: list[int] = []
+            for name in liked or []:
+                found = await session.execute(
+                    select(Anime)
+                    .where(
+                        (Anime.title_english.ilike(f"%{name}%"))
+                        | (Anime.title_romaji.ilike(f"%{name}%"))
+                    )
+                    .order_by(Anime.popularity.desc())
+                    .limit(1)
+                )
+                row = found.scalar_one_or_none()
+                if row is None:
+                    typer.echo(f"Title not found: {name}")
+                    return
+                ids.append(row.id)
+            quiz = None
+            if quiz_set:
+                quiz = [
+                    {
+                        "mood": "tense",
+                        "pacing": "balanced",
+                        "tone": "dark",
+                        "themes": "mystery",
+                        "intensity": "intense",
+                        "length": "any",
+                        "era": "any",
+                    },
+                    {
+                        "mood": "cozy",
+                        "pacing": "slow",
+                        "tone": "hopeful",
+                        "themes": "slice_of_life",
+                        "intensity": "chill",
+                        "length": "any",
+                        "era": "any",
+                    },
+                    {
+                        "mood": "epic",
+                        "pacing": "fast",
+                        "tone": "hopeful",
+                        "themes": "fantasy",
+                        "intensity": "intense",
+                        "length": "long",
+                        "era": "any",
+                    },
+                    {
+                        "mood": "emotional",
+                        "pacing": "balanced",
+                        "tone": "romantic",
+                        "themes": "slice_of_life",
+                        "intensity": "moderate",
+                        "length": "medium",
+                        "era": "any",
+                    },
+                    {
+                        "mood": "epic",
+                        "pacing": "fast",
+                        "tone": "hopeful",
+                        "themes": "mystery",
+                        "intensity": "intense",
+                        "length": "long",
+                        "era": "any",
+                    },
+                    {
+                        "mood": "epic",
+                        "pacing": "fast",
+                        "tone": "dark",
+                        "themes": "sci_fi",
+                        "intensity": "intense",
+                        "length": "medium",
+                        "era": "any",
+                    },
+                ][quiz_set - 1]
+            typer.echo(
+                f"Liked: {liked or []}; quiz-set={quiz_set}; scoring methods A and B"
+            )
+            for method in ("A", "B"):
+                typer.echo(f"\nMethod {method}")
+                for rank, result in enumerate(
+                    recommend_from_start(
+                        quiz,
+                        ids,
+                        n=10,
+                        include_mature=False,
+                        method=method,
+                        index=index,
+                    ),
+                    1,
+                ):
+                    typer.echo(
+                        f"{rank}. {result.title} | {result.year or 'N/A'} | {result.format or 'N/A'} | {', '.join(result.genres)} | {result.reason}"
+                    )
+
+    asyncio.run(_run())
+
+
 logger = logging.getLogger(__name__)
 
 

@@ -15,7 +15,7 @@ export function PosterImage({ src, alt, className = "" }: PosterImageProps) {
     <div className={`poster-art ${className}`.trim()}>
       {(!src || failed) && (
         <span aria-hidden="true" className="poster-art-placeholder">
-          Cover unavailable
+          {src ? "Image failed to load" : "Cover unavailable"}
         </span>
       )}
       {src && !failed && (
@@ -25,6 +25,11 @@ export function PosterImage({ src, alt, className = "" }: PosterImageProps) {
           loading="lazy"
           onError={() => setFailed(true)}
           src={src}
+          onLoad={(e) => {
+            if ((e.target as HTMLImageElement).naturalWidth === 0) {
+              setFailed(true);
+            }
+          }}
         />
       )}
     </div>

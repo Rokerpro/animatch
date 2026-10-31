@@ -14,6 +14,7 @@ from app.recs.engine import (
     compute_final_score,
     recommend_from_profile,
     recommend_from_quiz,
+    recommend_from_start,
     recommend_similar,
 )
 from app.recs.quiz import (
@@ -23,6 +24,15 @@ from app.recs.quiz import (
 )
 from app.recs.vectors import VectorIndex
 from app.services.catalog_sync import UnionFind
+
+
+def test_start_recommendations_are_deterministic(sample_catalog):
+    index = VectorIndex.build(sample_catalog)
+    liked = [item["id"] for item in sample_catalog[:3]]
+    first = recommend_from_start(None, liked, n=10, index=index)
+    second = recommend_from_start(None, liked, n=10, index=index)
+    assert [item.id for item in first] == [item.id for item in second]
+    assert not set(liked).intersection(item.id for item in first)
 
 
 @pytest.fixture

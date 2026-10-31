@@ -398,7 +398,8 @@
   .active-filters .filter-chip { border-color: theme("colors.surface.border"); color: theme("colors.accent.text"); }
   .mobile-filter-toggle { display: none; }
   .drawer-backdrop { position: fixed; z-index: 40; inset: 0; background: theme("colors.surface.backdrop"); }
-  .filter-drawer { position: absolute; inset: auto 0 0; width: 100%; max-height: 90vh; overflow-y: auto; border: 1px solid theme("colors.surface.border"); border-radius: 18px 18px 0 0; background: theme("colors.surface.raised"); padding: 20px; box-shadow: theme("boxShadow.drawer"); }
+  .filter-drawer { position: absolute; inset: auto 0 0; width: 100%; max-height: 90vh; overflow-y: auto; border: 1px solid theme("colors.surface.border"); border-radius: 18px 18px 0 0; background: theme("colors.surface.raised"); padding: 20px; box-shadow: theme("boxShadow.drawer"); transition: transform 200ms ease; transform: translateY(0); }
+  .filter-drawer[data-entering] { transform: translateY(100%); }
   .filter-drawer .filter-controls { display: grid; margin-top: 16px; }
   .filter-drawer .multi-filter-options { position: static; width: 100%; max-height: 34vh; }
   .pagination { display: flex; justify-content: center; gap: 8px; margin: 28px 0; }

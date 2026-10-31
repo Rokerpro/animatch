@@ -76,6 +76,7 @@ from app.recs.quiz import (
 )
 from app.recs.schemas import ExplanationSchema, RecResult
 from app.recs.vectors import (
+    AnimeRecord,
     VectorIndex,
     get_index,
     set_index,
@@ -687,6 +688,7 @@ def recommend_similar(
                 title_english=rec.title,
                 title_romaji=rec.title,
                 title_native=rec.title,
+                cover_image=rec.cover_image,
                 format=rec.format,
                 episodes=rec.episodes,
                 year=rec.season_year,
@@ -715,6 +717,167 @@ def recommend_similar(
             )
         )
 
+    return results
+
+
+def recommend_from_start(
+    quiz_answers: dict[str, str] | None,
+    liked_ids: list[int] | None,
+    n: int = 20,
+    include_mature: bool = False,
+    method: str | None = None,
+    index: VectorIndex | None = None,
+) -> list[RecResult]:
+    """Recommend from a quiz, liked title seeds, or both (A/B seed scoring)."""
+    if index is None:
+        index = get_index()
+    quiz_vec = None
+    labels: list[str] = []
+    constraints: dict[str, Any] = {}
+    if quiz_answers:
+        quiz_vec, labels, constraints = build_quiz_vector(quiz_answers, index)
+    seeds = [index.get(aid) for aid in (liked_ids or [])]
+    if any(seed is None for seed in seeds):
+        return []
+    seed_records = [seed for seed in seeds if seed is not None]
+    seed_vecs = [index.vec(seed.id) for seed in seed_records]
+    seed_vecs = [vec for vec in seed_vecs if vec is not None]
+    excluded = {seed.id for seed in seed_records}
+    excluded_franchises = {
+        s.franchise_id for s in seed_records if s.franchise_id is not None
+    }
+    candidates = _filter_and_relax_candidates(
+        index, exclude_ids=excluded, include_mature=include_mature, n=n
+    )
+    candidates = [
+        i
+        for i in candidates
+        if index.records[i].franchise_id not in excluded_franchises
+    ]
+    if not candidates:
+        return []
+    mat = index.matrix[candidates]
+    scores_by_seed = (
+        np.array([mat @ vec for vec in seed_vecs])
+        if seed_vecs
+        else np.zeros((0, len(candidates)))
+    )
+    variant = (method or settings.REC_START_METHOD).upper()
+    if len(scores_by_seed):
+        if variant == "A":
+            liked_vec = np.mean(seed_vecs, axis=0)
+            norm = float(np.linalg.norm(liked_vec))
+            if norm:
+                liked_vec = liked_vec / norm
+            liked_scores = mat @ liked_vec
+        else:
+            # Rank-normalize independently for each seed; reward broad compatibility.
+            normalized = np.array([rank_norm(row) for row in scores_by_seed])
+            liked_scores = normalized.mean(axis=0)
+            liked_scores += 0.12 * ((normalized >= 0.75).sum(axis=0) >= 2)
+        if quiz_vec is not None and np.any(quiz_vec):
+            quiz_scores = mat @ quiz_vec
+            raw = (
+                1 - settings.REC_START_LIKED_WEIGHT
+            ) * quiz_scores + settings.REC_START_LIKED_WEIGHT * liked_scores
+        else:
+            raw = liked_scores
+    elif quiz_vec is not None:
+        raw = mat @ quiz_vec
+    else:
+        return []
+    relevance = _relevance_scores(raw)
+    q_scores = np.array([index.records[i].quality_pct for i in candidates])
+    finals = compute_final_score(relevance, q_scores)
+    if quiz_answers:
+        _, _, _, constraints = parse_quiz_answers(quiz_answers)
+        finals = apply_quiz_soft_penalties(
+            finals, [index.records[i] for i in candidates], constraints
+        )
+    collapsed = _collapse_franchises(
+        candidates, finals, raw, relevance, q_scores, index
+    )
+    ordered = [c.cand_idx for c in collapsed]
+    final_by_id = np.array([c.final_score for c in collapsed])
+    selected = mmr_rerank(ordered, final_by_id, index, n)
+    results: list[RecResult] = []
+    for idx in selected:
+        rec = index.records[idx]
+        if seed_records:
+            sims = [
+                (float(index.matrix[idx] @ vec), seed)
+                for seed, vec in zip(seed_records, seed_vecs, strict=True)
+            ]
+            sims.sort(key=lambda pair: (-pair[0], pair[1].id))
+            seed_matches: list[tuple[float, AnimeRecord, list[str]]] = []
+            for _, seed in sims:
+                salient = sorted(set(seed.genres) & set(rec.genres))
+                salient += [
+                    tag
+                    for tag in seed.tags
+                    if tag in rec.tags
+                    and seed.raw_tag_ranks.get(tag, 0) >= 60
+                    and rec.raw_tag_ranks.get(tag, 0) >= 60
+                    and tag not in seed.tag_spoilers
+                    and tag not in rec.tag_spoilers
+                ]
+                if len(salient) >= settings.REC_MIN_SALIENT_FEATURES:
+                    similarity = next(
+                        value
+                        for value, candidate_seed in sims
+                        if candidate_seed.id == seed.id
+                    )
+                    seed_matches.append((similarity, seed, salient))
+            if not seed_matches:
+                continue
+            seed_matches.sort(key=lambda match: (-match[0], match[1].id))
+            matched = seed_matches[:2]
+            shared = list(
+                dict.fromkeys(
+                    feature for _, _, features in matched for feature in features
+                )
+            )
+            reason = f"Because you liked {', '.join(seed.title for _, seed, _ in matched)}: shares {', '.join(shared[:4])}."
+        else:
+            gw, tw, _, _ = parse_quiz_answers(quiz_answers or {})
+            if (gw or tw) and count_quiz_salient(
+                set(gw), set(tw), rec
+            ) < settings.REC_MIN_SALIENT_FEATURES:
+                continue
+            exp = build_explanation(
+                quiz_vec, index.matrix[idx], index, item_record=rec, quiz_answers=labels
+            )
+            reason = exp.reason
+        score = next(c for c in collapsed if c.cand_idx == idx)
+        results.append(
+            RecResult(
+                id=rec.id,
+                title=rec.title,
+                title_english=rec.title,
+                title_romaji=rec.title,
+                title_native=rec.title,
+                cover_image=rec.cover_image,
+                format=rec.format,
+                episodes=rec.episodes,
+                year=rec.season_year,
+                score=rec.average_score,
+                popularity=rec.popularity,
+                is_adult=rec.is_adult,
+                genres=rec.genres,
+                reason=reason,
+                similarity=min(
+                    max(
+                        float(raw[candidates.index(idx)]) if idx in candidates else 0.0,
+                        0,
+                    ),
+                    1,
+                ),
+                raw_cosine=round(score.raw_cosine, 4),
+                quality_score=round(score.quality_score, 4),
+                final_score=round(score.final_score, 4),
+                pre_mmr_rank=score.pre_mmr_rank,
+            )
+        )
     return results
 
 
@@ -1129,6 +1292,7 @@ async def rebuild_index_from_db(session: AsyncSession) -> VectorIndex:
                 "title_english": a.title_english,
                 "title_romaji": a.title_romaji,
                 "title_native": a.title_native,
+                "cover_image_url": a.cover_image_url,
                 "franchise_id": a.franchise_id,
                 "average_score": a.average_score,
                 "popularity": a.popularity,

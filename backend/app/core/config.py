@@ -98,6 +98,9 @@ class Settings(BaseSettings):
     REC_DEFAULT_N: int = 10
     REC_MAX_N: int = 50
 
+    REC_START_METHOD: str = "B"
+    REC_START_LIKED_WEIGHT: float = 0.7
+
     @model_validator(mode="after")
     def validate_production_security(self) -> "Settings":
         placeholder = (

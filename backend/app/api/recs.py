@@ -24,15 +24,61 @@ from app.recs.engine import (
     MatureSeedError,
     recommend_from_profile,
     recommend_from_quiz,
+    recommend_from_start,
     recommend_similar,
 )
 from app.recs.quiz import build_quiz_vector, get_quiz_questions
-from app.recs.schemas import QuizAnswerRequest, QuizResponse, RecResult
+from app.recs.schemas import QuizAnswerRequest, QuizResponse, RecResult, RecStartRequest
 from app.recs.vectors import get_index
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["recommendations"])
+
+
+@router.post("/recs/start", response_model=list[RecResult])
+async def post_recs_start(payload: RecStartRequest) -> list[RecResult]:
+    """Start recommendations from quiz answers and/or liked anime."""
+    liked_ids = payload.liked_ids or []
+    if not payload.quiz_answers and not liked_ids:
+        raise HTTPException(422, "Provide quiz_answers, liked_ids, or both.")
+    if len(liked_ids) > 5:
+        raise HTTPException(422, "liked_ids may contain at most 5 titles.")
+    if len(set(liked_ids)) != len(liked_ids):
+        raise HTTPException(422, "liked_ids must not contain duplicates.")
+    index = get_index()
+    seeds = [index.get(aid) for aid in liked_ids]
+    if any(seed is None for seed in seeds):
+        raise HTTPException(404, "One or more liked_ids were not found.")
+    if (
+        any(seed.is_adult for seed in seeds if seed is not None)
+        and not payload.include_mature
+    ):
+        raise HTTPException(404, "Anime not found or is restricted content.")
+    if not payload.quiz_answers and len(liked_ids) < 3:
+        raise HTTPException(
+            422, "At least 3 liked titles from 3 different franchises are required."
+        )
+    if not payload.quiz_answers:
+        franchise_keys = [
+            seed.franchise_id if seed.franchise_id is not None else ("title", seed.id)
+            for seed in seeds
+            if seed is not None
+        ]
+        if len(set(franchise_keys)) < 3:
+            raise HTTPException(
+                422,
+                "liked_ids must cover at least 3 different franchises; some selected titles share a franchise.",
+            )
+    if index.is_empty():
+        return []
+    return recommend_from_start(
+        payload.quiz_answers,
+        liked_ids,
+        n=payload.limit,
+        include_mature=payload.include_mature,
+        index=index,
+    )
 
 
 @router.get("/quiz", response_model=list[dict])

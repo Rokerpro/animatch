@@ -54,3 +54,10 @@ class QuizResponse(BaseModel):
     )
 
     model_config = ConfigDict(populate_by_name=True)
+
+
+class RecStartRequest(BaseModel):
+    quiz_answers: dict[str, str] | None = None
+    liked_ids: list[int] | None = None
+    include_mature: bool = False
+    limit: int = Field(default=20, ge=1, le=40)

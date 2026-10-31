@@ -67,6 +67,7 @@ class AnimeRecord:
     franchise_id: int | None
     average_score: int | None
     popularity: int
+    cover_image: str | None = None
     episodes: int | None
     duration: int | None = None
     season_year: int | None = None
@@ -225,6 +226,7 @@ class VectorIndex:
                         or item.get("title_native")
                         or "Unknown"
                     ),
+                    cover_image=item.get("cover_image_url"),
                     franchise_id=item.get("franchise_id"),
                     average_score=item.get("average_score"),
                     popularity=item.get("popularity") or 0,
