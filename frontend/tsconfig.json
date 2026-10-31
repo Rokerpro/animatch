@@ -22,9 +22,8 @@
     "forceConsistentCasingInFileNames": true,
 
     /* Path Aliasing */
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"]
     },
 
     /* Types */

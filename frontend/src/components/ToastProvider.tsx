@@ -4,6 +4,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { CircleAlert, CircleCheck, Info } from "lucide-react";
 import { ToastContext, type ToastKind, type ToastMessage } from "./ToastContext";
 
 let nextToastId = 0;
@@ -31,6 +32,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             key={toast.id}
             role={toast.kind === "error" ? "alert" : "status"}
           >
+            <span aria-hidden="true" className="toast-icon">
+              {toast.kind === "error" ? <CircleAlert size={17} /> : toast.kind === "success" ? <CircleCheck size={17} /> : <Info size={17} />}
+            </span>
             {toast.message}
           </div>
         ))}

@@ -6,6 +6,7 @@ import { AuthProvider } from "./auth/AuthContext";
 import { BrowsePage } from "./pages/BrowsePage";
 import { AnimeDetailPage } from "./pages/AnimeDetailPage";
 import { LoginPage, RegisterPage, SettingsPage } from "./pages/AuthPages";
+import { LandingPage, QuizPage, ResultsPage } from "./pages/QuizPages";
 
 function AniListFooter() {
   return (
@@ -18,7 +19,7 @@ function AniListFooter() {
 function PageShell({ children }: { children: ReactNode }) {
   return (
     <div className="app-shell">
-      <a className="skip-link" href="#main-content">
+      <a className="skip-link sr-only focus:not-sr-only" href="#main-content">
         Skip to content
       </a>
       <Navbar />
@@ -36,7 +37,9 @@ export function App() {
       <AuthProvider>
         <PageShell>
           <Routes>
-            <Route path="/" element={<BrowsePage />} />
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/quiz" element={<QuizPage />} />
+            <Route path="/results" element={<ResultsPage />} />
             <Route path="/browse" element={<BrowsePage />} />
             <Route path="/anime/:id" element={<AnimeDetailPage />} />
             <Route path="/login" element={<LoginPage />} />

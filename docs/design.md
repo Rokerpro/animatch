@@ -5,56 +5,55 @@
 
 ---
 
-## Design Rules (override all earlier styling)
+## Phase 5 initial design rules (superseded where Visual direction v2 differs)
 
-1. **No** gradient text, glow/blur effects, glassmorphism, icon-in-rounded-square tiles, pill badges, or marketing taglines in the UI.
-2. Cover art is the visual identity. Pages are dominated by a dense grid of anime posters (2:3 ratio) with tight, consistent gaps — not by hero text or decorative cards.
-3. Flat near-black surfaces separated by 1 px borders only. No drop shadows.
-4. **One accent, two values**:
-   - `#7c65c1` → borders, buttons, focus rings (UI chrome)
-   - `#9d8bdc` → accent text only (meets WCAG AA contrast on `#0d0d11`)
-5. Small, information-dense type: card titles at 14–15 px, real data (score %, year, format, episodes) on every card.
-6. Wordmark is plain text in the normal font weight — no gradient, no icon tile.
-7. Muted gray (`#9494a0`) for all secondary metadata.
+1. **Superseded by Visual direction v2 below:** the earlier bans on gradient text, glow, icon-in-rounded-square tiles, and pill badges no longer apply. Glassmorphism and marketing taglines remain disallowed.
+2. Cover art remains a strong visual element. Browse and recommendation results use dense poster grids; the v2 landing hero is an explicit exception.
+3. Follow the slightly raised surfaces, soft borders, rounded corners, and restrained shadows in Visual direction v2.
+4. Use the shared accent and content tokens defined in `frontend/tailwind.config.js`.
+5. Keep card titles compact and show real data (score, year, format, episodes) where available.
+6. The plain-text gradient wordmark with a sparkle tile is specified in Visual direction v2 and supersedes the earlier plain single-color wordmark.
+7. Use the shared muted content token for secondary metadata.
 
 ---
 
+## Visual direction v2 (supersedes earlier flat/minimal corrections)
+
+This section supersedes earlier flat/minimal corrections, including the bans on gradient text, icon tiles, pill badges, and glow. The v2 direction applies consistently to Landing, Browse, Quiz, Results, Similar rows, Detail, Login, Register, and Settings. It changes styling only; it does not authorize layout, route, API, or behavior changes.
+
+- Use a near-black page surface with a large violet radial glow near the top (17% opacity at its center); keep the rest of the background quiet. The `accent.glow` value lives in `frontend/tailwind.config.js`.
+- Use violet for fills, borders, and focus rings, and lighter violet text for small text on dark surfaces.
+- Render the wordmark as near-white “Ani” and gradient “Match” beside a small bordered rounded-square sparkle tile.
+- Keep the header to the wordmark, Browse, Quiz, the existing 18+ toggle, and Sign in. Do not add a search box.
+- Center the landing hero with an outlined pill badge, a large two-tone AniMatch heading, truthful functional subtitle, filled Start quiz button, and ghost Skip to Browse button.
+- Use slightly raised dark cards and panels with soft borders, rounded corners, and optional rounded icon tiles. Use violet focus rings.
+- Keep quiz questions in a centered rounded card with a progress pill and large rounded answer controls. Preserve the existing API-driven single/multi selection behavior.
+- Keep poster art dominant, sharp at 2:3, with softly rounded corners, a rounded score pill, title, muted metadata, and real API reason text in lighter violet, 12 px, clamped to three lines.
+- Use tinted rounded status boxes, red for errors and green for success, with icons.
+- Use 150–200 ms transitions, preserve visible keyboard focus, and respect `prefers-reduced-motion`. Do not use backdrop blur on poster grids or long lists.
+- The hero subtitle must say recommendations come from quiz answers and that the quiz takes about a minute. Do not claim features that do not exist.
+
+### Canonical theme tokens
+
+All color tokens are defined once in `frontend/tailwind.config.js`; CSS consumes those values through Tailwind's `theme()` function. Do not duplicate token values in CSS or this document. The config includes page, raised, overlay, and border surfaces; UI, hover, text, gradient-start/end and subtle accents; primary, secondary and muted content; high/mid/low score colors; and error/success status colors. Keep the existing semantic names in sync with their documented uses above.
+
 ## Colour Tokens (Tailwind)
 
-| Token | Value | Use |
-|-------|-------|-----|
-| `surface.base` | `#0d0d11` | Page background |
-| `surface.raised` | `#141419` | Cards, sidebars, panels |
-| `surface.overlay` | `#1a1a22` | Dropdowns, modals |
-| `surface.border` | `#202028` | 1 px dividers |
-| `accent.ui` | `#7c65c1` | Borders, buttons, focus rings |
-| `accent.hover` | `#6a56aa` | Hover state of accent buttons |
-| `accent.text` | `#9d8bdc` | Accent-coloured text (WCAG AA) |
-| `accent.subtle` | `rgba(124,101,193,0.12)` | Hover fill on filter rows |
-| `content.primary` | `#eeeeee` | Titles, body text |
-| `content.secondary` | `#9494a0` | Metadata, labels |
-| `content.muted` | `#5e5e6e` | Placeholders, disabled |
-| `score.high` | `#4ade80` | ≥ 75 % |
-| `score.mid` | `#facc15` | 50–74 % |
-| `score.low` | `#f87171` | < 50 % |
+See `frontend/tailwind.config.js` for the canonical token values. CSS and utility classes must reference the same token definitions rather than maintaining a second palette.
 
 ---
 
 ## Global Layout
 
-### Header (48 px fixed top bar)
-- 1 px bottom border (`surface.border`), `surface.base` fill.
-- Left: plain-text wordmark **AniMatch** (normal weight, `content.primary`).
-- Centre: compact search input (expand on focus, no separate search page for v1).
-- Right: `Browse` nav link only — **no Recommendations link in v1**.
-- Auth state: `Sign in` ghost button → `Avatar + username` dropdown after login (wired Phase 3+).
+### Header (v2)
+- Use the shared header described in Visual direction v2: sparkle tile and two-tone wordmark, Browse, Quiz, existing 18+ toggle, and Sign in/Settings. No search box.
 
 ### Filter Bar (sticky below header, 44 px, desktop)
 Supported filters match the Phase 2 API exactly:
 
 | Filter | Control | API param |
 |--------|---------|-----------|
-| Search | Text input (in header) | `search` |
+| Search | Text input in Browse filters (not the header) | `q` |
 | Genre | Multi-select dropdown | `genres[]` |
 | Tags | Multi-select dropdown | `tags[]` |
 | Format | Segmented toggle: All / TV / Movie / OVA / ONA / Special | `format` |
@@ -77,7 +76,7 @@ Active filter has `accent.ui` border and `accent.text` label.
 ### Poster Grid
 - **Columns**: 7 (≥ 1400 px), 6 (≥ 1200 px), 5 (≥ 960 px), 4 (≥ 768 px), 3 (≥ 480 px), 2 (< 480 px).
 - **Gap**: 12 px everywhere.
-- Poster image: sharp corners, 1 px `surface.border`, exact 2:3 `aspect-ratio`.
+- Poster image: softly rounded corners, 1 px `surface.border`, exact 2:3 `aspect-ratio`.
 
 ### Poster Card
 ```
@@ -155,7 +154,7 @@ Used on the similar-anime row (detail page) and on the personalised homepage (Ph
   Title here
   TV · 2022 · 12 eps
   ╰─ "Because you liked Frieren and rated
-      slice-of-life highly"               ← accent.text, 12px, 2-line max, always visible
+      slice-of-life highly"               ← accent.text, 12px, 3-line max, always visible
 ```
 
 - `reason` field is **mandatory and always visible** — never hidden behind a hover or tooltip.
@@ -255,7 +254,7 @@ Extends `AnimeCard` with:
 ---
 
 ## Accessibility Notes
-- All interactive elements keyboard-navigable; focus ring `2px solid #7c65c1`.
+- All interactive elements keyboard-navigable; use the shared `accent.ui` focus ring token.
 - Poster `<img>` always has `alt` = romanized title.
 - Filter controls have associated `<label>`.
 - Score badge has `aria-label` (e.g. `"Score: 84%"`).

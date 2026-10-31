@@ -18,6 +18,9 @@ export interface Recommendation extends AnimeCardData {
   rankTaste?: number | null; qualityScore?: number | null; finalScore?: number | null;
   preMmrRank?: number | null; explanation?: Explanation;
 }
+export interface QuizAnswerOption { id: string; label: string }
+export interface QuizQuestion { id: string; label: string; type?: string; answers: QuizAnswerOption[] }
+export interface QuizResponse { results: Recommendation[]; quizVecStored: boolean }
 export interface FiltersResponse { genres: string[]; tags: string[] }
 export interface UserResponse {
   id: number; email: string; display_name: string; show_mature: boolean;

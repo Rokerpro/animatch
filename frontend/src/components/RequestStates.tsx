@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { CircleAlert } from "lucide-react";
 
 export function PosterSkeleton({ count = 12 }: { count?: number }) {
   return (
@@ -40,6 +41,7 @@ export function ErrorState({
 }) {
   return (
     <section className="request-state" aria-labelledby="error-state-title" role="alert">
+      <CircleAlert aria-hidden="true" className="request-state-icon" size={20} />
       <h2 id="error-state-title">{title}</h2>
       <p className="request-state-body">{message}</p>
       {onRetry && (
