@@ -60,3 +60,12 @@ This document captures identified tuning opportunities, feature enhancements, an
     * Re-evaluate rating centering variance ($\sigma_r > 0$) behavior on genuine large watchlists (100+ titles).
     * Evaluate cold-start hybrid decay ($K = 10$) with authentic incremental ratings.
     * Calibrate profile diversity ($\lambda_{\text{profile}}$) vs. seed similarity diversity ($\lambda_{\text{seed}}$).
+
+---
+
+## 6. Evaluation Backlog
+
+* Add studio as a weak recommendation feature so same-studio titles can cluster. *Kiki's Delivery Service* and *My Neighbor Totoro* are currently missing from *Spirited Away* recommendations.
+* The length gate uses the entry title's episode count. Franchises such as *My Hero Academia*, whose first season has 13 episodes, may never match “long”; consider using franchise episode totals.
+* Keep `REC_QUIZ_QUALITY_WEIGHT` at `0.25` by default. Comparing it with `0.10` produced nearly identical recommendation lists.
+* Keep `REC_START_METHOD` at `A`; revisit mixed-taste inputs later with real user data.

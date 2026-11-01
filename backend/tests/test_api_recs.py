@@ -41,9 +41,12 @@ def start_index(monkeypatch):
                 "status": "FINISHED",
                 "is_adult": anime_id == 7,
                 "format": "TV",
-                "genres": ["Drama", "Mystery"],
+                "genres": ["Drama", "Mystery", "Psychological", "Thriller"],
                 "tags": [
-                    {"name": "Psychological", "rank": 90},
+                    {"name": "Survival", "rank": 90},
+                    {"name": "Detective", "rank": 90},
+                    {"name": "Crime", "rank": 90},
+                    {"name": "Conspiracy", "rank": 90},
                     {"name": "Ensemble Cast", "rank": 95},
                 ],
             }
@@ -105,23 +108,35 @@ async def test_recs_start_accepts_quiz_titles_and_both_and_excludes_franchises(
     payload: dict,
     expected_excluded_ids: set[int] | None,
 ):
+    if "quiz_answers" in payload:
+        from app.recs.quiz import parse_quiz_answers
+
+        genres, tags, _, _ = parse_quiz_answers(payload["quiz_answers"])
+        missing = start_index.validate_vocabulary(list(genres) + list(tags))
+        assert not missing, f"payload={payload!r}; missing quiz vocabulary={missing}"
+
     response = await client.post("/api/recs/start", json=payload)
     assert response.status_code == 200, f"payload={payload!r}"
     rows = response.json()
-    assert len(rows) <= payload["limit"], f"payload={payload!r}"
+    assert len(rows) <= payload["limit"], f"payload={payload!r}; rows={rows!r}"
     if expected_excluded_ids is not None:
         result_ids = {row["id"] for row in rows}
-        assert result_ids.isdisjoint(
-            expected_excluded_ids
-        ), f"payload={payload!r}; expected exclusions={expected_excluded_ids}"
+        assert result_ids.isdisjoint(expected_excluded_ids), (
+            f"payload={payload!r}; expected exclusions={expected_excluded_ids}; "
+            f"rows={rows!r}"
+        )
     assert all(
         "coverImage" in row and "reason" in row for row in rows
-    ), f"payload={payload!r}"
+    ), f"payload={payload!r}; rows={rows!r}"
     if "quiz_answers" in payload and "liked_ids" not in payload:
-        assert rows, f"payload={payload!r}"
+        assert rows, f"payload={payload!r}; rows={rows!r}"
+        result_ids = [row["id"] for row in rows]
+        assert len(result_ids) == len(
+            set(result_ids)
+        ), f"payload={payload!r}; duplicate result ids; rows={rows!r}"
         assert all(
-            "Matches your preference" in row["reason"] for row in rows
-        ), f"payload={payload!r}"
+            row["reason"].startswith("Matches ") for row in rows
+        ), f"payload={payload!r}; rows={rows!r}"
 
 
 @pytest.mark.asyncio
@@ -156,16 +171,23 @@ async def test_start_reason_features_belong_to_each_named_seed(
     for row in response.json():
         result_record = start_index.get(row["id"])
         reason = row["reason"].removeprefix("Because you liked ").rstrip(".")
-        matches = re.findall(r"([^()]+) \(([^()]*)\)", reason)
+        matches = re.findall(r"(?:^| and )([^()]+) \(([^()]*)\)", reason)
         assert matches, f"payload={payload!r}; reason={row['reason']!r}"
         assert (
             "Ensemble Cast" not in row["reason"]
         ), f"payload={payload!r}; reason={row['reason']!r}"
         for seed_name, feature_text in matches:
             seed = next(
-                record
-                for record in start_index.records
-                if record.title == seed_name.strip()
+                (
+                    record
+                    for record in start_index.records
+                    if record.title == seed_name.strip()
+                ),
+                None,
+            )
+            assert seed is not None, (
+                f"payload={payload!r}; unknown liked title {seed_name!r}; "
+                f"full reason={row['reason']!r}"
             )
             for feature in feature_text.split(", "):
                 assert (

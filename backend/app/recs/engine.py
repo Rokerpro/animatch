@@ -20,7 +20,7 @@ global rank-normalisation.  Quality is then added as a small bonus.
 3. Quiz:
    rel(x)     = minmax(cos(quiz_vec, x), over top-200 scores)
    final(x)   = rel(x) + q * quality_pct(x)
-   Followed by soft score penalties for length and era constraints.
+   Length range is gated with relaxation; length and era adjust pool ordering.
 
 4. Profile (recs/me):
    rel(x)     = minmax(cos(taste_vec, x), over top-200 scores)
@@ -66,6 +66,7 @@ from app.core.config import settings
 from app.models.anime import Anime, Tag
 from app.recs.explain import (
     build_explanation,
+    build_quiz_explanation,
     count_profile_salient,
     count_quiz_salient,
     count_shared_salient,
@@ -73,9 +74,11 @@ from app.recs.explain import (
     shared_salient_features,
 )
 from app.recs.quiz import (
+    apply_quiz_length_gate,
     apply_quiz_soft_penalties,
     build_quiz_vector,
     parse_quiz_answers,
+    selected_theme_genres,
 )
 from app.recs.schemas import ExplanationSchema, RecResult
 from app.recs.vectors import (
@@ -740,6 +743,34 @@ def _blend_start_scores(
     return (1.0 - liked_weight) * quiz_scores + liked_weight * liked_scores
 
 
+def _apply_theme_requirement(
+    candidates: list[int],
+    index: VectorIndex,
+    answers: dict[str, str] | None,
+    limit: int,
+) -> list[int]:
+    """Require the selected theme only when it can fill the requested limit."""
+    required_genres = selected_theme_genres(answers or {})
+    if not required_genres:
+        return candidates
+    matching = [
+        idx for idx in candidates if set(index.records[idx].genres) & required_genres
+    ]
+
+    def franchise_capacity(indices: list[int]) -> int:
+        groups = {
+            (
+                ("item", index.records[idx].id)
+                if index.records[idx].franchise_id is None
+                else ("franchise", index.records[idx].franchise_id)
+            )
+            for idx in indices
+        }
+        return len(groups)
+
+    return matching if franchise_capacity(matching) >= limit else candidates
+
+
 def recommend_from_start(
     quiz_answers: dict[str, str] | None,
     liked_ids: list[int] | None,
@@ -752,10 +783,9 @@ def recommend_from_start(
     if index is None:
         index = get_index()
     quiz_vec = None
-    labels: list[str] = []
     constraints: dict[str, Any] = {}
     if quiz_answers:
-        quiz_vec, labels, constraints = build_quiz_vector(quiz_answers, index)
+        quiz_vec, _, constraints = build_quiz_vector(quiz_answers, index)
     seeds = [index.get(aid) for aid in (liked_ids or [])]
     if any(seed is None for seed in seeds):
         return []
@@ -820,6 +850,8 @@ def recommend_from_start(
         n=n,
         candidate_filter=salient_gate,
     )
+    candidates = _apply_theme_requirement(candidates, index, quiz_answers, n)
+    candidates = apply_quiz_length_gate(candidates, index, constraints, n)
     if not candidates:
         return []
     mat = index.matrix[candidates]
@@ -857,7 +889,12 @@ def recommend_from_start(
         return []
     relevance = _relevance_scores(raw)
     q_scores = np.array([index.records[i].quality_pct for i in candidates])
-    finals = compute_final_score(relevance, q_scores)
+    quality_weight = (
+        settings.REC_QUIZ_QUALITY_WEIGHT
+        if quiz_vec is not None and not seed_records
+        else settings.REC_QUALITY_WEIGHT
+    )
+    finals = compute_final_score(relevance, q_scores, q=quality_weight)
     if quiz_answers:
         _, _, _, constraints = parse_quiz_answers(quiz_answers)
         finals = apply_quiz_soft_penalties(
@@ -895,27 +932,15 @@ def recommend_from_start(
                 seed_titles=[seed.title for _, seed, _ in matched],
             )
         else:
-            exp = build_explanation(
-                query_vec=quiz_vec,
-                item_vec=index.matrix[idx],
-                index=index,
-                item_record=rec,
-                quiz_answers=labels,
+            exp = build_quiz_explanation(
+                quiz_answers or {}, rec, index.matrix[idx], index
             )
             shared_genres, shared_tags = quiz_matches_by_candidate.get(idx, ([], []))
-            matched_features = shared_genres + shared_tags
-            if matched_features and labels:
-                answer_str = ", ".join(labels[:2])
-                reason = (
-                    f"Matches your preference for {answer_str} anime with "
-                    f"{', '.join(matched_features[:4])}."
-                )
-            else:
-                reason = exp.reason
+            reason = exp.reason
             explanation = ExplanationSchema(
-                shared_genres=shared_genres,
-                shared_tags=shared_tags,
-                quiz_answers=labels,
+                shared_genres=exp.shared_genres or shared_genres,
+                shared_tags=exp.shared_tags or shared_tags,
+                quiz_answers=exp.quiz_answers,
             )
         score = next(c for c in collapsed if c.cand_idx == idx)
         results.append(
@@ -964,7 +989,7 @@ def recommend_from_quiz(
     if index.is_empty():
         return []
 
-    genre_weights, tag_weights, labels, constraints = parse_quiz_answers(answers)
+    genre_weights, tag_weights, _, constraints = parse_quiz_answers(answers)
     quiz_vec = query_vec
     if quiz_vec is None:
         quiz_vec, _, _ = build_quiz_vector(answers, index)
@@ -977,13 +1002,29 @@ def recommend_from_quiz(
     if not candidates:
         return []
 
+    target_genres = set(genre_weights.keys())
+    target_tags = set(tag_weights.keys())
+    if target_genres or target_tags:
+        candidates = [
+            idx
+            for idx in candidates
+            if count_quiz_salient(target_genres, target_tags, index.records[idx])
+            >= settings.REC_MIN_SALIENT_FEATURES
+        ]
+    candidates = _apply_theme_requirement(candidates, index, answers, n)
+    candidates = apply_quiz_length_gate(candidates, index, constraints, n)
+    if not candidates:
+        return []
+
     cand_matrix = index.matrix[candidates]
     cand_records = [index.records[i] for i in candidates]
     cand_q_scores = np.array([r.quality_pct for r in cand_records], dtype=np.float64)
 
     cos_sim = cand_matrix @ quiz_vec
     sim_scores = _relevance_scores(cos_sim)
-    final_scores = compute_final_score(sim_scores, cand_q_scores)
+    final_scores = compute_final_score(
+        sim_scores, cand_q_scores, q=settings.REC_QUIZ_QUALITY_WEIGHT
+    )
 
     # Apply soft penalties for episode / year constraints
     final_scores = apply_quiz_soft_penalties(final_scores, cand_records, constraints)
@@ -1004,26 +1045,13 @@ def recommend_from_quiz(
 
     selected_indices = mmr_rerank(collapsed_cand_indices, collapsed_scores, index, n)
 
-    target_genres = set(genre_weights.keys())
-    target_tags = set(tag_weights.keys())
-
     results: list[RecResult] = []
     for cand_idx in selected_indices:
         rec = index.records[cand_idx]
         cand_score = cand_score_lookup[cand_idx]
 
-        # Salient feature gate: require >= REC_MIN_SALIENT_FEATURES shared features with quiz targets
-        if (target_genres or target_tags) and count_quiz_salient(
-            target_genres, target_tags, rec
-        ) < settings.REC_MIN_SALIENT_FEATURES:
-            continue
-
-        explanation = build_explanation(
-            query_vec=quiz_vec,
-            item_vec=index.matrix[cand_idx],
-            index=index,
-            item_record=rec,
-            quiz_answers=labels,
+        explanation = build_quiz_explanation(
+            answers, rec, index.matrix[cand_idx], index
         )
 
         results.append(

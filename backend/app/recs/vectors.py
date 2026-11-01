@@ -248,15 +248,31 @@ class VectorIndex:
         # --- IDF weights ---
         # genre
         genre_df = (raw_genre > 0).sum(axis=0)  # (G,)
-        genre_idf = np.log((N + 1) / (genre_df + 1)) + 1.0  # (G,)
+        genre_idf = (
+            np.log((N + 1) / (genre_df + 1)) + 1.0
+            if G
+            else np.zeros((0,), dtype=np.float64)
+        )  # (G,)
 
         # tag
         tag_df = (raw_tag > 0).sum(axis=0)  # (T,)
-        tag_idf = np.log((N + 1) / (tag_df + 1)) + 1.0  # (T,)
+        tag_idf = (
+            np.log((N + 1) / (tag_df + 1)) + 1.0
+            if T
+            else np.zeros((0,), dtype=np.float64)
+        )  # (T,)
 
         # --- Per-item L2 normalise each block, then apply IDF weight ---
-        l2_genre = normalize(raw_genre, norm="l2", axis=1)  # (N, G)
-        l2_tag = normalize(raw_tag, norm="l2", axis=1)  # (N, T)
+        l2_genre = (
+            normalize(raw_genre, norm="l2", axis=1)
+            if G
+            else np.zeros((N, 0), dtype=np.float32)
+        )  # (N, G)
+        l2_tag = (
+            normalize(raw_tag, norm="l2", axis=1)
+            if T
+            else np.zeros((N, 0), dtype=np.float32)
+        )  # (N, T)
         l2_format = normalize(raw_format, norm="l2", axis=1)  # (N, F)
 
         weighted_genre = w_genre * (l2_genre * genre_idf)  # broadcast idf row

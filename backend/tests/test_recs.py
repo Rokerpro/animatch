@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
+import json
 import math
+import re
+from pathlib import Path
 
 import numpy as np
 import pytest
 
-from app.core.config import settings
+import app.recs.engine as rec_engine
+from app.core.config import Settings, settings
 from app.recs.engine import (
     MatureSeedError,
     _blend_start_scores,
@@ -29,13 +33,166 @@ from app.recs.quiz import (
     apply_quiz_soft_penalties,
     build_quiz_vector,
     load_quiz_data,
+    parse_quiz_answers,
+    selected_theme_genres,
 )
 from app.recs.vectors import VectorIndex
 from app.services.catalog_sync import UnionFind
 
 
+def test_quiz_vocabulary_exists_in_catalog_fixture():
+    quiz_path = Path(__file__).parents[1] / "app" / "data" / "quiz.json"
+    vocab_path = Path(__file__).parent / "fixtures" / "catalog_vocab.json"
+    quiz = json.loads(quiz_path.read_text(encoding="utf-8"))
+    vocabulary = json.loads(vocab_path.read_text(encoding="utf-8"))
+    available = {kind: set(names) for kind, names in vocabulary.items()}
+
+    missing = []
+    for question in quiz["questions"]:
+        for answer in question["answers"]:
+            for kind, terms in (answer.get("weights") or {}).items():
+                if kind not in available:
+                    continue
+                missing.extend(
+                    f"{question['id']}/{answer['id']} {kind}: {term}"
+                    for term in terms
+                    if term not in available[kind]
+                )
+
+    assert not missing, "Quiz vocabulary missing from catalog fixture: " + "; ".join(
+        missing
+    )
+
+
 def test_start_scoring_default_is_method_a():
     assert settings.REC_START_METHOD == "A"
+
+
+def test_quiz_genre_and_tag_vocabulary_reclassification():
+    quiz = load_quiz_data()
+    answers = {
+        (question["id"], answer["id"]): answer
+        for question in quiz["questions"]
+        for answer in question["answers"]
+    }
+    assert answers[("mood", "tense")]["weights"]["genres"]["Psychological"] == 1.3
+    assert "Psychological" not in answers[("mood", "tense")]["weights"]["tags"]
+    assert answers[("mood", "emotional")]["weights"]["genres"]["Drama"] == 1.3
+    assert "Mecha" in answers[("themes", "sci_fi")]["weights"]["genres"]
+    assert "Mecha" not in answers[("themes", "sci_fi")]["weights"]["tags"]
+    assert "Sports" in answers[("themes", "sports")]["weights"]["genres"]
+    cozy_tags = answers[("mood", "cozy")]["weights"]["tags"]
+    assert cozy_tags["Cute Girls Doing Cute Things"] == 0.8
+    assert cozy_tags["Iyashikei"] == 1.5
+    assert "CGDCT" not in cozy_tags and "Healing" not in cozy_tags
+    genre_vocab = {
+        "Action",
+        "Adventure",
+        "Comedy",
+        "Drama",
+        "Ecchi",
+        "Fantasy",
+        "Hentai",
+        "Horror",
+        "Mahou Shoujo",
+        "Mecha",
+        "Music",
+        "Mystery",
+        "Psychological",
+        "Romance",
+        "Sci-Fi",
+        "Slice of Life",
+        "Sports",
+        "Supernatural",
+        "Thriller",
+    }
+    for answer in answers.values():
+        weights = answer.get("weights") or {}
+        assert not genre_vocab.intersection(weights.get("tags", {}))
+    slice_tags = answers[("themes", "slice_of_life")]["weights"]["tags"]
+    assert slice_tags["School"] == 0.9
+    assert "School Life" not in slice_tags
+    action_answer = answers[("themes", "action")]
+    assert action_answer["label"] == "Action / adventure"
+    assert action_answer["weights"]["genres"] == {"Action": 1.0, "Adventure": 1.0}
+    assert action_answer["weights"]["tags"] == {}
+    assert selected_theme_genres({"themes": "sci_fi"}) == {"Sci-Fi", "Mecha"}
+    assert selected_theme_genres({"themes": "action"}) == {"Action", "Adventure"}
+
+
+def test_quiz_quality_weight_is_configurable(monkeypatch, sample_index):
+    assert Settings.model_fields["REC_QUIZ_QUALITY_WEIGHT"].default == 0.25
+    observed_weights = []
+    original_compute = rec_engine.compute_final_score
+
+    def capture_weight(relevance, quality, q=settings.REC_QUALITY_WEIGHT):
+        observed_weights.append(q)
+        return original_compute(relevance, quality, q=q)
+
+    monkeypatch.setattr(settings, "REC_QUIZ_QUALITY_WEIGHT", 0.37)
+    monkeypatch.setattr(rec_engine, "compute_final_score", capture_weight)
+    results = recommend_from_quiz({"themes": "fantasy"}, n=1, index=sample_index)
+    start_results = recommend_from_start(
+        {"themes": "fantasy"}, None, n=1, index=sample_index
+    )
+
+    assert results
+    assert start_results
+    assert observed_weights == [0.37, 0.37]
+
+
+def test_quiz_reason_only_names_answers_matched_by_result():
+    index = VectorIndex.build(
+        [
+            {
+                "id": 31,
+                "title_english": "Mystery Thriller",
+                "franchise_id": 31,
+                "average_score": 80,
+                "popularity": 500,
+                "episodes": 12,
+                "season_year": 2020,
+                "status": "FINISHED",
+                "format": "TV",
+                "genres": ["Thriller", "Mystery"],
+                "tags": [],
+            }
+        ]
+    )
+    record = index.records[0]
+    results = recommend_from_quiz(
+        {"mood": "tense", "tone": "dark", "themes": "mystery"},
+        n=1,
+        index=index,
+    )
+    assert len(results) == 1
+    reason = results[0].reason
+
+    assert reason == (
+        "Matches Mystery / detective (Mystery) and Tense / thrilling (Thriller)."
+    )
+    assert "Dark / gritty" not in reason
+    assert len(reason.split("(")) - 1 <= 3
+    listed_features = re.findall(r"\(([^()]*)\)", reason)
+    flattened_features = [
+        feature
+        for feature_list in listed_features
+        for feature in feature_list.split(", ")
+    ]
+    assert len(flattened_features) == len(set(flattened_features))
+    for clause in reason.removeprefix("Matches ").rstrip(".").split(" and "):
+        title, feature_text = clause.split(" (", maxsplit=1)
+        feature_list = feature_text.rstrip(")").split(", ")
+        assert len(feature_list) <= 2
+        answer = next(
+            answer
+            for question in load_quiz_data()["questions"]
+            for answer in question["answers"]
+            if answer["label"] == title
+        )
+        asked_for = set(answer["weights"]["genres"]) | set(answer["weights"]["tags"])
+        assert set(feature_list) <= asked_for
+        assert set(feature_list) <= set(record.genres) | set(record.tags)
 
 
 def test_generic_tag_stoplist_does_not_count_or_appear_in_reason():
@@ -127,6 +284,43 @@ def test_generic_tag_stoplist_does_not_count_or_appear_in_reason():
         ]
     )
     assert recommend_from_start(None, [11], n=10, index=generic_only_index) == []
+
+
+@pytest.mark.parametrize(
+    ("genres", "tags"),
+    [
+        pytest.param(
+            [],
+            [{"name": "Mystery", "rank": 90}, {"name": "Crime", "rank": 90}],
+            id="no-genres",
+        ),
+        pytest.param(["Mystery", "Crime"], [], id="no-tags"),
+    ],
+)
+def test_vector_index_build_and_recommendations_with_empty_feature_block(genres, tags):
+    catalog = [
+        {
+            "id": anime_id,
+            "title_english": title,
+            "franchise_id": anime_id,
+            "average_score": 80,
+            "popularity": 500 - anime_id,
+            "episodes": 12,
+            "season_year": 2020 + anime_id,
+            "status": "FINISHED",
+            "format": "TV",
+            "genres": genres,
+            "tags": tags,
+        }
+        for anime_id, title in ((21, "Seed"), (22, "Candidate"))
+    ]
+
+    index = VectorIndex.build(catalog)
+
+    assert index.genre_end - index.genre_start == len(genres)
+    assert index.tag_end - index.tag_start == len(tags)
+    results = recommend_from_start(None, [21], n=1, index=index)
+    assert [result.id for result in results] == [22]
 
 
 def test_method_b_blend_respects_liked_weight():
@@ -373,16 +567,111 @@ def test_quiz_weight_pull(sample_index: VectorIndex):
     assert "Fantasy" in results[0].genres
 
 
+def test_quiz_theme_gate_and_relaxation():
+    catalog = [
+        {
+            "id": anime_id,
+            "title_english": title,
+            "franchise_id": anime_id,
+            "average_score": 80,
+            "popularity": 500 - anime_id,
+            "episodes": 12,
+            "season_year": 2020,
+            "status": "FINISHED",
+            "format": "TV",
+            "genres": genres,
+            "tags": [],
+        }
+        for anime_id, title, genres in (
+            (41, "Sci-Fi mystery", ["Sci-Fi", "Mystery", "Thriller"]),
+            (42, "Mecha mystery", ["Mecha", "Mystery", "Thriller"]),
+            (43, "Non-theme mystery", ["Drama", "Mystery", "Thriller"]),
+        )
+    ]
+    index = VectorIndex.build(catalog)
+    answers = {"mood": "tense", "themes": "sci_fi"}
+
+    gated = recommend_from_quiz(answers, n=2, index=index)
+    relaxed = recommend_from_quiz(answers, n=3, index=index)
+
+    assert len(gated) == 2
+    assert all(set(result.genres) & {"Sci-Fi", "Mecha"} for result in gated)
+    assert len(relaxed) == 3
+    assert any(
+        "Sci-Fi" not in result.genres and "Mecha" not in result.genres
+        for result in relaxed
+    )
+
+
 def test_quiz_length_soft_constraint(sample_index: VectorIndex):
-    """Quiz soft penalty reduces score of items violating episode constraint."""
-    constraints = {"max_episodes": 13}
+    """Short, medium, and long ranges halve out-of-range titles; any does not."""
     rec_short = sample_index.get(5)  # 10 eps
-    rec_long = sample_index.get(3)  # 24 eps
-    assert rec_short and rec_long
-    scores = np.array([1.0, 1.0])
-    adjusted = apply_quiz_soft_penalties(scores, [rec_short, rec_long], constraints)
-    assert adjusted[0] == 1.0
-    assert adjusted[1] < 1.0
+    rec_medium = sample_index.get(3)  # 24 eps
+    rec_long = sample_index.get(1)  # 28 eps
+    assert rec_short and rec_medium and rec_long
+    assert Settings.model_fields["REC_QUIZ_SOFT_PENALTY_EPISODES"].default == 0.5
+    scores = np.ones(3)
+    records = [rec_short, rec_medium, rec_long]
+    short = apply_quiz_soft_penalties(
+        scores, records, {"max_episodes": 13}, penalty_episodes=0.5
+    )
+    medium = apply_quiz_soft_penalties(
+        scores,
+        records,
+        {"min_episodes": 14, "max_episodes": 26},
+        penalty_episodes=0.5,
+    )
+    long = apply_quiz_soft_penalties(
+        scores, records, {"min_episodes": 27}, penalty_episodes=0.5
+    )
+    assert short.tolist() == pytest.approx([1.0, 0.5, 0.5])
+    assert medium.tolist() == pytest.approx([0.5, 1.0, 0.5])
+    assert long.tolist() == pytest.approx([0.5, 0.5, 1.0])
+    _, _, _, any_length = parse_quiz_answers({"length": "any"})
+    assert np.array_equal(
+        apply_quiz_soft_penalties(scores, records, any_length, penalty_episodes=0.5),
+        scores,
+    )
+
+
+@pytest.mark.parametrize(
+    ("episodes", "limit", "expected_ids"),
+    [
+        pytest.param([28, 30, 12, 24], 2, {201, 202}, id="strict-long-range"),
+        pytest.param([28, 20, 24, 12, 8], 3, {201, 202, 203}, id="adjacent-range"),
+        pytest.param([28, 20, 12, 8], 4, {201, 202, 203, 204}, id="drop-gate"),
+    ],
+)
+def test_quiz_length_gate_relaxes_for_quiz_and_start(episodes, limit, expected_ids):
+    catalog = [
+        {
+            "id": 200 + position,
+            "title_english": f"Length candidate {position}",
+            "franchise_id": 200 + position,
+            "average_score": 80,
+            "popularity": 500 - position,
+            "episodes": count,
+            "season_year": 2020,
+            "status": "FINISHED",
+            "format": "TV",
+            "genres": ["Mystery", "Thriller"],
+            "tags": [],
+        }
+        for position, count in enumerate(episodes, start=1)
+    ]
+    index = VectorIndex.build(catalog)
+    answers = {"length": "long"}
+
+    quiz_results = recommend_from_quiz(answers, n=limit, index=index)
+    start_results = recommend_from_start(answers, None, n=limit, index=index)
+
+    assert len(quiz_results) == limit
+    assert len(start_results) == limit
+    assert {result.id for result in quiz_results} == expected_ids
+    assert {result.id for result in start_results} == expected_ids
+    if limit == 2:
+        assert all(result.episodes >= 27 for result in quiz_results)
+        assert all(result.episodes >= 27 for result in start_results)
 
 
 def test_quiz_vocabulary(sample_index: VectorIndex):
@@ -390,6 +679,24 @@ def test_quiz_vocabulary(sample_index: VectorIndex):
     quiz_data = load_quiz_data()
     assert "questions" in quiz_data
     assert len(quiz_data["questions"]) == 7
+
+
+def test_catalog_vocab_output_format():
+    from app.cli import _format_catalog_vocab
+
+    output = _format_catalog_vocab(
+        ["Action", "Comedy"], [("Adventure", 12), ("School", 8)]
+    )
+
+    assert output == (
+        "# Catalog vocabulary\n\n"
+        "## Genres\n"
+        "- Action\n"
+        "- Comedy\n\n"
+        "## Top 250 non-adult, non-spoiler tags by title count\n"
+        "- Adventure: 12 titles\n"
+        "- School: 8 titles\n"
+    )
 
 
 def test_profile_rating_centering(sample_index: VectorIndex):

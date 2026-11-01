@@ -1,5 +1,5 @@
 {
-  "_comment": "AniMatch quiz definition v1. Each answer's 'weights' keys MUST exist in the vector index vocabulary (genres or tags). 'length' and 'era' answers use soft_penalty constraints, not vector weights — see recs/quiz.py for the penalty formula.",
+  "_comment": "AniMatch quiz definition v1. Each answer's 'weights' keys MUST exist in the vector index vocabulary (genres or tags). 'length' and 'era' answers use constraints, not vector weights. Length acts as a gate with relaxation; see recs/quiz.py.",
   "questions": [
     {
       "id": "mood",
@@ -10,7 +10,7 @@
           "label": "Cozy / relaxing",
           "weights": {
             "genres": {},
-            "tags": { "Iyashikei": 1.5, "Slow Life": 1.2, "Healing": 1.0, "CGDCT": 0.8 }
+            "tags": { "Iyashikei": 1.5, "Cute Girls Doing Cute Things": 0.8 }
           }
         },
         {
@@ -18,7 +18,7 @@
           "label": "Epic / action-packed",
           "weights": {
             "genres": { "Action": 1.4, "Adventure": 1.0 },
-            "tags": { "War": 1.0, "Battles": 1.2, "Super Power": 0.8 }
+            "tags": { "War": 1.0, "Super Power": 0.8 }
           }
         },
         {
@@ -26,7 +26,7 @@
           "label": "Emotional / thought-provoking",
           "weights": {
             "genres": { "Drama": 1.3 },
-            "tags": { "Tragedy": 1.2, "Coming of Age": 1.0, "Grief": 0.9 }
+            "tags": { "Coming of Age": 1.0 }
           }
         },
         {
@@ -41,8 +41,8 @@
           "id": "tense",
           "label": "Tense / thrilling",
           "weights": {
-            "genres": { "Thriller": 1.2, "Mystery": 1.0 },
-            "tags": { "Psychological": 1.3, "Survival": 1.1, "Mind Games": 1.0 }
+            "genres": { "Thriller": 1.2, "Mystery": 1.0, "Psychological": 1.3 },
+            "tags": { "Survival": 1.1 }
           }
         }
       ]
@@ -56,7 +56,7 @@
           "label": "Slow and deliberate",
           "weights": {
             "genres": {},
-            "tags": { "Iyashikei": 0.8, "Slow Life": 1.2, "Atmospheric": 0.9 }
+            "tags": { "Iyashikei": 0.8 }
           }
         },
         {
@@ -72,7 +72,7 @@
           "label": "Fast-paced / action",
           "weights": {
             "genres": { "Action": 0.8 },
-            "tags": { "Fast-paced": 1.3, "Battles": 0.9, "High Stakes Game": 0.8 }
+            "tags": {}
           }
         }
       ]
@@ -86,7 +86,7 @@
           "label": "Dark / gritty",
           "weights": {
             "genres": { "Psychological": 1.3, "Horror": 1.0 },
-            "tags": { "Dark Fantasy": 1.2, "Tragedy": 1.0, "Mature Themes": 0.9 }
+            "tags": {}
           }
         },
         {
@@ -94,7 +94,7 @@
           "label": "Hopeful / uplifting",
           "weights": {
             "genres": { "Adventure": 0.8 },
-            "tags": { "Redemption": 1.1, "Found Family": 1.0, "Friendship": 0.8 }
+            "tags": { "Found Family": 1.0 }
           }
         },
         {
@@ -110,7 +110,7 @@
           "label": "Romantic",
           "weights": {
             "genres": { "Romance": 1.5 },
-            "tags": { "Love Triangle": 0.9, "Confession": 0.8 }
+            "tags": { "Love Triangle": 0.9 }
           }
         }
       ]
@@ -131,8 +131,8 @@
           "id": "sci_fi",
           "label": "Sci-fi / technology",
           "weights": {
-            "genres": { "Sci-Fi": 1.5 },
-            "tags": { "Space": 1.1, "Mecha": 0.9, "Cyberpunk": 1.0, "Time Travel": 0.9 }
+            "genres": { "Sci-Fi": 1.5, "Mecha": 0.9 },
+            "tags": { "Space": 1.1, "Cyberpunk": 1.0 }
           }
         },
         {
@@ -148,7 +148,7 @@
           "label": "Sports / competition",
           "weights": {
             "genres": { "Sports": 1.5 },
-            "tags": { "Team Sports": 1.0, "Competition": 0.9 }
+            "tags": { "Athletics": 1.0 }
           }
         },
         {
@@ -156,7 +156,15 @@
           "label": "Slice of life / everyday",
           "weights": {
             "genres": { "Slice of Life": 1.5 },
-            "tags": { "School Life": 0.9, "Daily Life": 1.1 }
+            "tags": { "School": 0.9, "Family Life": 1.1 }
+          }
+        },
+        {
+          "id": "action",
+          "label": "Action / adventure",
+          "weights": {
+            "genres": { "Action": 1.0, "Adventure": 1.0 },
+            "tags": {}
           }
         }
       ]
@@ -170,7 +178,7 @@
           "label": "Chill and low-stakes",
           "weights": {
             "genres": { "Slice of Life": 0.8 },
-            "tags": { "Iyashikei": 1.2, "Moe": 0.8, "Healing": 1.0 }
+            "tags": { "Iyashikei": 1.2 }
           }
         },
         {
@@ -185,8 +193,8 @@
           "id": "intense",
           "label": "High tension throughout",
           "weights": {
-            "genres": { "Action": 1.0, "Thriller": 0.9 },
-            "tags": { "Psychological": 1.3, "Survival": 1.1, "Gore": 0.8 }
+            "genres": { "Action": 1.0, "Thriller": 0.9, "Psychological": 1.3 },
+            "tags": { "Survival": 1.1, "Gore": 0.8 }
           }
         }
       ]
@@ -194,8 +202,8 @@
     {
       "id": "length",
       "label": "How long a series are you looking for?",
-      "_constraint_type": "soft_episode_penalty",
-      "_comment": "These answers produce a soft score penalty for titles outside the range, NOT a hard filter and NOT injected into the feature vector. Penalty formula: penalty = QUIZ_CONSTRAINT_WEIGHT * clamp(violation_ratio, 0, 1), where violation_ratio = excess_episodes / max_ep or shortfall / min_ep. See recs/quiz.py.",
+      "_constraint_type": "episode_gate_with_relaxation",
+      "_comment": "These answers first gate to the requested episode range. If fewer than the requested limit pass, include one adjacent range, then drop the gate if needed. Outside-range titles in the resulting pool receive a 0.5 score multiplier. See recs/quiz.py.",
       "answers": [
         {
           "id": "short",

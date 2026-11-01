@@ -1,0 +1,274 @@
+# Catalog vocabulary
+
+## Genres
+- Action
+- Adventure
+- Comedy
+- Drama
+- Ecchi
+- Fantasy
+- Hentai
+- Horror
+- Mahou Shoujo
+- Mecha
+- Music
+- Mystery
+- Psychological
+- Romance
+- Sci-Fi
+- Slice of Life
+- Sports
+- Supernatural
+- Thriller
+
+## Top 250 non-adult, non-spoiler tags by title count
+- Male Protagonist: 1939 titles
+- Female Protagonist: 1275 titles
+- School: 1086 titles
+- Heterosexual: 1039 titles
+- Ensemble Cast: 804 titles
+- Shounen: 793 titles
+- Magic: 729 titles
+- Primarily Teen Cast: 704 titles
+- Urban Fantasy: 675 titles
+- Primarily Female Cast: 673 titles
+- Kuudere: 660 titles
+- Super Power: 605 titles
+- Primarily Adult Cast: 599 titles
+- Nudity: 576 titles
+- Urban: 554 titles
+- Swordplay: 539 titles
+- CGI: 527 titles
+- Coming of Age: 518 titles
+- Tsundere: 513 titles
+- Female Harem: 511 titles
+- Seinen: 500 titles
+- Primarily Male Cast: 418 titles
+- Gore: 411 titles
+- Episodic: 408 titles
+- Demons: 388 titles
+- Guns: 371 titles
+- Philosophy: 366 titles
+- Slapstick: 354 titles
+- Isekai: 350 titles
+- School Club: 331 titles
+- Anti-Hero: 290 titles
+- Parody: 290 titles
+- Politics: 283 titles
+- Love Triangle: 279 titles
+- Cute Girls Doing Cute Things: 273 titles
+- Work: 273 titles
+- LGBTQ+ Themes: 267 titles
+- Medieval: 267 titles
+- Travel: 261 titles
+- Military: 260 titles
+- Tomboy: 257 titles
+- Foreign: 253 titles
+- Surreal Comedy: 247 titles
+- Found Family: 245 titles
+- Rural: 244 titles
+- War: 236 titles
+- Animals: 235 titles
+- Meta: 232 titles
+- Historical: 227 titles
+- Family Life: 220 titles
+- Gods: 219 titles
+- Kemonomimi: 218 titles
+- Crime: 217 titles
+- Henshin: 207 titles
+- Iyashikei: 207 titles
+- Food: 196 titles
+- Martial Arts: 193 titles
+- Dragons: 188 titles
+- Mythology: 185 titles
+- Bullying: 182 titles
+- Revenge: 178 titles
+- Tanned Skin: 178 titles
+- Monster Girl: 176 titles
+- Maids: 170 titles
+- Twins: 164 titles
+- Robots: 161 titles
+- Survival: 160 titles
+- Video Games: 155 titles
+- Yuri: 153 titles
+- Chibi: 151 titles
+- Primarily Child Cast: 151 titles
+- Ojou-sama: 149 titles
+- Body Horror: 148 titles
+- Aliens: 147 titles
+- Shoujo: 147 titles
+- Elf: 146 titles
+- Crossdressing: 144 titles
+- Orphan: 144 titles
+- Otaku Culture: 143 titles
+- Unrequited Love: 141 titles
+- Shapeshifting: 140 titles
+- Idol: 138 titles
+- Detective: 134 titles
+- Anthropomorphism: 133 titles
+- Assassins: 131 titles
+- Dystopian: 131 titles
+- Archery: 124 titles
+- Post-Apocalyptic: 121 titles
+- Vampire: 120 titles
+- Youkai: 119 titles
+- Artificial Intelligence: 118 titles
+- Religion: 116 titles
+- Educational: 112 titles
+- Police: 109 titles
+- Amnesia: 105 titles
+- Ghost: 105 titles
+- Nekomimi: 105 titles
+- Disability: 104 titles
+- Cohabitation: 100 titles
+- Dungeon: 99 titles
+- Teacher: 99 titles
+- Achronological Order: 98 titles
+- Rehabilitation: 98 titles
+- Royal Affairs: 98 titles
+- Yandere: 98 titles
+- Cute Boys Doing Cute Things: 97 titles
+- Chuunibyou: 95 titles
+- Delinquents: 95 titles
+- Gender Bending: 95 titles
+- Space: 94 titles
+- Kaiju: 93 titles
+- Coastal: 91 titles
+- Battle Royale: 90 titles
+- Bisexual: 90 titles
+- Satire: 90 titles
+- Witch: 90 titles
+- Fugitive: 89 titles
+- Denpa: 87 titles
+- Class Struggle: 86 titles
+- Adoption: 85 titles
+- Hikikomori: 85 titles
+- Ninja: 85 titles
+- Outdoor Activities: 84 titles
+- Ships: 83 titles
+- Spearplay: 83 titles
+- College: 81 titles
+- Curses: 81 titles
+- Gyaru: 81 titles
+- Acting: 80 titles
+- Samurai: 79 titles
+- Conspiracy: 78 titles
+- Trains: 78 titles
+- Anachronism: 77 titles
+- Cultivation: 77 titles
+- Drawing: 75 titles
+- Femboy: 74 titles
+- Real Robot: 74 titles
+- Virtual World: 73 titles
+- Gangs: 72 titles
+- Boys' Love: 71 titles
+- Environmental: 71 titles
+- Monster Boy: 71 titles
+- Cyberpunk: 70 titles
+- Interspecies: 70 titles
+- Terrorism: 70 titles
+- Language Barrier: 68 titles
+- Creature Taming: 67 titles
+- Exorcism: 67 titles
+- Super Robot: 67 titles
+- Slavery: 65 titles
+- Superhero: 65 titles
+- Zombie: 65 titles
+- Motorcycles: 63 titles
+- Lost Civilization: 62 titles
+- Steampunk: 62 titles
+- Angels: 60 titles
+- Death Game: 60 titles
+- Age Regression: 59 titles
+- Josei: 58 titles
+- Tokusatsu: 58 titles
+- Desert: 57 titles
+- Economics: 57 titles
+- Band: 56 titles
+- Snowscape: 56 titles
+- Yakuza: 55 titles
+- Athletics: 54 titles
+- Boarding School: 54 titles
+- Kingdom Management: 54 titles
+- Shrine Maiden: 54 titles
+- Skeleton: 54 titles
+- Mafia: 53 titles
+- Bar: 52 titles
+- Baseball: 52 titles
+- Cosmic Horror: 52 titles
+- Writing: 52 titles
+- Butler: 51 titles
+- Parenthood: 51 titles
+- Agriculture: 50 titles
+- Fairy: 50 titles
+- Psychosexual: 50 titles
+- Dissociative Identities: 49 titles
+- Cult: 48 titles
+- Fairy Tale: 48 titles
+- Proxy Battle: 48 titles
+- Kids: 47 titles
+- Cosplay: 46 titles
+- Espionage: 45 titles
+- Goblin: 45 titles
+- Male Harem: 45 titles
+- Marriage: 45 titles
+- Office Lady: 45 titles
+- Aviation: 44 titles
+- Dancing: 44 titles
+- Gambling: 44 titles
+- Noir: 44 titles
+- Basketball: 43 titles
+- Medicine: 43 titles
+- Restaurant: 43 titles
+- Cyborg: 42 titles
+- Drugs: 42 titles
+- Villainess: 42 titles
+- Nun: 41 titles
+- Memory Manipulation: 40 titles
+- Swimming: 40 titles
+- Incest: 39 titles
+- Photography: 39 titles
+- Suicide: 39 titles
+- Arranged Marriage: 38 titles
+- Estranged Family: 38 titles
+- Full CGI: 38 titles
+- Musical Theater: 38 titles
+- Pirates: 37 titles
+- Mixed Media: 35 titles
+- Prison: 34 titles
+- Transgender: 34 titles
+- Cars: 33 titles
+- Fishing: 33 titles
+- Rotoscoping: 33 titles
+- Classic Literature: 32 titles
+- POV: 32 titles
+- Succubus: 32 titles
+- Volleyball: 32 titles
+- Rock Music: 30 titles
+- Agender: 29 titles
+- Alchemy: 29 titles
+- Reverse Isekai: 29 titles
+- Werewolf: 29 titles
+- Criminal Organization: 28 titles
+- Software Development: 28 titles
+- Wilderness: 28 titles
+- Astronomy: 27 titles
+- Exiled: 26 titles
+- Fitness: 26 titles
+- Office: 26 titles
+- Polyamorous: 26 titles
+- Space Opera: 26 titles
+- Horticulture: 25 titles
+- Football: 24 titles
+- Torture: 24 titles
+- Augmented Reality: 23 titles
+- Fake Relationship: 23 titles
+- Mopeds: 23 titles
+- Aromantic: 22 titles
+- Card Battle: 22 titles
+- Crossover: 22 titles
+- Fashion: 22 titles
+- Homeless: 22 titles
+- Circus: 21 titles
+- Mermaid: 21 titles
+- Asexual: 20 titles

@@ -33,6 +33,15 @@ def _report_title_not_found(title: str, suggestions: list[Any]) -> None:
         typer.echo(f"  {candidate} (id={anime.id})")
 
 
+def _format_catalog_vocab(genres: list[str], tags: list[tuple[str, int]]) -> str:
+    """Format the catalog vocabulary report for both stdout and Markdown."""
+    lines = ["# Catalog vocabulary", "", "## Genres"]
+    lines.extend(f"- {genre}" for genre in genres)
+    lines.extend(["", "## Top 250 non-adult, non-spoiler tags by title count"])
+    lines.extend(f"- {name}: {count} titles" for name, count in tags)
+    return "\n".join(lines) + "\n"
+
+
 @app.command("quiz-demo")
 def quiz_demo() -> None:
     """Print six fixed quiz evaluation sets against the local catalog."""
@@ -98,7 +107,7 @@ def quiz_demo() -> None:
                 "mood": "epic",
                 "pacing": "fast",
                 "tone": "hopeful",
-                "themes": "mystery",
+                "themes": "action",
                 "intensity": "intense",
                 "length": "long",
                 "era": "any",
@@ -140,7 +149,7 @@ def quiz_demo() -> None:
                     )
                     for rank, result in enumerate(results, 1):
                         typer.echo(
-                            f"{rank}. {result.title} | {result.year or 'N/A'} | {result.format or 'N/A'} | {', '.join(result.genres)} | {result.reason}"
+                            f"{rank}. {result.title} | {result.year or 'N/A'} | {result.episodes or 'N/A'} eps | {result.format or 'N/A'} | {', '.join(result.genres)} | {result.reason}"
                         )
                     elapsed = time.perf_counter() - started
                     progress(
@@ -205,6 +214,49 @@ def quiz_vocab_check() -> None:
                             )
                     if not missing_count:
                         typer.echo("  no unknown genres or tags")
+
+    asyncio.run(_run())
+
+
+@app.command("catalog-vocab")
+def catalog_vocab() -> None:
+    """Print and save catalog genres and the most-used eligible tags."""
+    from pathlib import Path
+
+    from sqlalchemy import func, select
+
+    from app.db.session import AsyncSessionLocal
+    from app.models.anime import Anime, Genre, Tag, anime_tags
+
+    async def _run() -> None:
+        async with AsyncSessionLocal() as session:
+            genres = list(
+                (
+                    await session.execute(select(Genre.name).order_by(Genre.name.asc()))
+                ).scalars()
+            )
+            title_count = func.count(func.distinct(anime_tags.c.anime_id))
+            tag_rows = await session.execute(
+                select(Tag.name, title_count.label("title_count"))
+                .join(anime_tags, anime_tags.c.tag_id == Tag.id)
+                .join(Anime, Anime.id == anime_tags.c.anime_id)
+                .where(
+                    Tag.is_adult.is_(False),
+                    Anime.is_adult.is_(False),
+                    anime_tags.c.is_spoiler.is_(False),
+                )
+                .group_by(Tag.id, Tag.name)
+                .order_by(title_count.desc(), Tag.name.asc())
+                .limit(250)
+            )
+            output = _format_catalog_vocab(
+                genres, [(name, count) for name, count in tag_rows.all()]
+            )
+            typer.echo(output, nl=False)
+            docs_path = (
+                Path(__file__).resolve().parents[2] / "docs" / "catalog-vocab.md"
+            )
+            docs_path.write_text(output, encoding="utf-8")
 
     asyncio.run(_run())
 
@@ -274,7 +326,7 @@ def start_demo(
                         "mood": "epic",
                         "pacing": "fast",
                         "tone": "hopeful",
-                        "themes": "mystery",
+                        "themes": "action",
                         "intensity": "intense",
                         "length": "long",
                         "era": "any",

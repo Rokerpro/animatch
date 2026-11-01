@@ -1,6 +1,7 @@
+Building recommendation index from the local catalog...
+Catalog index ready in 1.1s.
 
-## 1. Dark psychological thrillers
-Chosen answer IDs: {'mood': 'tense', 'pacing': 'balanced', 'tone': 'dark', 'themes': 'mystery', 'intensity': 'intense', 'length': 'any', 'era': 'any'}
+Starting quiz set 1/6: Dark psychological thrillers; answers={'mood': 'tense', 'pacing': 'balanced', 'tone': 'dark', 'themes': 'mystery', 'intensity': 'intense', 'length': 'any', 'era': 'any'}
 Quiz answers contain unknown vocabulary terms: ['Mind Games', 'Dark Fantasy', 'Mature Themes']
 1. Talentless Nana | 2020 | TV | Drama, Supernatural, Thriller, Mystery, Horror, Psychological | Matches your preference for Tense / thrilling and Balanced anime with Thriller, Mystery and Horror.
 2. Danganronpa: The Animation | 2013 | TV | Thriller, Sci-Fi, Mystery, Horror, Psychological | Matches your preference for Tense / thrilling and Balanced anime with Thriller, Mystery and Horror.
@@ -12,9 +13,9 @@ Quiz answers contain unknown vocabulary terms: ['Mind Games', 'Dark Fantasy', 'M
 8. The Future Diary | 2011 | TV | Action, Supernatural, Thriller, Mystery, Horror, Psychological | Matches your preference for Tense / thrilling and Balanced anime with Thriller, Mystery and Horror.
 9. B: The Beginning | 2018 | ONA | Action, Supernatural, Thriller, Mystery, Psychological | Matches your preference for Tense / thrilling and Balanced anime with Thriller, Mystery and Psychological.
 10. Death Note | 2006 | TV | Supernatural, Thriller, Mystery, Psychological | Matches your preference for Tense / thrilling and Balanced anime with Thriller, Mystery and Psychological.
+Finished quiz set 1/6 in 0.0s (10 results).
 
-## 2. Cozy slice of life
-Chosen answer IDs: {'mood': 'cozy', 'pacing': 'slow', 'tone': 'hopeful', 'themes': 'slice_of_life', 'intensity': 'chill', 'length': 'any', 'era': 'any'}
+Starting quiz set 2/6: Cozy slice of life; answers={'mood': 'cozy', 'pacing': 'slow', 'tone': 'hopeful', 'themes': 'slice_of_life', 'intensity': 'chill', 'length': 'any', 'era': 'any'}
 Quiz answers contain unknown vocabulary terms: ['Slow Life', 'Healing', 'CGDCT', 'Atmospheric', 'Redemption', 'Friendship', 'School Life', 'Daily Life', 'Moe']
 1. Deaimon: Recipe for Happiness | 2022 | TV | Slice of Life | Matches your preference for Cozy / relaxing and Slow and deliberate anime with Slice of Life.
 2. Bunny Drop | 2011 | TV | Slice of Life | Matches your preference for Cozy / relaxing and Slow and deliberate anime with Slice of Life.
@@ -26,9 +27,9 @@ Quiz answers contain unknown vocabulary terms: ['Slow Life', 'Healing', 'CGDCT',
 8. Barakamon | 2014 | TV | Slice of Life | Matches your preference for Cozy / relaxing and Slow and deliberate anime with Slice of Life.
 9. How to Keep a Mummy | 2018 | TV | Comedy, Supernatural, Slice of Life | Matches your preference for Cozy / relaxing and Slow and deliberate anime with Slice of Life.
 10. Do It Yourself!! | 2022 | TV | Slice of Life | Matches your preference for Cozy / relaxing and Slow and deliberate anime with Slice of Life.
+Finished quiz set 2/6 in 0.1s (10 results).
 
-## 3. Epic fantasy adventure
-Chosen answer IDs: {'mood': 'epic', 'pacing': 'fast', 'tone': 'hopeful', 'themes': 'fantasy', 'intensity': 'intense', 'length': 'long', 'era': 'any'}
+Starting quiz set 3/6: Epic fantasy adventure; answers={'mood': 'epic', 'pacing': 'fast', 'tone': 'hopeful', 'themes': 'fantasy', 'intensity': 'intense', 'length': 'long', 'era': 'any'}
 Quiz answers contain unknown vocabulary terms: ['Battles', 'Fast-paced', 'High Stakes Game', 'Redemption', 'Friendship']
 1. Isekai Cheat Magician | 2019 | TV | Adventure, Action, Fantasy | Matches your preference for Epic / action-packed and Fast-paced / action anime with Adventure, Action and Fantasy.
 2. Solo Leveling | 2024 | TV | Adventure, Action, Fantasy | Matches your preference for Epic / action-packed and Fast-paced / action anime with Adventure, Action and Fantasy.
@@ -40,9 +41,9 @@ Quiz answers contain unknown vocabulary terms: ['Battles', 'Fast-paced', 'High S
 8. I Parry Everything | 2024 | TV | Adventure, Action, Fantasy | Matches your preference for Epic / action-packed and Fast-paced / action anime with Adventure, Action and Fantasy.
 9. Hortensia SAGA | 2021 | TV | Adventure, Drama, Action, Fantasy | Matches your preference for Epic / action-packed and Fast-paced / action anime with Adventure, Action and Fantasy.
 10. The Beginning After the End | 2025 | TV | Adventure, Action, Fantasy | Matches your preference for Epic / action-packed and Fast-paced / action anime with Adventure, Action and Fantasy.
+Finished quiz set 3/6 in 0.1s (10 results).
 
-## 4. Romance and school life
-Chosen answer IDs: {'mood': 'emotional', 'pacing': 'balanced', 'tone': 'romantic', 'themes': 'slice_of_life', 'intensity': 'moderate', 'length': 'medium', 'era': 'any'}
+Starting quiz set 4/6: Romance and school life; answers={'mood': 'emotional', 'pacing': 'balanced', 'tone': 'romantic', 'themes': 'slice_of_life', 'intensity': 'moderate', 'length': 'medium', 'era': 'any'}
 Quiz answers contain unknown vocabulary terms: ['Grief', 'Confession', 'School Life', 'Daily Life']
 1. We Were There | 2006 | TV | Drama, Slice of Life, Romance | Matches your preference for Emotional / thought-provoking and Balanced anime with Slice of Life, Romance and Drama.
 2. Blue Spring Ride | 2014 | TV | Drama, Slice of Life, Romance | Matches your preference for Emotional / thought-provoking and Balanced anime with Slice of Life, Romance and Drama.
@@ -54,9 +55,9 @@ Quiz answers contain unknown vocabulary terms: ['Grief', 'Confession', 'School L
 8. Just Because! | 2017 | TV | Drama, Slice of Life, Romance | Matches your preference for Emotional / thought-provoking and Balanced anime with Slice of Life, Romance and Drama.
 9. Tsukigakirei | 2017 | TV | Drama, Slice of Life, Romance | Matches your preference for Emotional / thought-provoking and Balanced anime with Slice of Life, Romance and Drama.
 10. Tamako Market | 2013 | TV | Comedy, Slice of Life | Matches your preference for Emotional / thought-provoking and Balanced anime with Slice of Life.
+Finished quiz set 4/6 in 0.1s (10 results).
 
-## 5. Action-packed shounen
-Chosen answer IDs: {'mood': 'epic', 'pacing': 'fast', 'tone': 'hopeful', 'themes': 'mystery', 'intensity': 'intense', 'length': 'long', 'era': 'any'}
+Starting quiz set 5/6: Action-packed shounen; answers={'mood': 'epic', 'pacing': 'fast', 'tone': 'hopeful', 'themes': 'mystery', 'intensity': 'intense', 'length': 'long', 'era': 'any'}
 Quiz answers contain unknown vocabulary terms: ['Battles', 'Fast-paced', 'High Stakes Game', 'Redemption', 'Friendship']
 1. Naruto | 2002 | TV | Adventure, Drama, Comedy, Action, Supernatural, Fantasy | Matches your preference for Epic / action-packed and Fast-paced / action anime with Adventure and Action.
 2. Rokka -Braves of the Six Flowers- | 2015 | TV | Adventure, Action, Fantasy, Mystery | Matches your preference for Epic / action-packed and Fast-paced / action anime with Mystery, Adventure and Action.
@@ -68,9 +69,9 @@ Quiz answers contain unknown vocabulary terms: ['Battles', 'Fast-paced', 'High S
 8. Darwin's Game | 2020 | TV | Action, Thriller, Sci-Fi, Mystery | Matches your preference for Epic / action-packed and Fast-paced / action anime with Thriller, Mystery and Action.
 9. So I'm a Spider, So What? | 2021 | TV | Adventure, Comedy, Action, Fantasy, Mystery | Matches your preference for Epic / action-packed and Fast-paced / action anime with Mystery, Adventure and Action.
 10. My Hero Academia | 2016 | TV | Adventure, Comedy, Action | Matches your preference for Epic / action-packed and Fast-paced / action anime with Adventure and Action.
+Finished quiz set 5/6 in 0.1s (10 results).
 
-## 6. Sci-fi and mecha
-Chosen answer IDs: {'mood': 'epic', 'pacing': 'fast', 'tone': 'dark', 'themes': 'sci_fi', 'intensity': 'intense', 'length': 'medium', 'era': 'any'}
+Starting quiz set 6/6: Sci-fi and mecha; answers={'mood': 'epic', 'pacing': 'fast', 'tone': 'dark', 'themes': 'sci_fi', 'intensity': 'intense', 'length': 'medium', 'era': 'any'}
 Quiz answers contain unknown vocabulary terms: ['Battles', 'Fast-paced', 'High Stakes Game', 'Dark Fantasy', 'Mature Themes', 'Time Travel']
 1. Angels of Death | 2018 | TV | Adventure, Action, Thriller, Horror, Psychological | Matches your preference for Epic / action-packed and Fast-paced / action anime with Horror, Thriller and Psychological.
 2. Terra Formars | 2014 | TV | Action, Sci-Fi, Horror | Matches your preference for Epic / action-packed and Fast-paced / action anime with Horror, Sci-Fi and Action.
@@ -82,3 +83,4 @@ Quiz answers contain unknown vocabulary terms: ['Battles', 'Fast-paced', 'High S
 8. Akame ga Kill! | 2014 | TV | Adventure, Drama, Action, Fantasy, Thriller, Horror, Psychological | Matches your preference for Epic / action-packed and Fast-paced / action anime with Horror, Thriller and Psychological.
 9. Texhnolyze | 2003 | TV | Drama, Action, Sci-Fi, Psychological | Matches your preference for Epic / action-packed and Fast-paced / action anime with Psychological, Sci-Fi and Action.
 10. Gantz | 2004 | TV | Drama, Action, Supernatural, Sci-Fi, Ecchi, Horror, Psychological | Matches your preference for Epic / action-packed and Fast-paced / action anime with Horror, Psychological and Sci-Fi.
+Finished quiz set 6/6 in 0.1s (10 results).

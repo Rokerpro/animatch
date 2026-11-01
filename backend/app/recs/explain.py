@@ -370,3 +370,131 @@ def build_explanation(
         quiz_answers=quiz_answers,
         reason=reason,
     )
+
+
+def build_quiz_explanation(
+    answers: dict[str, str],
+    item_record: AnimeRecord,
+    item_vec: np.ndarray,
+    index: VectorIndex,
+) -> Explanation:
+    """Explain quiz recommendations only with selected answers this title matches."""
+    from app.recs.quiz import load_quiz_data
+
+    answer_features: list[tuple[int, str, list[tuple[float, float, str, str]]]] = []
+    quiz = load_quiz_data()
+
+    for answer_order, question in enumerate(quiz.get("questions", [])):
+        answer_id = answers.get(question["id"])
+        answer = next(
+            (
+                choice
+                for choice in question.get("answers", [])
+                if choice["id"] == answer_id
+            ),
+            None,
+        )
+        if answer is None:
+            continue
+        weights = answer.get("weights") or {}
+        features: list[tuple[float, float, str, str]] = []
+        for genre, weight in (weights.get("genres") or {}).items():
+            if genre not in item_record.genres or genre not in index.all_genres:
+                continue
+            feature_index = index.all_genres.index(genre)
+            offset = index.genre_start + feature_index
+            idf = (
+                float(index.genre_idf[feature_index])
+                if feature_index < len(index.genre_idf)
+                else 0.0
+            )
+            features.append(
+                (idf, float(weight) * float(item_vec[offset]), genre, "genre")
+            )
+        for tag, weight in (weights.get("tags") or {}).items():
+            if (
+                tag not in item_record.raw_tag_ranks
+                or item_record.raw_tag_ranks[tag] < 60
+                or tag in item_record.tag_spoilers
+                or not is_salient_tag(tag)
+                or tag not in index.all_tags
+            ):
+                continue
+            feature_index = index.all_tags.index(tag)
+            offset = index.tag_start + feature_index
+            idf = (
+                float(index.tag_idf[feature_index])
+                if feature_index < len(index.tag_idf)
+                else 0.0
+            )
+            features.append((idf, float(weight) * float(item_vec[offset]), tag, "tag"))
+
+        features.sort(
+            key=lambda feature: (-feature[0], -feature[1], feature[2].casefold())
+        )
+        if features:
+            answer_features.append(
+                (answer_order, answer.get("label", answer_id), features)
+            )
+
+    # Assign each feature to only one answer. Rarity is the primary ordering;
+    # contribution, answer order, and name make ties deterministic.
+    ranked_features = sorted(
+        (
+            (idf, contribution, answer_order, label, name, kind)
+            for answer_order, label, features in answer_features
+            for idf, contribution, name, kind in features
+        ),
+        key=lambda feature: (
+            -feature[0],
+            -feature[1],
+            feature[2],
+            feature[4].casefold(),
+        ),
+    )
+    selected_by_answer: dict[int, list[tuple[str, str]]] = {}
+    labels_by_order = {order: label for order, label, _ in answer_features}
+    seen_features: set[str] = set()
+    answer_order_in_reason: list[int] = []
+    for _, _, answer_order, _, name, kind in ranked_features:
+        feature_key = name.casefold()
+        if feature_key in seen_features:
+            continue
+        if answer_order not in selected_by_answer:
+            if len(answer_order_in_reason) >= 3:
+                continue
+            selected_by_answer[answer_order] = []
+            answer_order_in_reason.append(answer_order)
+        if len(selected_by_answer[answer_order]) >= 2:
+            continue
+        selected_by_answer[answer_order].append((name, kind))
+        seen_features.add(feature_key)
+
+    clauses: list[str] = []
+    matched_answers: list[str] = []
+    shared_genres: list[str] = []
+    shared_tags: list[str] = []
+    for answer_order in answer_order_in_reason:
+        selected_features = selected_by_answer[answer_order]
+        if not selected_features:
+            continue
+        label = labels_by_order[answer_order]
+        clauses.append(
+            f"{label} ({', '.join(feature for feature, _ in selected_features)})"
+        )
+        matched_answers.append(label)
+        for feature, kind in selected_features:
+            target = shared_genres if kind == "genre" else shared_tags
+            target.append(feature)
+
+    reason = (
+        "Matches " + " and ".join(clauses) + "."
+        if clauses
+        else "Matches your quiz preferences."
+    )
+    return Explanation(
+        shared_genres=shared_genres,
+        shared_tags=shared_tags,
+        quiz_answers=matched_answers,
+        reason=reason,
+    )

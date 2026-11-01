@@ -87,8 +87,11 @@ class Settings(BaseSettings):
 
     REC_COLD_START_K: int = 10
 
-    REC_QUIZ_SOFT_PENALTY_EPISODES: float = 0.15
+    # Penalty amount; 0.5 applies a 0.5 score multiplier outside the episode range.
+    REC_QUIZ_SOFT_PENALTY_EPISODES: float = 0.5
     REC_QUIZ_SOFT_PENALTY_YEAR: float = 0.15
+    # Quiz-only quality bonus, independently configurable for evaluation.
+    REC_QUIZ_QUALITY_WEIGHT: float = 0.25
 
     # Minimum number of shared salient features (genres + non-spoiler tags
     # with rank >= 60 on both titles) required for a recommendation to be shown.
