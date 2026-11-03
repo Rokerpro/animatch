@@ -154,6 +154,7 @@ def test_quiz_reason_only_names_answers_matched_by_result():
                 "season_year": 2020,
                 "status": "FINISHED",
                 "format": "TV",
+                "cover_image_url": "https://img.test/mystery.jpg",
                 "genres": ["Thriller", "Mystery"],
                 "tags": [],
             }
@@ -166,6 +167,7 @@ def test_quiz_reason_only_names_answers_matched_by_result():
         index=index,
     )
     assert len(results) == 1
+    assert results[0].cover_image == "https://img.test/mystery.jpg"
     reason = results[0].reason
 
     assert reason == (

@@ -1061,6 +1061,7 @@ def recommend_from_quiz(
                 title_english=rec.title,
                 title_romaji=rec.title,
                 title_native=rec.title,
+                cover_image=rec.cover_image,
                 format=rec.format,
                 episodes=rec.episodes,
                 year=rec.season_year,

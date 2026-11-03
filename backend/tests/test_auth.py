@@ -252,11 +252,12 @@ async def test_csrf_rejection_and_acceptance(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_get_me_unauthorized_and_authorized(client: AsyncClient):
-    """Verifies GET /api/auth/me returns 401 without session and user profile with session."""
-    # Without session
+async def test_get_me_anonymous_and_authorized(client: AsyncClient):
+    """Verifies GET /api/auth/me returns null anonymously and a profile when signed in."""
+    # Without session, return a normal anonymous response for frontend session checks.
     res_unauth = await client.get("/api/auth/me")
-    assert res_unauth.status_code == 401
+    assert res_unauth.status_code == 200
+    assert res_unauth.json() is None
 
     # Register and automatically set session
     reg = await client.post(
@@ -303,9 +304,10 @@ async def test_delete_account(client: AsyncClient, db_session: AsyncSession):
     )
     assert result.scalar_one_or_none() is None
 
-    # Verify subsequent GET /api/auth/me is unauthorized
+    # A deleted user's session is treated as anonymous by the session check.
     me_res = await client.get("/api/auth/me")
-    assert me_res.status_code == 401
+    assert me_res.status_code == 200
+    assert me_res.json() is None
 
 
 @pytest.mark.asyncio
@@ -547,10 +549,10 @@ async def test_register_rate_limiting(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_valid_token_for_deleted_account_returns_401(
+async def test_valid_token_for_deleted_account_returns_anonymous_profile(
     client: AsyncClient, db_session: AsyncSession
 ):
-    """Verifies that a valid, signed JWT for a deleted user returns 401 Unauthorized."""
+    """Verifies that a valid token for a deleted account resolves to an anonymous profile."""
     # Register user
     reg = await client.post(
         "/api/auth/register",
@@ -573,8 +575,8 @@ async def test_valid_token_for_deleted_account_returns_401(
 
     # Client still has session cookie, but user record is gone
     res = await client.get("/api/auth/me")
-    assert res.status_code == 401
-    assert "User not found" in res.json()["detail"]
+    assert res.status_code == 200
+    assert res.json() is None
 
 
 @pytest.mark.asyncio

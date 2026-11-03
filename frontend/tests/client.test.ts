@@ -17,4 +17,18 @@ describe("API client", () => {
     expect(urls.every((url) => new URL(url).searchParams.get("includeMature") === "true")).toBe(true);
     expect(fetch.mock.calls.every(([, init]) => init?.credentials === "include")).toBe(true);
   });
+  it("sends the exact snake_case start body and preserves the server validation message", async () => {
+    const fetch = vi.spyOn(globalThis, "fetch").mockImplementation(async () => new Response("[]", { status: 200, headers: { "Content-Type": "application/json" } }));
+    await api.startRecommendations([11, 22, 33], true);
+    const [url, init] = fetch.mock.calls[0];
+    expect(String(url)).toContain("/api/recs/start");
+    expect(init?.method).toBe("POST");
+    expect(JSON.parse(String(init?.body))).toEqual({ liked_ids: [11, 22, 33], include_mature: true });
+
+    fetch.mockImplementationOnce(async () => new Response(JSON.stringify({ detail: "Liked titles share a franchise." }), { status: 422, headers: { "Content-Type": "application/json" } }));
+    await expect(api.startRecommendations([11, 22, 33], false)).rejects.toMatchObject({
+      message: "Liked titles share a franchise.",
+      status: 422,
+    });
+  });
 });

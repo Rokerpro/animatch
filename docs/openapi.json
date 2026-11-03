@@ -682,7 +682,7 @@
           "auth"
         ],
         "summary": "Get Me",
-        "description": "Returns the profile of the currently authenticated user.",
+        "description": "Returns the current profile, or null when there is no signed-in user.",
         "operationId": "get_me_api_auth_me_get",
         "parameters": [
           {
@@ -724,7 +724,14 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserResponse"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/UserResponse"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
                 }
               }
             }

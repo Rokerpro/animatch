@@ -15,7 +15,21 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   });
   if (!response.ok) {
     let message = response.statusText;
-    try { const data = await response.json(); message = data.detail ?? message; } catch { /* response has no JSON body */ }
+    try {
+      const data: unknown = await response.json();
+      if (data && typeof data === "object" && "detail" in data) {
+        const detail = (data as { detail?: unknown }).detail;
+        if (typeof detail === "string") message = detail;
+        else if (Array.isArray(detail)) {
+          const messages = detail.flatMap((item: unknown) => {
+            if (!item || typeof item !== "object" || !("msg" in item)) return [];
+            const value = (item as { msg?: unknown }).msg;
+            return typeof value === "string" ? [value] : [];
+          });
+          if (messages.length) message = messages.join("; ");
+        }
+      }
+    } catch { /* response has no JSON body */ }
     throw new ApiError(typeof message === "string" ? message : "Request failed", response.status);
   }
   return response.json() as Promise<T>;
@@ -30,13 +44,14 @@ export function buildAnimeQuery(params: AnimeListParams): string {
   return query.toString();
 }
 export const api = {
-  anime: (params: AnimeListParams) => request<AnimeListResponse>(`/api/anime?${buildAnimeQuery(params)}`),
+  anime: (params: AnimeListParams, signal?: AbortSignal) => request<AnimeListResponse>(`/api/anime?${buildAnimeQuery(params)}`, { signal }),
   filters: (includeMature: boolean) => request<FiltersResponse>(`/api/anime/filters?includeMature=${includeMature}`),
   detail: (id: number, includeMature: boolean) => request<AnimeDetailData>(`/api/anime/${id}?includeMature=${includeMature}`),
   similar: (id: number, includeMature: boolean) => request<Recommendation[]>(`/api/recs/similar/${id}?includeMature=${includeMature}`),
   quiz: () => request<QuizQuestion[]>("/api/quiz"),
   quizRecommendations: (answers: Record<string, string>, includeMature: boolean) => request<QuizResponse>("/api/recs/quiz", { method: "POST", body: JSON.stringify({ answers, includeMature }) }),
-  me: () => request<UserResponse>("/api/auth/me"),
+  startRecommendations: (likedIds: number[], includeMature: boolean) => request<Recommendation[]>("/api/recs/start", { method: "POST", body: JSON.stringify({ liked_ids: likedIds, include_mature: includeMature }) }),
+  me: () => request<UserResponse | null>("/api/auth/me"),
   providers: () => request<AuthProvidersResponse>("/api/auth/providers"),
   login: (body: LoginRequest) => request<UserResponse>("/api/auth/login", { method: "POST", body: JSON.stringify(body) }),
   register: (body: RegisterRequest) => request<UserResponse>("/api/auth/register", { method: "POST", body: JSON.stringify(body) }),

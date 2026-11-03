@@ -203,12 +203,12 @@ async def logout(
     return {"message": "Logged out successfully"}
 
 
-@router.get("/me", response_model=UserResponse)
+@router.get("/me", response_model=UserResponse | None)
 async def get_me(
-    current_user: Annotated[User, Depends(get_current_user)],
-) -> UserResponse:
-    """Returns the profile of the currently authenticated user."""
-    return UserResponse.model_validate(current_user)
+    current_user: Annotated[User | None, Depends(get_optional_user)],
+) -> UserResponse | None:
+    """Returns the current profile, or null when there is no signed-in user."""
+    return UserResponse.model_validate(current_user) if current_user else None
 
 
 @router.patch("/me", response_model=UserResponse)

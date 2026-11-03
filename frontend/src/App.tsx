@@ -5,6 +5,7 @@ import { ToastProvider } from "./components/ToastProvider";
 import { AuthProvider } from "./auth/AuthContext";
 import { BrowsePage } from "./pages/BrowsePage";
 import { AnimeDetailPage } from "./pages/AnimeDetailPage";
+import { SimilarAnimePage } from "./pages/SimilarAnimePage";
 import { LoginPage, RegisterPage, SettingsPage } from "./pages/AuthPages";
 import { LandingPage, QuizPage, ResultsPage } from "./pages/QuizPages";
 
@@ -42,6 +43,7 @@ export function App() {
             <Route path="/results" element={<ResultsPage />} />
             <Route path="/browse" element={<BrowsePage />} />
             <Route path="/anime/:id" element={<AnimeDetailPage />} />
+            <Route path="/similar/:id" element={<SimilarAnimePage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/settings" element={<SettingsPage />} />
