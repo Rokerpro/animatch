@@ -4,7 +4,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 import app.models  # noqa: F401
-from app.db.session import Base
+from app.db.session import Base, enable_sqlite_foreign_keys
 
 
 def normalized_fts_value(column: str) -> str:
@@ -54,6 +54,7 @@ FTS5_STATEMENTS = [
 
 async def init_db(engine: AsyncEngine) -> None:
     """Creates all metadata tables and SQLite FTS5 table + triggers if on SQLite."""
+    enable_sqlite_foreign_keys(engine)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
         if conn.dialect.name == "sqlite":

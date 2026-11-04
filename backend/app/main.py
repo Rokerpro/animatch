@@ -9,6 +9,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from app.api.anime import router as anime_router
 from app.api.auth import router as auth_router
 from app.api.health import router as health_router
+from app.api.list_entries import router as list_entries_router
 from app.api.recs import router as recs_router
 from app.core.config import settings, setup_logging
 from app.db.session import AsyncSessionLocal
@@ -76,6 +77,7 @@ def create_app() -> FastAPI:
     app.include_router(health_router, prefix="/api")
     app.include_router(anime_router, prefix="/api")
     app.include_router(auth_router, prefix="/api")
+    app.include_router(list_entries_router, prefix="/api")
     app.include_router(recs_router, prefix="/api")
 
     return app

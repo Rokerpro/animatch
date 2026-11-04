@@ -88,3 +88,43 @@ class CsrfTokenResponse(BaseModel):
 
     csrf_token: str
 
+
+class TasteProfileRequest(BaseModel):
+    """Schema for PUT /api/me/taste-profile."""
+
+    quiz_answers: dict[str, str] | None = None
+    liked_ids: list[int] = Field(default_factory=list)
+
+    @field_validator("quiz_answers", mode="before")
+    @classmethod
+    def validate_quiz_answers(cls, v: dict[str, str] | None) -> dict[str, str] | None:
+        if v is None:
+            return None
+        from app.recs.quiz import load_quiz_data
+
+        quiz_data = load_quiz_data()
+        q_map = {q["id"]: q for q in quiz_data.get("questions", [])}
+        for qid, aid in v.items():
+            q = q_map.get(qid)
+            if not q:
+                raise ValueError(f"Invalid quiz question id: {qid}")
+            ans = next((a for a in q.get("answers", []) if a["id"] == aid), None)
+            if not ans:
+                raise ValueError(f"Invalid answer id '{aid}' for question '{qid}'")
+        return v
+
+    @field_validator("liked_ids")
+    @classmethod
+    def validate_liked_ids(cls, v: list[int]) -> list[int]:
+        if len(v) > 5:
+            raise ValueError("liked_ids may contain at most 5 titles")
+        if len(set(v)) != len(v):
+            raise ValueError("liked_ids must not contain duplicates")
+        return v
+
+
+class TasteProfileResponse(BaseModel):
+    """Schema for GET /api/me/taste-profile."""
+
+    quiz_answers: dict[str, str] | None = None
+    liked_ids: list[int] = Field(default_factory=list)

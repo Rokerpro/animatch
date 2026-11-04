@@ -1,10 +1,11 @@
 import json
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Awaitable, Callable
 from pathlib import Path
 from typing import Any
 
 import pytest
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -13,9 +14,11 @@ from sqlalchemy.ext.asyncio import (
 )
 from sqlalchemy.pool import StaticPool
 
+from app.core.config import settings
 from app.db.init_db import init_db
 from app.db.session import get_db
 from app.main import create_app
+from app.models.anime import Anime
 from app.services.catalog_sync import CatalogSyncService
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
@@ -73,6 +76,23 @@ async def client(
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
+
+
+@pytest.fixture
+def register_user(client: AsyncClient) -> Callable[[str], Awaitable[str]]:
+    """Register a user through the auth route and return its CSRF token."""
+
+    async def register(email: str) -> str:
+        response = await client.post(
+            "/api/auth/register",
+            json={"email": email, "password": "secure_password_12345"},
+        )
+        assert (
+            response.status_code == 201
+        ), f"registration payload failed: {response.text}"
+        return response.cookies[settings.CSRF_COOKIE_NAME]
+
+    return register
 
 
 @pytest.fixture
@@ -134,3 +154,9 @@ async def seeded_catalog(
         parsed_items.append(parsed)
 
     await service.upsert_batch(db_session, parsed_items)
+    franchise_members = await db_session.execute(
+        select(Anime).where(Anime.id.in_([154587, 5114]))
+    )
+    for anime in franchise_members.scalars():
+        anime.franchise_id = 154587
+    await db_session.commit()

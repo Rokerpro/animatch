@@ -731,7 +731,8 @@
                     {
                       "type": "null"
                     }
-                  ]
+                  ],
+                  "title": "Response Get Me Api Auth Me Get"
                 }
               }
             }
@@ -843,7 +844,7 @@
           "auth"
         ],
         "summary": "Delete Me",
-        "description": "Deletes the current user account and clears session cookies.",
+        "description": "Deletes the current user account and clears session cookies.\n\nList entries cascade delete via FK. Taste profile is cleared.",
         "operationId": "delete_me_api_auth_me_delete",
         "parameters": [
           {
@@ -906,6 +907,162 @@
                     "type": "string"
                   },
                   "title": "Response Delete Me Api Auth Me Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/me/taste-profile": {
+      "put": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Put Taste Profile",
+        "description": "Saves the user's quiz answers and liked titles to their taste profile.\n\nValidates:\n- liked_ids: exist in catalog, max 5, no duplicates\n- quiz_answers: valid question/answer IDs against quiz.json\n- Nothing else is stored",
+        "operationId": "put_taste_profile_api_auth_me_taste_profile_put",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Csrf-Token"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TasteProfileRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TasteProfileResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Get Taste Profile",
+        "description": "Returns the current user's taste profile, or an empty profile if not set.",
+        "operationId": "get_taste_profile_api_auth_me_taste_profile_get",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TasteProfileResponse"
                 }
               }
             }
@@ -1049,6 +1206,341 @@
             "content": {
               "application/json": {
                 "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/list": {
+      "get": {
+        "tags": [
+          "list"
+        ],
+        "summary": "Get List",
+        "description": "Returns paginated watchlist entries for the authenticated user.\n\n- Filter by status\n- Sort by updated_at (desc), rating (desc), or title (asc)\n- Pagination with total count\n- Each item includes the same card fields as the catalog",
+        "operationId": "get_list_api_list_get",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by watchlist status",
+              "title": "Status"
+            },
+            "description": "Filter by watchlist status"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Sort by: updated, rating, title",
+              "default": "updated",
+              "title": "Sort"
+            },
+            "description": "Sort by: updated, rating, title"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Page number",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "Page number"
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "description": "Items per page (max 50)",
+              "default": 24,
+              "title": "Pagesize"
+            },
+            "description": "Items per page (max 50)"
+          },
+          {
+            "name": "includeMature",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Include adult content",
+              "default": false,
+              "title": "Includemature"
+            },
+            "description": "Include adult content"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get List Api List Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/list/{anime_id}": {
+      "put": {
+        "tags": [
+          "list"
+        ],
+        "summary": "Put List Entry",
+        "description": "Create or update a list entry for the current user.\n\n- Validates rating 1-10\n- Validates status\n- 404 if anime not found\n- Mature titles follow include_mature rule",
+        "operationId": "put_list_entry_api_list__anime_id__put",
+        "parameters": [
+          {
+            "name": "anime_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Anime Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Csrf-Token"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true,
+                "title": "Payload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Put List Entry Api List  Anime Id  Put"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "list"
+        ],
+        "summary": "Delete List Entry",
+        "description": "Delete a list entry for the current user.\n\nReturns 404 if entry doesn't exist.",
+        "operationId": "delete_list_entry_api_list__anime_id__delete",
+        "parameters": [
+          {
+            "name": "anime_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Anime Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Csrf-Token"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Delete List Entry Api List  Anime Id  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -1311,7 +1803,7 @@
           "recommendations"
         ],
         "summary": "Get My Recommendations",
-        "description": "Personalised recommendations for the authenticated user based on their taste vector.\n\nFalls back to a quality-ranked popular list if the user has neither ratings nor a quiz prior.",
+        "description": "Personalised recommendations for the authenticated user based on their list.\n\nBuilds recommendations from:\n- Saved taste profile (quiz_answers and liked_ids via the same logic as /api/recs/start)\n- User's ratings on their list (completed with rating)\n- Blended with n/(n+10) weighting, centered on user's own mean\n- Excludes everything already on their list\n- With no profile and no ratings, returns empty list with clear message (no popular fallback)",
         "operationId": "get_my_recommendations_api_recs_me_get",
         "parameters": [
           {
@@ -2356,6 +2848,62 @@
           "name"
         ],
         "title": "TagDetail"
+      },
+      "TasteProfileRequest": {
+        "properties": {
+          "quiz_answers": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quiz Answers"
+          },
+          "liked_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Liked Ids"
+          }
+        },
+        "type": "object",
+        "title": "TasteProfileRequest",
+        "description": "Schema for PUT /api/me/taste-profile."
+      },
+      "TasteProfileResponse": {
+        "properties": {
+          "quiz_answers": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quiz Answers"
+          },
+          "liked_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Liked Ids"
+          }
+        },
+        "type": "object",
+        "title": "TasteProfileResponse",
+        "description": "Schema for GET /api/me/taste-profile."
       },
       "UserLoginRequest": {
         "properties": {

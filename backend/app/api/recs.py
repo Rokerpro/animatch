@@ -14,11 +14,13 @@ from typing import Annotated
 
 import numpy as np
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_optional_user
 from app.core.config import settings
 from app.db.session import get_db
+from app.models.list_entry import ListEntry
 from app.models.user import User
 from app.recs.engine import (
     MatureSeedError,
@@ -189,12 +191,18 @@ async def get_similar_anime(
 @router.get("/recs/me", response_model=list[RecResult])
 async def get_my_recommendations(
     current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
     n: Annotated[int, Query(ge=1, le=50)] = settings.REC_DEFAULT_N,
     include_mature: Annotated[bool, Query(alias="includeMature")] = False,
 ) -> list[RecResult]:
-    """Personalised recommendations for the authenticated user based on their taste vector.
+    """Personalised recommendations for the authenticated user based on their list.
 
-    Falls back to a quality-ranked popular list if the user has neither ratings nor a quiz prior.
+    Builds recommendations from:
+    - Saved taste profile (quiz_answers and liked_ids via the same logic as /api/recs/start)
+    - User's ratings on their list (completed with rating)
+    - Blended with n/(n+10) weighting, centered on user's own mean
+    - Excludes everything already on their list
+    - With no profile and no ratings, returns empty list with clear message (no popular fallback)
     """
     index = get_index()
     if index.is_empty():
@@ -202,15 +210,71 @@ async def get_my_recommendations(
 
     effective_mature = include_mature or current_user.show_mature
 
-    user_items = []
-    quiz_prior = None
+    # Get user's list entries
+    stmt = select(ListEntry).where(ListEntry.user_id == current_user.id)
+    result = await db.execute(stmt)
+    list_entries = result.scalars().all()
 
+    # Build user_items from list entries (only completed with rating, and dropped)
+    user_items = []
+    for entry in list_entries:
+        item = {
+            "anime_id": entry.anime_id,
+            "status": entry.status,
+        }
+        if entry.rating is not None:
+            item["rating"] = entry.rating
+        user_items.append(item)
+
+    # Get quiz prior from taste_profile (if any)
+    quiz_prior = None
+    liked_ids = []
     if current_user.taste_profile:
         tp = current_user.taste_profile
-        user_items = tp.get("items", [])
         if "quiz_prior_vec" in tp:
             quiz_prior = np.array(tp["quiz_prior_vec"], dtype=np.float32)
+        elif tp.get("quiz_answers"):
+            quiz_prior, _, _ = build_quiz_vector(tp["quiz_answers"], index)
+        liked_ids = tp.get("liked_ids", [])
 
+    listed_ids = {item["anime_id"] for item in user_items}
+    user_items.extend(
+        {"anime_id": anime_id, "status": "completed", "rating": 10}
+        for anime_id in liked_ids
+        if anime_id not in listed_ids
+    )
+    liked_franchises = {
+        record.franchise_id
+        for anime_id in liked_ids
+        if (record := index.get(anime_id)) is not None
+        and record.franchise_id is not None
+    }
+    excluded_ids = listed_ids | set(liked_ids)
+    user_items.extend(
+        {"anime_id": record.id, "status": "planning"}
+        for record in index.records
+        if record.franchise_id in liked_franchises and record.id not in excluded_ids
+    )
+
+    # If no profile and no ratings, return empty list with message
+    has_ratings = any(
+        item.get("rating") is not None
+        for item in user_items
+        if item.get("status") == "completed"
+    )
+    has_profile = bool(
+        current_user.taste_profile
+        and (current_user.taste_profile.get("quiz_answers") or liked_ids)
+    )
+
+    if not has_ratings and not has_profile:
+        return []
+
+    # Use the engine's recommend_from_profile which already handles:
+    # - Rating centering with n/(n+10) weighting
+    # - Quiz prior blending
+    # - Excluding list entries
+    # - Salient feature gate
     return recommend_from_profile(
         user_items=user_items,
         n=n,

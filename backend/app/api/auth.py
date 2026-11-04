@@ -23,6 +23,8 @@ from app.schemas.user import (
     AuthProvidersResponse,
     CsrfTokenResponse,
     GoogleLinkRequest,
+    TasteProfileRequest,
+    TasteProfileResponse,
     UserLoginRequest,
     UserRegisterRequest,
     UserResponse,
@@ -229,6 +231,64 @@ async def update_me(
     return UserResponse.model_validate(current_user)
 
 
+@router.put("/me/taste-profile", response_model=TasteProfileResponse)
+async def put_taste_profile(
+    payload: TasteProfileRequest,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _: Annotated[None, Depends(verify_csrf)],
+) -> TasteProfileResponse:
+    """Saves the user's quiz answers and liked titles to their taste profile.
+
+    Validates:
+    - liked_ids: exist in catalog, max 5, no duplicates
+    - quiz_answers: valid question/answer IDs against quiz.json
+    - Nothing else is stored
+    """
+    # Validate liked_ids exist in catalog
+    if payload.liked_ids:
+        from app.models.anime import Anime
+
+        stmt = select(Anime.id).where(Anime.id.in_(payload.liked_ids))
+        result = await db.execute(stmt)
+        found_ids = {row[0] for row in result.fetchall()}
+        missing = set(payload.liked_ids) - found_ids
+        if missing:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"One or more liked_ids not found in catalog: {sorted(missing)}",
+            )
+
+    # Store only quiz_answers and liked_ids
+    taste_prof = {}
+    if payload.quiz_answers:
+        taste_prof["quiz_answers"] = payload.quiz_answers
+    if payload.liked_ids:
+        taste_prof["liked_ids"] = payload.liked_ids
+
+    current_user.taste_profile = taste_prof if taste_prof else None
+    await db.commit()
+    await db.refresh(current_user)
+
+    return TasteProfileResponse(
+        quiz_answers=current_user.taste_profile.get("quiz_answers") if current_user.taste_profile else None,
+        liked_ids=current_user.taste_profile.get("liked_ids", []) if current_user.taste_profile else [],
+    )
+
+
+@router.get("/me/taste-profile", response_model=TasteProfileResponse)
+async def get_taste_profile(
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> TasteProfileResponse:
+    """Returns the current user's taste profile, or an empty profile if not set."""
+    if current_user.taste_profile:
+        return TasteProfileResponse(
+            quiz_answers=current_user.taste_profile.get("quiz_answers"),
+            liked_ids=current_user.taste_profile.get("liked_ids", []),
+        )
+    return TasteProfileResponse()
+
+
 @router.delete("/me")
 async def delete_me(
     response: Response,
@@ -236,7 +296,11 @@ async def delete_me(
     db: Annotated[AsyncSession, Depends(get_db)],
     _: Annotated[None, Depends(verify_csrf)],
 ) -> dict[str, str]:
-    """Deletes the current user account and clears session cookies."""
+    """Deletes the current user account and clears session cookies.
+
+    List entries cascade delete via FK. Taste profile is cleared.
+    """
+    current_user.taste_profile = None
     await db.delete(current_user)
     await db.commit()
     clear_auth_cookies(response)
