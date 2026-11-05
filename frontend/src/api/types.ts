@@ -31,6 +31,7 @@ export interface CsrfTokenResponse { csrf_token: string }
 export interface LoginRequest { email: string; password: string }
 export interface RegisterRequest extends LoginRequest { display_name?: string | null }
 export interface UserUpdateRequest { display_name?: string | null; show_mature?: boolean | null }
+export interface TasteProfile { quiz_answers: Record<string, string> | null; liked_ids: number[] }
 export interface AnimeListParams {
   q?: string; genres?: string[]; excludeGenres?: string[]; tags?: string[]; format?: string;
   yearMin?: number; yearMax?: number; minScore?: number; maxEpisodes?: number; status?: string;

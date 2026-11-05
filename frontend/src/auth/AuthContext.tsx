@@ -4,18 +4,27 @@ import { api } from "../api/client";
 import { queryKeys, useMe } from "../api/hooks";
 import { useToast } from "../components/useToast";
 import { AuthContext } from "./context";
+import { clearSavedQuiz } from "../quizStorage";
+import { clearSavedStart } from "../startStorage";
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { data: user } = useMe();
+  const { data: user, isLoading } = useMe();
   const client = useQueryClient(); const { showToast } = useToast();
   const mature = user?.show_mature ?? false;
   const refresh = useCallback(async () => { await client.invalidateQueries({ queryKey: queryKeys.me }); }, [client]);
   const setMature = useCallback(async (value: boolean) => {
     if (!user) return;
     try { await api.updateMe({ show_mature: value }); await refresh(); showToast("Mature content preference saved", "success"); }
-    catch { showToast("Could not save preference", "error"); }
+    catch (error) { showToast(error instanceof Error ? error.message : "Could not save preference", "error"); }
     await client.invalidateQueries({ queryKey: ["anime"] });
     await client.invalidateQueries({ queryKey: ["similar"] });
   }, [client, refresh, showToast, user]);
-  const value = useMemo(() => ({ user: user ?? null, mature, setMature, refresh }), [user, mature, setMature, refresh]);
+  const signOut = useCallback(async () => {
+    try { await api.logout(); } finally {
+      clearSavedQuiz(); clearSavedStart();
+      client.setQueryData(queryKeys.me, null);
+      await client.invalidateQueries();
+    }
+  }, [client]);
+  const value = useMemo(() => ({ user: user ?? null, authLoading: isLoading, mature, setMature, refresh, signOut }), [user, isLoading, mature, setMature, refresh, signOut]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

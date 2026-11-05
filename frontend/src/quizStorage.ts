@@ -1,7 +1,7 @@
 import type { AnimeCardData, Recommendation } from "./api/types";
 
 export const QUIZ_STORAGE_KEY = "animatch.phase5.v1";
-export interface SavedQuiz { answers: Record<string, string>; results: Recommendation[]; includeMature: boolean }
+export interface SavedQuiz { answers: Record<string, string>; results: Recommendation[]; includeMature: boolean; profileSavedFor?: number }
 export interface QuizDraft {
   answers: Record<string, string>;
   step: number;
@@ -79,6 +79,11 @@ export function saveQuiz(value: SavedQuiz): boolean {
   memoryFallback = value;
   draftMemoryFallback = null;
   try { localStorage.setItem(QUIZ_STORAGE_KEY, JSON.stringify(value)); storageUnavailable = false; return true; } catch { storageUnavailable = true; return false; }
+}
+
+export function markQuizProfileSaved(userId: number): void {
+  const saved = readSavedQuiz();
+  if (saved) saveQuiz({ ...saved, profileSavedFor: userId });
 }
 
 export function clearSavedQuiz(): void { memoryFallback = null; draftMemoryFallback = null; storageUnavailable = false; try { localStorage.removeItem(QUIZ_STORAGE_KEY); } catch { storageUnavailable = true; /* Storage may be unavailable. */ } }

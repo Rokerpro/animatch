@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 type PosterImageProps = {
   src: string | null | undefined;
@@ -7,9 +7,8 @@ type PosterImageProps = {
 };
 
 export function PosterImage({ src, alt, className = "" }: PosterImageProps) {
-  const [failed, setFailed] = useState(false);
-
-  useEffect(() => setFailed(false), [src]);
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  const failed = Boolean(src && failedSrc === src);
 
   return (
     <div className={`poster-art ${className}`.trim()}>
@@ -23,11 +22,11 @@ export function PosterImage({ src, alt, className = "" }: PosterImageProps) {
           alt={alt}
           decoding="async"
           loading="lazy"
-          onError={() => setFailed(true)}
+          onError={() => setFailedSrc(src)}
           src={src}
           onLoad={(e) => {
             if ((e.target as HTMLImageElement).naturalWidth === 0) {
-              setFailed(true);
+              setFailedSrc(src);
             }
           }}
         />

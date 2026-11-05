@@ -58,9 +58,8 @@ describe("Phase 5 quiz flow", () => {
     await selectAnimeTitle();
     expect(screen.getByText("Picked Anime")).toBeTruthy();
 
-    const retakeQuiz = screen.getByRole("link", { name: "Retake the quiz" });
-    expect(retakeQuiz).toHaveAttribute("aria-current", "page");
-    fireEvent.click(retakeQuiz);
+    expect(screen.queryByRole("link", { name: "Retake the quiz" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Take the quiz instead" }));
     expect(screen.getByTestId("current-location")).toHaveTextContent("/quiz");
     expect(screen.getByRole("heading", { name: "What mood?" })).toBeTruthy();
     expect((screen.getByLabelText("Cozy") as HTMLInputElement).checked).toBe(true);

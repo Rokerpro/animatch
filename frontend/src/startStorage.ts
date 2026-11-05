@@ -6,6 +6,7 @@ export interface SavedStart {
   liked_ids: number[];
   results: Recommendation[];
   include_mature: boolean;
+  profile_saved_for?: number;
 }
 
 let memoryFallback: SavedStart | null = null;
@@ -43,6 +44,11 @@ export function saveStart(value: SavedStart): boolean {
     storageUnavailable = true;
     return false;
   }
+}
+
+export function markStartProfileSaved(userId: number): void {
+  const saved = readSavedStart();
+  if (saved) saveStart({ ...saved, profile_saved_for: userId });
 }
 
 export function clearSavedStart(): void {

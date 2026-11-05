@@ -1,7 +1,8 @@
-import type { AnimeDetailData, AnimeListParams, AnimeListResponse, AuthProvidersResponse, CsrfTokenResponse, FiltersResponse, LoginRequest, Recommendation, RegisterRequest, UserResponse, UserUpdateRequest, QuizQuestion, QuizResponse } from "./types";
+import type { AnimeDetailData, AnimeListParams, AnimeListResponse, AuthProvidersResponse, CsrfTokenResponse, FiltersResponse, LoginRequest, Recommendation, RegisterRequest, UserResponse, UserUpdateRequest, QuizQuestion, QuizResponse, TasteProfile } from "./types";
 
 export function normalizeApiBaseUrl(configuredBase: string | undefined) {
-  const value = configuredBase ?? "http://localhost:8000";
+  // Use the same origin by default so Vite or Nginx can proxy /api to the backend.
+  const value = configuredBase ?? "/api";
   return value.replace(/\/api\/?$/, "").replace(/\/$/, "");
 }
 const baseUrl = normalizeApiBaseUrl(import.meta.env.VITE_API_URL);
@@ -48,13 +49,27 @@ export const api = {
   filters: (includeMature: boolean) => request<FiltersResponse>(`/api/anime/filters?includeMature=${includeMature}`),
   detail: (id: number, includeMature: boolean) => request<AnimeDetailData>(`/api/anime/${id}?includeMature=${includeMature}`),
   similar: (id: number, includeMature: boolean) => request<Recommendation[]>(`/api/recs/similar/${id}?includeMature=${includeMature}`),
-  quiz: () => request<QuizQuestion[]>("/api/quiz"),
+  quiz: (signal?: AbortSignal) => request<QuizQuestion[]>("/api/quiz", { signal }),
   quizRecommendations: (answers: Record<string, string>, includeMature: boolean) => request<QuizResponse>("/api/recs/quiz", { method: "POST", body: JSON.stringify({ answers, includeMature }) }),
   startRecommendations: (likedIds: number[], includeMature: boolean) => request<Recommendation[]>("/api/recs/start", { method: "POST", body: JSON.stringify({ liked_ids: likedIds, include_mature: includeMature }) }),
+  myRecommendations: (includeMature: boolean) => request<Recommendation[]>(`/api/recs/me?includeMature=${includeMature}`),
   me: () => request<UserResponse | null>("/api/auth/me"),
   providers: () => request<AuthProvidersResponse>("/api/auth/providers"),
   login: (body: LoginRequest) => request<UserResponse>("/api/auth/login", { method: "POST", body: JSON.stringify(body) }),
   register: (body: RegisterRequest) => request<UserResponse>("/api/auth/register", { method: "POST", body: JSON.stringify(body) }),
+  logout: async () => {
+    const csrf = await api.csrf();
+    return request<Record<string, string>>("/api/auth/logout", { method: "POST", headers: { "X-CSRF-Token": csrf.csrf_token } });
+  },
+  tasteProfile: () => request<TasteProfile>("/api/auth/me/taste-profile"),
+  saveTasteProfile: async (body: TasteProfile) => {
+    const csrf = await api.csrf();
+    return request<TasteProfile>("/api/auth/me/taste-profile", { method: "PUT", headers: { "X-CSRF-Token": csrf.csrf_token }, body: JSON.stringify(body) });
+  },
+  deleteMe: async () => {
+    const csrf = await api.csrf();
+    return request<Record<string, string>>("/api/auth/me", { method: "DELETE", headers: { "X-CSRF-Token": csrf.csrf_token } });
+  },
   googleLogin: () => `${baseUrl}/api/auth/google/login`,
   csrf: () => request<CsrfTokenResponse>("/api/auth/csrf"),
   updateMe: async (body: UserUpdateRequest) => {

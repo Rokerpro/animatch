@@ -168,6 +168,12 @@
     color: theme("colors.content.primary");
   }
   .header-nav a { display: inline-flex; min-height: 44px; align-items: center; }
+  .account-menu-wrap { position: relative; }
+  .account-menu-button { display: inline-flex; width: 40px; height: 40px; align-items: center; justify-content: center; border: 1px solid theme("colors.surface.border"); border-radius: 50%; background: theme("colors.surface.raised"); padding: 0; color: theme("colors.content.primary"); cursor: pointer; }
+  .account-menu { position: absolute; z-index: 30; top: calc(100% + 7px); right: 0; display: grid; min-width: 168px; border: 1px solid theme("colors.surface.border"); border-radius: 10px; background: theme("colors.surface.raised"); padding: 5px; box-shadow: theme("boxShadow.panel"); }
+  .account-menu a, .account-menu button { display: flex; min-height: 40px; align-items: center; border: 0; border-radius: 6px; background: transparent; padding: 0 10px; color: theme("colors.content.secondary"); text-align: left; cursor: pointer; }
+  .account-menu a:hover, .account-menu button:hover, .account-menu a[aria-current="page"] { background: theme("colors.accent.subtle"); color: theme("colors.content.primary"); }
+  .account-mobile-link { display: none !important; }
 
   .app-main {
     width: 100%;
@@ -484,6 +490,23 @@
   .auth-form .auth-error p { color: theme("colors.content.primary"); }
   .google-button { display: block; margin-top: 12px; border: 1px solid theme("colors.surface.border"); border-radius: 10px; padding: 12px; text-align: center; }
   .setting-toggle { display: flex; align-items: center; gap: 10px; }
+  .settings-page { width: min(100% - 32px, 720px); margin: 40px auto 64px; }
+  .settings-page > h1 { margin: 0; font-size: 24px; font-weight: 550; }
+  .settings-email { margin: 7px 0 22px; color: theme("colors.content.secondary"); font-size: 13px; }
+  .settings-section { display: grid; gap: 15px; border: 1px solid theme("colors.surface.border"); border-radius: 14px; background: theme("colors.surface.raised"); padding: 22px; box-shadow: theme("boxShadow.panel"); }
+  .settings-section h2 { margin: 0; font-size: 16px; font-weight: 550; }
+  .settings-section > label:not(.setting-toggle) { display: grid; gap: 7px; color: theme("colors.content.secondary"); font-size: 13px; }
+  .settings-section input:not([type="checkbox"]) { width: 100%; min-height: 42px; border: 1px solid theme("colors.surface.border"); border-radius: 8px; background: theme("colors.surface.base"); padding: 0 11px; color: theme("colors.content.primary"); }
+  .settings-section .primary-action { justify-self: start; }
+  .settings-link { justify-self: start; color: theme("colors.accent.text"); }
+  .settings-error { margin: 0; color: theme("colors.status.error"); font-size: 13px; }
+  .danger-section { margin-top: 18px; border-color: color-mix(in srgb, theme("colors.status.error") 52%, theme("colors.surface.border")); }
+  .danger-section > p { margin: 0; color: theme("colors.content.secondary"); font-size: 13px; line-height: 1.6; }
+  .delete-account-button { justify-self: start; min-height: 42px; border: 1px solid theme("colors.status.error"); border-radius: 9px; background: transparent; padding: 0 14px; color: theme("colors.status.error"); cursor: pointer; }
+  .delete-account-button:hover:not(:disabled) { background: color-mix(in srgb, theme("colors.status.error") 14%, transparent); }
+  .delete-account-button:disabled { cursor: not-allowed; opacity: .48; }
+  .empty-recommendations { display: grid; justify-items: start; gap: 12px; border: 1px solid theme("colors.surface.border"); border-radius: 14px; background: theme("colors.surface.raised"); padding: 22px; }
+  .empty-recommendations p { margin: 0; color: theme("colors.content.secondary"); }
   .mature-toggle { border: 1px solid theme("colors.surface.border"); border-radius: 999px; background: theme("colors.surface.raised"); padding: 5px 9px; color: theme("colors.content.secondary"); font-size: 11px; font-weight: 600; line-height: 1.2; cursor: pointer; transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease; }
   .mature-toggle:hover { border-color: theme("colors.content.secondary"); color: theme("colors.content.primary"); }
   .mature-toggle.is-active, .mature-toggle.is-active:hover { border-color: theme("colors.accent.ui"); background: theme("colors.accent.ui"); color: theme("colors.content.primary"); }
@@ -658,6 +681,10 @@
     gap: 7px;
     font-size: 11px;
   }
+  .header-nav .for-you-link { display: none; }
+  .header-nav .browse-anime-link { display: none; }
+  .account-mobile-link { display: flex !important; }
+  .account-menu { min-width: 190px; }
   .mature-toggle { padding: 4px 6px; }
   .mature-toggle { min-height: 44px; }
 

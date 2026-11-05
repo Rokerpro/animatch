@@ -11,7 +11,7 @@ export const queryKeys = {
 };
 export const useAnime = (params: AnimeListParams) => useQuery({ queryKey: queryKeys.anime(params), queryFn: () => api.anime(params) });
 export const useFilters = (mature: boolean) => useQuery({ queryKey: queryKeys.filters(mature), queryFn: () => api.filters(mature) });
-export const useAnimeDetail = (id: number, mature: boolean) => useQuery({ queryKey: queryKeys.detail(id, mature), queryFn: () => api.detail(id, mature) });
+export const useAnimeDetail = (id: number, mature: boolean, enabled = true) => useQuery({ queryKey: queryKeys.detail(id, mature), queryFn: () => api.detail(id, mature), enabled });
 export const useSimilar = (id: number, mature: boolean) => useQuery({ queryKey: queryKeys.similar(id, mature), queryFn: () => api.similar(id, mature) });
 export const useMe = () => useQuery({ queryKey: queryKeys.me, queryFn: () => api.me(), retry: false });
 export const useProviders = () => useQuery({ queryKey: queryKeys.providers, queryFn: () => api.providers() });

@@ -12,9 +12,11 @@ describe("API client", () => {
     await api.filters(true);
     await api.detail(2, true);
     await api.similar(2, true);
+    await api.myRecommendations(true);
     const urls = fetch.mock.calls.map(([input]) => String(input));
-    expect(urls).toHaveLength(4);
+    expect(urls).toHaveLength(5);
     expect(urls.every((url) => new URL(url).searchParams.get("includeMature") === "true")).toBe(true);
+    expect(urls[4]).toContain("/api/recs/me?includeMature=true");
     expect(fetch.mock.calls.every(([, init]) => init?.credentials === "include")).toBe(true);
   });
   it("sends the exact snake_case start body and preserves the server validation message", async () => {

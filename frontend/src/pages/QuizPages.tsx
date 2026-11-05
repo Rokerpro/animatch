@@ -9,8 +9,9 @@ import { PosterSkeleton } from "../components/RequestStates";
 import { TitleAutocomplete } from "../components/TitleAutocomplete";
 import { useAuth } from "../auth/useAuth";
 import { Check, CircleAlert, Clapperboard, ListChecks, Sparkles, X } from "lucide-react";
-import { clearQuizDraft, readQuizDraft, readSavedQuiz, saveQuiz, saveQuizDraft } from "../quizStorage";
-import { readSavedStart, saveStart } from "../startStorage";
+import { clearQuizDraft, clearSavedQuiz, markQuizProfileSaved, readQuizDraft, readSavedQuiz, saveQuiz, saveQuizDraft } from "../quizStorage";
+import { clearSavedStart, markStartProfileSaved, readSavedStart, saveStart } from "../startStorage";
+import { useOptionalToast } from "../components/useToast";
 import { StartResultsPage } from "./StartResultsPage";
 
 const FRANCHISE_VALIDATION_MESSAGE =
@@ -51,6 +52,7 @@ export function LandingPage() {
 export function QuizPage() {
   const [questions, setQuestions] = useState<QuizQuestion[] | null>(null);
   const [error, setError] = useState(false);
+  const [quizLoadMessage, setQuizLoadMessage] = useState("");
   const [draft] = useState(readQuizDraft);
   const [step, setStep] = useState(draft?.step ?? 0);
   const [answers, setAnswers] = useState<Record<string, string>>(draft?.answers ?? {});
@@ -62,7 +64,7 @@ export function QuizPage() {
   const [startSubmitting, setStartSubmitting] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const titleMode = searchParams.get("mode") === "titles";
-  const { mature } = useAuth(); const navigate = useNavigate();
+  const { mature, user } = useAuth(); const navigate = useNavigate(); const { showToast } = useOptionalToast();
   const viewHeadingRef = useRef<HTMLHeadingElement>(null);
   const mountedViewRef = useRef(false);
   const [announcement, setAnnouncement] = useState("");
@@ -89,13 +91,29 @@ export function QuizPage() {
   function switchView(toTitles: boolean) {
     setSearchParams(toTitles ? { mode: "titles" } : {}, { replace: true });
   }
-  async function load() { setError(false); try { setQuestions(await api.quiz()); } catch { setError(true); } }
+  async function load() {
+    setError(false); setQuizLoadMessage("");
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 10_000);
+    try { setQuestions(await api.quiz(controller.signal)); }
+    catch (reason) {
+      setError(true);
+      setQuizLoadMessage(reason instanceof DOMException && reason.name === "AbortError"
+        ? "The quiz request timed out. Check that the backend is running, then retry."
+        : "Could not load the quiz. Check that the backend is running, then retry.");
+    } finally { window.clearTimeout(timeout); }
+  }
   useEffect(() => { void load(); }, []);
   async function submit(currentAnswers = answers) {
     setSubmitting(true); setSubmitError(false);
     try {
       const response = await api.quizRecommendations(currentAnswers, mature);
+      clearSavedStart();
       saveQuiz({ answers: currentAnswers, results: response.results, includeMature: mature });
+      if (user) {
+        try { await api.saveTasteProfile({ quiz_answers: currentAnswers, liked_ids: [] }); markQuizProfileSaved(user.id); showToast("Saved your answers", "success"); }
+        catch (reason) { showToast(reason instanceof Error ? reason.message : "Could not save your profile", "error"); }
+      }
       navigate("/results", { replace: true });
     } catch { setSubmitError(true); } finally { setSubmitting(false); }
   }
@@ -108,7 +126,12 @@ export function QuizPage() {
       const likedIds = pickedTitles.map((anime) => anime.id);
       const results = await api.startRecommendations(likedIds, mature);
       saveStart({ liked_ids: likedIds, results, include_mature: mature });
+      clearSavedQuiz();
       clearQuizDraft();
+      if (user) {
+        try { await api.saveTasteProfile({ quiz_answers: null, liked_ids: likedIds }); markStartProfileSaved(user.id); showToast("Saved your answers", "success"); }
+        catch (reason) { showToast(reason instanceof Error ? reason.message : "Could not save your profile", "error"); }
+      }
       navigate("/results", { replace: true });
     } catch (reason: unknown) {
       setStartError(startRequestErrorMessage(reason));
@@ -124,7 +147,7 @@ export function QuizPage() {
     setPickedTitles((current) => current.filter((anime) => anime.id !== id));
     setStartError("");
   }
-  if (error) return <section className="quiz-page"><h1>Quiz</h1><div className="status-box status-error" role="alert"><CircleAlert aria-hidden="true" /><p><strong>Could not load the quiz.</strong></p><button className="text-button" onClick={() => void load()}>Retry</button></div></section>;
+  if (error) return <section className="quiz-page"><h1>Quiz</h1><div className="status-box status-error" role="alert"><CircleAlert aria-hidden="true" /><p>{quizLoadMessage}</p><button className="text-button" onClick={() => void load()}>Retry</button></div></section>;
   if (!questions) return <section className="quiz-page"><h1>Quiz</h1><p>Loading questions…</p></section>;
   if (!questions.length) return <section className="quiz-page"><h1>Quiz</h1><p>No quiz questions are available.</p></section>;
   const question = questions[Math.min(step, questions.length - 1)]; const multiple = ["multi", "multiple", "multi-select", "multiselect"].includes(question.type?.toLowerCase() ?? "");
