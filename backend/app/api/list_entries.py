@@ -1,13 +1,4 @@
-"""User watchlist endpoints.
-
-GET /api/list?status=&sort=&page=&pageSize=&includeMature=
-PUT /api/list/{anime_id}
-DELETE /api/list/{anime_id}
-
-All endpoints require authentication. State-changing endpoints require CSRF.
-Users can only access their own list entries.
-Mature content follows the same include_mature rule as /api/anime/{id}.
-"""
+"""Authenticated watchlist endpoints with explicit request and response models."""
 
 from __future__ import annotations
 
@@ -22,28 +13,39 @@ from sqlalchemy.orm import selectinload
 from app.api.deps import get_current_user, verify_csrf
 from app.db.session import get_db
 from app.models.anime import Anime
-from app.models.list_entry import LIST_STATUSES, ListEntry
+from app.models.list_entry import ListEntry
 from app.models.user import User
 from app.schemas.anime import AnimeCard
+from app.schemas.errors import ApiErrorResponse
+from app.schemas.list_entries import (
+    ListAnimeStatus,
+    ListDeleteResponse,
+    ListEntryPut,
+    ListEntryResponse,
+    ListPageInfo,
+    ListResponse,
+    ListSort,
+    ListStatus,
+    ListStatusesResponse,
+)
+from app.services.maturity import is_mature_anime, mature_anime_clause
 
 router = APIRouter(tags=["list"])
 
-ALLOWED_SORTS = {"updated", "rating", "title"}
-VALID_STATUSES = set(LIST_STATUSES)
-MATURE_GENRES = {"hentai", "ecchi"}
-
-
-def is_mature_anime(anime: Anime) -> bool:
-    """Check if an anime should be filtered as mature content."""
-    if anime.is_adult:
-        return True
-    if any(t.is_adult for t in anime.tags):
-        return True
-    return any(g.name.lower() in MATURE_GENRES for g in anime.genres)
+LIST_ERRORS = {
+    401: {"model": ApiErrorResponse, "description": "Unauthenticated."},
+    403: {"model": ApiErrorResponse, "description": "Missing or invalid CSRF token."},
+    404: {"model": ApiErrorResponse, "description": "Requested resource not found."},
+    422: {"model": ApiErrorResponse, "description": "Validation error."},
+}
+READ_ERRORS = {
+    401: LIST_ERRORS[401],
+    422: LIST_ERRORS[422],
+}
 
 
 def serialize_anime_card(anime: Anime) -> AnimeCard:
-    """Serializes an Anime ORM model into AnimeCard schema."""
+    """Serialize catalog fields while retaining the existing camelCase card keys."""
     display_title = (
         anime.title_english
         or anime.title_romaji
@@ -66,244 +68,268 @@ def serialize_anime_card(anime: Anime) -> AnimeCard:
         score=anime.average_score,
         popularity=anime.popularity,
         is_adult=anime.is_adult,
-        genres=[g.name for g in anime.genres],
+        genres=[genre.name for genre in anime.genres],
     )
 
 
-@router.get("/list")
+def serialize_list_entry(entry: ListEntry) -> ListEntryResponse:
+    """Serialize a list row with legacy snake_case entry keys."""
+    return ListEntryResponse(
+        id=entry.id,
+        anime_id=entry.anime_id,
+        anime=serialize_anime_card(entry.anime),
+        status=entry.status,
+        rating=entry.rating,
+        source=entry.source,
+        added_at=entry.added_at,
+        updated_at=entry.updated_at,
+    )
+
+
+@router.get(
+    "/list",
+    response_model=ListResponse,
+    responses=READ_ERRORS,
+    description=(
+        "Returns the authenticated user's list. `includeMature` controls filtering "
+        "directly and does not use the account's `show_mature` setting. Entry fields "
+        "remain snake_case; nested anime card fields are camelCase."
+    ),
+)
 async def get_list(
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_user)],
     status_filter: Annotated[
-        str | None, Query(alias="status", description="Filter by watchlist status")
+        ListStatus | None,
+        Query(alias="status", description="Filter by watchlist status."),
     ] = None,
     sort: Annotated[
-        str, Query(description="Sort by: updated, rating, title")
-    ] = "updated",
-    page: Annotated[int, Query(ge=1, description="Page number")] = 1,
+        ListSort, Query(description="Sort by updated time, rating, or title.")
+    ] = ListSort.UPDATED,
+    page: Annotated[int, Query(ge=1, description="Page number.")] = 1,
     page_size: Annotated[
-        int, Query(ge=1, le=50, alias="pageSize", description="Items per page (max 50)")
+        int,
+        Query(ge=1, le=50, alias="pageSize", description="Items per page (max 50)."),
     ] = 24,
     include_mature: Annotated[
-        bool, Query(alias="includeMature", description="Include adult content")
+        bool,
+        Query(
+            alias="includeMature",
+            description="Include adult content; defaults to false, independent of account setting.",
+        ),
     ] = False,
-) -> dict:
-    """Returns paginated watchlist entries for the authenticated user.
-
-    - Filter by status
-    - Sort by updated_at (desc), rating (desc), or title (asc)
-    - Pagination with total count
-    - Each item includes the same card fields as the catalog
-    """
-    if status_filter and status_filter not in VALID_STATUSES:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Invalid status. Must be one of: {', '.join(sorted(VALID_STATUSES))}",
-        )
-
-    sort_key = sort.lower().strip()
-    if sort_key not in ALLOWED_SORTS:
-        sort_key = "updated"
-
-    # Base query
+) -> ListResponse:
+    """Return an accurately counted, paginated list for the authenticated user."""
     query = (
         select(ListEntry)
         .join(ListEntry.anime)
         .where(ListEntry.user_id == current_user.id)
         .options(selectinload(ListEntry.anime).selectinload(Anime.genres))
     )
+    if status_filter is not None:
+        query = query.where(ListEntry.status == status_filter.value)
+    if not include_mature:
+        query = query.where(~mature_anime_clause())
 
-    # Status filter
-    if status_filter:
-        query = query.where(ListEntry.status == status_filter)
-
-    # Total count (before mature filtering)
     count_stmt = select(func.count()).select_from(query.order_by(None).subquery())
-    total_res = await db.execute(count_stmt)
-    total = total_res.scalar() or 0
+    total = (await db.execute(count_stmt)).scalar() or 0
 
-    # Sorting
-    if sort_key == "rating":
+    if sort is ListSort.RATING:
         query = query.order_by(
             ListEntry.rating.desc().nulls_last(), ListEntry.updated_at.desc()
         )
-    elif sort_key == "title":
+    elif sort is ListSort.TITLE:
         query = query.order_by(
             func.coalesce(
                 Anime.title_english, Anime.title_romaji, Anime.title_native
             ).asc()
         )
-    else:  # "updated" default
+    else:
         query = query.order_by(ListEntry.updated_at.desc())
 
-    # Pagination - fetch one extra to check mature filtering
-    offset = (page - 1) * page_size
-    query = query.offset(offset).limit(page_size + 1)
+    entries = (
+        (await db.execute(query.offset((page - 1) * page_size).limit(page_size)))
+        .scalars()
+        .all()
+    )
+    last_page = max(1, math.ceil(total / page_size))
+    return ListResponse(
+        items=[serialize_list_entry(entry) for entry in entries],
+        page_info=ListPageInfo(
+            total=total,
+            current_page=page,
+            last_page=last_page,
+            per_page=page_size,
+            has_next_page=page < last_page,
+        ),
+    )
 
-    result = await db.execute(query)
-    entries = result.scalars().all()
 
-    # Filter mature content and build response items
-    items = []
-    for entry in entries:
-        anime = entry.anime
-        if not include_mature and is_mature_anime(anime):
-            continue
-        items.append(
-            {
-                "id": entry.id,
-                "anime_id": entry.anime_id,
-                "anime": serialize_anime_card(anime),
-                "status": entry.status,
-                "rating": entry.rating,
-                "source": entry.source,
-                "added_at": entry.added_at.isoformat(),
-                "updated_at": entry.updated_at.isoformat(),
-            }
+@router.get(
+    "/list/statuses",
+    response_model=ListStatusesResponse,
+    responses=READ_ERRORS,
+    description=(
+        "Returns only the authenticated user's matching list entries. Unknown anime "
+        "IDs and IDs absent from the caller's list are omitted. `includeMature` "
+        "controls filtering directly, matching GET /api/list."
+    ),
+)
+async def get_list_statuses(
+    ids: Annotated[
+        str,
+        Query(
+            description="Comma-separated anime IDs (1–50). Empty or non-integer values are rejected."
+        ),
+    ],
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+    include_mature: Annotated[
+        bool,
+        Query(
+            alias="includeMature",
+            description="Include adult content; defaults to false, independent of account setting.",
+        ),
+    ] = False,
+) -> ListStatusesResponse:
+    """Return this user's list state for up to 50 anime IDs in one query."""
+    raw_ids = ids.split(",")
+    if not ids.strip() or len(raw_ids) > 50:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="ids must contain between 1 and 50 comma-separated integer IDs",
         )
+    try:
+        anime_ids = [int(value.strip()) for value in raw_ids]
+    except ValueError as err:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="ids must contain only comma-separated integers",
+        ) from err
 
-    # Trim to page_size
-    has_more = len(items) > page_size
-    if has_more:
-        items = items[:page_size]
+    query = (
+        select(ListEntry)
+        .join(ListEntry.anime)
+        .where(
+            ListEntry.user_id == current_user.id,
+            ListEntry.anime_id.in_(anime_ids),
+        )
+    )
+    if not include_mature:
+        query = query.where(~mature_anime_clause())
+    entries = (await db.execute(query)).scalars().all()
+    return ListStatusesResponse(
+        items=[
+            ListAnimeStatus(
+                anime_id=entry.anime_id,
+                status=entry.status,
+                rating=entry.rating,
+            )
+            for entry in entries
+        ]
+    )
 
-    last_page = max(1, math.ceil(total / page_size)) if total > 0 else 1
-    has_next_page = page < last_page or has_more
 
-    return {
-        "items": items,
-        "page_info": {
-            "total": total,
-            "current_page": page,
-            "last_page": last_page,
-            "per_page": page_size,
-            "has_next_page": has_next_page,
-        },
-    }
-
-
-@router.put("/list/{anime_id}", status_code=status.HTTP_200_OK)
+@router.put(
+    "/list/{anime_id}",
+    status_code=status.HTTP_200_OK,
+    response_model=ListEntryResponse,
+    responses=LIST_ERRORS,
+    description=(
+        "Create or partially update the caller's list entry. Omitted fields retain "
+        "their existing values; an explicit `rating: null` clears the rating. A "
+        "rating-only request for a missing entry creates it with status `planning`. "
+        "Mature anime are allowed only when the account's `show_mature` setting is "
+        "true; this operation has no `includeMature` query parameter. Entry fields "
+        "remain snake_case and nested anime card fields are camelCase."
+    ),
+)
 async def put_list_entry(
     anime_id: int,
-    payload: dict,
+    payload: ListEntryPut,
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_user)],
     _: Annotated[None, Depends(verify_csrf)],
-) -> dict:
-    """Create or update a list entry for the current user.
-
-    - Validates rating 1-10
-    - Validates status
-    - 404 if anime not found
-    - Mature titles follow include_mature rule
-    """
-    # Check anime exists and mature rule
+) -> ListEntryResponse:
+    """Create or update a list entry while preserving documented partial semantics."""
     stmt = (
         select(Anime)
         .where(Anime.id == anime_id)
         .options(selectinload(Anime.genres), selectinload(Anime.tags))
     )
-    result = await db.execute(stmt)
-    anime = result.scalar_one_or_none()
-
+    anime = (await db.execute(stmt)).scalar_one_or_none()
     if not anime:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Anime with id {anime_id} not found",
         )
-
-    # Mature content check (same as /api/anime/{id})
-    include_mature = current_user.show_mature
-    if not include_mature and is_mature_anime(anime):
+    if not current_user.show_mature and is_mature_anime(anime):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Anime with id {anime_id} not found",
         )
 
-    # Validate status
-    new_status = payload.get("status")
-    if new_status is not None and new_status not in VALID_STATUSES:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Invalid status. Must be one of: {', '.join(sorted(VALID_STATUSES))}",
+    provided = payload.model_fields_set
+    new_status = payload.status if "status" in provided else None
+    new_rating = payload.rating if "rating" in provided else None
+    result = await db.execute(
+        select(ListEntry).where(
+            ListEntry.user_id == current_user.id,
+            ListEntry.anime_id == anime_id,
         )
-
-    # Validate rating
-    new_rating = payload.get("rating")
-    if new_rating is not None and (
-        not isinstance(new_rating, int) or not (1 <= new_rating <= 10)
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Rating must be an integer between 1 and 10",
-        )
-
-    # Check if entry exists
-    stmt = select(ListEntry).where(
-        ListEntry.user_id == current_user.id,
-        ListEntry.anime_id == anime_id,
     )
-    result = await db.execute(stmt)
     entry = result.scalar_one_or_none()
-
     if entry is None:
-        # Create new entry
         entry = ListEntry(
             user_id=current_user.id,
             anime_id=anime_id,
-            status=new_status or "planning",
+            status=(new_status.value if new_status is not None else "planning"),
             rating=new_rating,
             source="manual",
         )
         db.add(entry)
     else:
-        # Update existing entry
         if new_status is not None:
-            entry.status = new_status
-        if new_rating is not None:
+            entry.status = new_status.value
+        if "rating" in provided:
             entry.rating = new_rating
 
     await db.commit()
     await db.refresh(entry)
     await db.refresh(entry, attribute_names=["anime"])
-
-    return {
-        "id": entry.id,
-        "anime_id": entry.anime_id,
-        "anime": serialize_anime_card(entry.anime),
-        "status": entry.status,
-        "rating": entry.rating,
-        "source": entry.source,
-        "added_at": entry.added_at.isoformat(),
-        "updated_at": entry.updated_at.isoformat(),
-    }
+    return serialize_list_entry(entry)
 
 
-@router.delete("/list/{anime_id}", status_code=status.HTTP_200_OK)
+@router.delete(
+    "/list/{anime_id}",
+    status_code=status.HTTP_200_OK,
+    response_model=ListDeleteResponse,
+    responses=LIST_ERRORS,
+    description=(
+        "Delete one of the caller's entries. No maturity check is performed on "
+        "purpose: users can always remove anything from their own list, including "
+        "entries hidden by mature-content settings."
+    ),
+)
 async def delete_list_entry(
     anime_id: int,
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_user)],
     _: Annotated[None, Depends(verify_csrf)],
-) -> dict[str, str]:
-    """Delete a list entry for the current user.
-
-    Returns 404 if entry doesn't exist.
-    """
-    stmt = select(ListEntry).where(
-        ListEntry.user_id == current_user.id,
-        ListEntry.anime_id == anime_id,
+) -> ListDeleteResponse:
+    """Delete a list entry, even if its anime is currently hidden as mature."""
+    result = await db.execute(
+        select(ListEntry).where(
+            ListEntry.user_id == current_user.id,
+            ListEntry.anime_id == anime_id,
+        )
     )
-    result = await db.execute(stmt)
     entry = result.scalar_one_or_none()
-
-    if not entry:
+    if entry is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"List entry for anime {anime_id} not found",
         )
-
     await db.delete(entry)
     await db.commit()
-
-    return {"message": f"List entry for anime {anime_id} deleted"}
+    return ListDeleteResponse(message=f"List entry for anime {anime_id} deleted")

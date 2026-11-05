@@ -1218,7 +1218,7 @@
           "list"
         ],
         "summary": "Get List",
-        "description": "Returns paginated watchlist entries for the authenticated user.\n\n- Filter by status\n- Sort by updated_at (desc), rating (desc), or title (asc)\n- Pagination with total count\n- Each item includes the same card fields as the catalog",
+        "description": "Returns the authenticated user's list. `includeMature` controls filtering directly and does not use the account's `show_mature` setting. Entry fields remain snake_case; nested anime card fields are camelCase.",
         "operationId": "get_list_api_list_get",
         "parameters": [
           {
@@ -1228,28 +1228,27 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "$ref": "#/components/schemas/ListStatus"
                 },
                 {
                   "type": "null"
                 }
               ],
-              "description": "Filter by watchlist status",
+              "description": "Filter by watchlist status.",
               "title": "Status"
             },
-            "description": "Filter by watchlist status"
+            "description": "Filter by watchlist status."
           },
           {
             "name": "sort",
             "in": "query",
             "required": false,
             "schema": {
-              "type": "string",
-              "description": "Sort by: updated, rating, title",
-              "default": "updated",
-              "title": "Sort"
+              "$ref": "#/components/schemas/ListSort",
+              "description": "Sort by updated time, rating, or title.",
+              "default": "updated"
             },
-            "description": "Sort by: updated, rating, title"
+            "description": "Sort by updated time, rating, or title."
           },
           {
             "name": "page",
@@ -1258,11 +1257,11 @@
             "schema": {
               "type": "integer",
               "minimum": 1,
-              "description": "Page number",
+              "description": "Page number.",
               "default": 1,
               "title": "Page"
             },
-            "description": "Page number"
+            "description": "Page number."
           },
           {
             "name": "pageSize",
@@ -1272,11 +1271,11 @@
               "type": "integer",
               "maximum": 50,
               "minimum": 1,
-              "description": "Items per page (max 50)",
+              "description": "Items per page (max 50).",
               "default": 24,
               "title": "Pagesize"
             },
-            "description": "Items per page (max 50)"
+            "description": "Items per page (max 50)."
           },
           {
             "name": "includeMature",
@@ -1284,11 +1283,11 @@
             "required": false,
             "schema": {
               "type": "boolean",
-              "description": "Include adult content",
+              "description": "Include adult content; defaults to false, independent of account setting.",
               "default": false,
               "title": "Includemature"
             },
-            "description": "Include adult content"
+            "description": "Include adult content; defaults to false, independent of account setting."
           },
           {
             "name": "authorization",
@@ -1329,19 +1328,126 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "additionalProperties": true,
-                  "title": "Response Get List Api List Get"
+                  "$ref": "#/components/schemas/ListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
                 }
               }
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "Validation error.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/list/statuses": {
+      "get": {
+        "tags": [
+          "list"
+        ],
+        "summary": "Get List Statuses",
+        "description": "Returns only the authenticated user's matching list entries. Unknown anime IDs and IDs absent from the caller's list are omitted. `includeMature` controls filtering directly, matching GET /api/list.",
+        "operationId": "get_list_statuses_api_list_statuses_get",
+        "parameters": [
+          {
+            "name": "ids",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Comma-separated anime IDs (1\u201350). Empty or non-integer values are rejected.",
+              "title": "Ids"
+            },
+            "description": "Comma-separated anime IDs (1\u201350). Empty or non-integer values are rejected."
+          },
+          {
+            "name": "includeMature",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Include adult content; defaults to false, independent of account setting.",
+              "default": false,
+              "title": "Includemature"
+            },
+            "description": "Include adult content; defaults to false, independent of account setting."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListStatusesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
                 }
               }
             }
@@ -1355,7 +1461,7 @@
           "list"
         ],
         "summary": "Put List Entry",
-        "description": "Create or update a list entry for the current user.\n\n- Validates rating 1-10\n- Validates status\n- 404 if anime not found\n- Mature titles follow include_mature rule",
+        "description": "Create or partially update the caller's list entry. Omitted fields retain their existing values; an explicit `rating: null` clears the rating. A rating-only request for a missing entry creates it with status `planning`. Mature anime are allowed only when the account's `show_mature` setting is true; this operation has no `includeMature` query parameter. Entry fields remain snake_case and nested anime card fields are camelCase.",
         "operationId": "put_list_entry_api_list__anime_id__put",
         "parameters": [
           {
@@ -1421,9 +1527,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "additionalProperties": true,
-                "title": "Payload"
+                "$ref": "#/components/schemas/ListEntryPut"
               }
             }
           }
@@ -1434,19 +1538,47 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "additionalProperties": true,
-                  "title": "Response Put List Entry Api List  Anime Id  Put"
+                  "$ref": "#/components/schemas/ListEntryResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing or invalid CSRF token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Requested resource not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
                 }
               }
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "Validation error.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiErrorResponse"
                 }
               }
             }
@@ -1458,7 +1590,7 @@
           "list"
         ],
         "summary": "Delete List Entry",
-        "description": "Delete a list entry for the current user.\n\nReturns 404 if entry doesn't exist.",
+        "description": "Delete one of the caller's entries. No maturity check is performed on purpose: users can always remove anything from their own list, including entries hidden by mature-content settings.",
         "operationId": "delete_list_entry_api_list__anime_id__delete",
         "parameters": [
           {
@@ -1525,21 +1657,47 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "additionalProperties": {
-                    "type": "string"
-                  },
-                  "title": "Response Delete List Entry Api List  Anime Id  Delete"
+                  "$ref": "#/components/schemas/ListDeleteResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing or invalid CSRF token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Requested resource not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
                 }
               }
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "Validation error.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ApiErrorResponse"
                 }
               }
             }
@@ -2311,6 +2469,29 @@
         ],
         "title": "AnimeListResponse"
       },
+      "ApiErrorResponse": {
+        "properties": {
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ValidationErrorItem"
+                },
+                "type": "array"
+              }
+            ],
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "detail"
+        ],
+        "title": "ApiErrorResponse"
+      },
       "AuthProvidersResponse": {
         "properties": {
           "google": {
@@ -2456,6 +2637,223 @@
           "database"
         ],
         "title": "HealthResponse"
+      },
+      "ListAnimeStatus": {
+        "properties": {
+          "animeId": {
+            "type": "integer",
+            "title": "Animeid"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ListStatus"
+          },
+          "rating": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rating"
+          }
+        },
+        "type": "object",
+        "required": [
+          "animeId",
+          "status",
+          "rating"
+        ],
+        "title": "ListAnimeStatus"
+      },
+      "ListDeleteResponse": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "title": "ListDeleteResponse"
+      },
+      "ListEntryPut": {
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/ListStatus",
+            "description": "Optional watch status. Omission retains an existing status. On a new entry, a status-only request uses this status and a null rating."
+          },
+          "rating": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 10.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rating",
+            "description": "Optional 1-10 rating. Omission retains an existing rating; null clears it. A rating-only request for a new entry creates it as planning."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "ListEntryPut",
+        "description": "Partial update semantics for creating and editing list entries.\n\nStatus-only requests update an existing status and retain its rating; for a\nnew entry they use the supplied status with a null rating. Rating-only\nrequests update an existing rating and retain its status; for a new entry\nthey create it with status ``planning``. An omitted rating is retained,\nwhile an explicit null rating clears it. At least one field is required."
+      },
+      "ListEntryResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "anime_id": {
+            "type": "integer",
+            "title": "Anime Id"
+          },
+          "anime": {
+            "$ref": "#/components/schemas/AnimeCard"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ListStatus"
+          },
+          "rating": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rating"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "mal_import"
+            ],
+            "title": "Source"
+          },
+          "added_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Added At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "anime_id",
+          "anime",
+          "status",
+          "rating",
+          "source",
+          "added_at",
+          "updated_at"
+        ],
+        "title": "ListEntryResponse",
+        "description": "Persisted entry shape; entry keys remain snake_case by contract."
+      },
+      "ListPageInfo": {
+        "properties": {
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "current_page": {
+            "type": "integer",
+            "title": "Current Page"
+          },
+          "last_page": {
+            "type": "integer",
+            "title": "Last Page"
+          },
+          "per_page": {
+            "type": "integer",
+            "title": "Per Page"
+          },
+          "has_next_page": {
+            "type": "boolean",
+            "title": "Has Next Page"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total",
+          "current_page",
+          "last_page",
+          "per_page",
+          "has_next_page"
+        ],
+        "title": "ListPageInfo"
+      },
+      "ListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ListEntryResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "page_info": {
+            "$ref": "#/components/schemas/ListPageInfo"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "page_info"
+        ],
+        "title": "ListResponse"
+      },
+      "ListSort": {
+        "type": "string",
+        "enum": [
+          "updated",
+          "rating",
+          "title"
+        ],
+        "title": "ListSort"
+      },
+      "ListStatus": {
+        "type": "string",
+        "enum": [
+          "planning",
+          "watching",
+          "completed",
+          "dropped",
+          "on_hold"
+        ],
+        "title": "ListStatus"
+      },
+      "ListStatusesResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ListAnimeStatus"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "title": "ListStatusesResponse"
       },
       "PageInfo": {
         "properties": {
@@ -3079,6 +3477,54 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "ValidationErrorItem": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Loc"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Msg"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ctx"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationErrorItem"
       }
     }
   }

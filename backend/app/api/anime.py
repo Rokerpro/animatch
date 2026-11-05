@@ -20,12 +20,12 @@ from app.schemas.anime import (
     PageInfo,
     TagDetail,
 )
+from app.services.maturity import MATURE_GENRES, is_mature_anime, mature_anime_clause
 from app.services.title_search import normalized_title_column, title_search_clause
 
 router = APIRouter(tags=["anime"])
 
 ALLOWED_SORTS = {"popularity", "score", "year", "title"}
-MATURE_GENRES = {"hentai", "ecchi"}
 
 
 def parse_comma_list(values: list[str] | None) -> list[str]:
@@ -167,29 +167,7 @@ async def list_anime(
 
     # 2. Mature content server-side exclusion
     if not include_mature:
-        query = query.where(Anime.is_adult.is_(False))
-        # Exclude anime linked to any adult tags
-        has_adult_tag = exists(
-            select(1)
-            .select_from(anime_tags)
-            .join(Tag, anime_tags.c.tag_id == Tag.id)
-            .where(
-                anime_tags.c.anime_id == Anime.id,
-                Tag.is_adult.is_(True),
-            )
-        )
-        query = query.where(~has_adult_tag)
-        # Exclude anime linked to Hentai or Ecchi genres
-        has_mature_genre = exists(
-            select(1)
-            .select_from(anime_genres)
-            .join(Genre, anime_genres.c.genre_id == Genre.id)
-            .where(
-                anime_genres.c.anime_id == Anime.id,
-                func.lower(Genre.name).in_(list(MATURE_GENRES)),
-            )
-        )
-        query = query.where(~has_mature_genre)
+        query = query.where(~mature_anime_clause())
 
     # 3. Genre filters (EXISTS: all selected genres must match)
     parsed_genres = parse_comma_list(genres)
@@ -382,22 +360,11 @@ async def get_anime_detail(
         )
 
     # Server-side mature content check
-    if not include_mature:
-        if anime.is_adult:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Anime with id {id} not found",
-            )
-        if any(t.is_adult for t in anime.tags):
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Anime with id {id} not found",
-            )
-        if any(g.name.lower() in MATURE_GENRES for g in anime.genres):
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Anime with id {id} not found",
-            )
+    if not include_mature and is_mature_anime(anime):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Anime with id {id} not found",
+        )
 
     tag_stmt = (
         select(Tag.name, anime_tags.c.rank, anime_tags.c.is_spoiler)
@@ -408,8 +375,7 @@ async def get_anime_detail(
     tag_res = await db.execute(tag_stmt)
     tag_rows = tag_res.all()
     tag_details = [
-        TagDetail(name=row[0], rank=row[1], is_spoiler=row[2])
-        for row in tag_rows
+        TagDetail(name=row[0], rank=row[1], is_spoiler=row[2]) for row in tag_rows
     ]
 
     return serialize_anime_detail(anime, tag_details=tag_details)
