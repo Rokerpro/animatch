@@ -11,6 +11,12 @@ from httpx import AsyncClient
 from app.recs.vectors import VectorIndex
 
 
+def _detail_message(detail: str | list[dict]) -> str:
+    if isinstance(detail, str):
+        return detail
+    return "; ".join(item["msg"] for item in detail if isinstance(item.get("msg"), str))
+
+
 @pytest.fixture
 def start_index(monkeypatch):
     from app.api import recs
@@ -62,7 +68,7 @@ async def test_recs_start_validates_input_and_seed_constraints(
 ):
     cases = [
         ({}, 422, "Provide"),
-        ({"liked_ids": [1, 3, 4, 5, 6, 7]}, 422, "at most 5"),
+        ({"liked_ids": [1, 3, 4, 5, 6, 8]}, 422, "at most 5"),
         ({"liked_ids": [1, 3]}, 422, "At least 3"),
         ({"liked_ids": [1, 2, 3]}, 422, "share a franchise"),
         ({"liked_ids": [1, 1, 3]}, 422, "duplicates"),
@@ -72,7 +78,26 @@ async def test_recs_start_validates_input_and_seed_constraints(
     for payload, status_code, message in cases:
         response = await client.post("/api/recs/start", json=payload)
         assert response.status_code == status_code
-        assert message.lower() in response.json()["detail"].lower()
+        detail = _detail_message(response.json()["detail"])
+        assert message.lower() in detail.lower()
+
+
+@pytest.mark.asyncio
+async def test_recs_start_accepts_five_distinct_ids_and_empty_ids_with_quiz(
+    client: AsyncClient, start_index
+):
+    quiz_answers = {"mood": "tense", "themes": "mystery"}
+    five = await client.post(
+        "/api/recs/start",
+        json={"liked_ids": [1, 3, 4, 5, 6], "quiz_answers": quiz_answers, "limit": 1},
+    )
+    assert five.status_code == 200, five.text
+
+    empty = await client.post(
+        "/api/recs/start",
+        json={"liked_ids": [], "quiz_answers": quiz_answers, "limit": 1},
+    )
+    assert empty.status_code == 200, empty.text
 
 
 @pytest.mark.asyncio

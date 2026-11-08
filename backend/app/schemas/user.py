@@ -1,7 +1,7 @@
 """Pydantic schemas for authentication and user accounts."""
 
 from datetime import datetime
-from typing import Any
+from typing import Annotated, Any
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
@@ -92,8 +92,11 @@ class CsrfTokenResponse(BaseModel):
 class TasteProfileRequest(BaseModel):
     """Schema for PUT /api/me/taste-profile."""
 
-    quiz_answers: dict[str, str] | None = None
-    liked_ids: list[int] = Field(default_factory=list)
+    quiz_answers: (
+        dict[Annotated[str, Field(max_length=64)], Annotated[str, Field(max_length=64)]]
+        | None
+    ) = Field(default=None, max_length=20)
+    liked_ids: list[int] = Field(default_factory=list, max_length=5)
 
     @field_validator("quiz_answers", mode="before")
     @classmethod
@@ -116,8 +119,6 @@ class TasteProfileRequest(BaseModel):
     @field_validator("liked_ids")
     @classmethod
     def validate_liked_ids(cls, v: list[int]) -> list[int]:
-        if len(v) > 5:
-            raise ValueError("liked_ids may contain at most 5 titles")
         if len(set(v)) != len(v):
             raise ValueError("liked_ids must not contain duplicates")
         return v

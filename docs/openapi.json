@@ -3200,7 +3200,8 @@
                 "items": {
                   "type": "integer"
                 },
-                "type": "array"
+                "type": "array",
+                "maxItems": 5
               },
               {
                 "type": "null"
@@ -3253,9 +3254,14 @@
             "anyOf": [
               {
                 "additionalProperties": {
-                  "type": "string"
+                  "type": "string",
+                  "maxLength": 64
                 },
-                "type": "object"
+                "propertyNames": {
+                  "maxLength": 64
+                },
+                "type": "object",
+                "maxProperties": 20
               },
               {
                 "type": "null"
@@ -3268,6 +3274,7 @@
               "type": "integer"
             },
             "type": "array",
+            "maxItems": 5,
             "title": "Liked Ids"
           }
         },

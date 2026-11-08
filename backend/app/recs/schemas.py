@@ -58,6 +58,6 @@ class QuizResponse(BaseModel):
 
 class RecStartRequest(BaseModel):
     quiz_answers: dict[str, str] | None = None
-    liked_ids: list[int] | None = None
+    liked_ids: list[int] | None = Field(default=None, max_length=5)
     include_mature: bool = False
     limit: int = Field(default=20, ge=1, le=40)
