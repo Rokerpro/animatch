@@ -69,7 +69,7 @@ export function StartResultsPage() {
           <PosterSkeleton count={4} />
         </>
       ) : saved.results.length ? (
-        <PosterGrid label="Recommendations based on your picks">
+        <PosterGrid animeIds={saved.results.map((result) => result.id)} label="Recommendations based on your picks">
           {saved.results.map((result) => (
             <RecommendationCard key={result.id} recommendation={result} />
           ))}

@@ -3,9 +3,10 @@ import { useContext } from "react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-const mocks = vi.hoisted(() => ({ useAnimeDetail: vi.fn(), useSimilar: vi.fn(), useAuth: vi.fn(), useProviders: vi.fn(), useMe: vi.fn() }));
-vi.mock("../src/api/hooks", () => ({ useAnimeDetail: mocks.useAnimeDetail, useSimilar: mocks.useSimilar, useProviders: mocks.useProviders, useMe: mocks.useMe }));
+const mocks = vi.hoisted(() => ({ useAnimeDetail: vi.fn(), useSimilar: vi.fn(), useListStatuses: vi.fn(), useAuth: vi.fn(), useProviders: vi.fn(), useMe: vi.fn() }));
+vi.mock("../src/api/hooks", () => ({ useAnimeDetail: mocks.useAnimeDetail, useSimilar: mocks.useSimilar, useListStatuses: mocks.useListStatuses, useProviders: mocks.useProviders, useMe: mocks.useMe }));
 vi.mock("../src/auth/useAuth", () => ({ useAuth: mocks.useAuth }));
+vi.mock("../src/api/useListMutation", () => ({ useListMutation: () => ({ mutate: vi.fn(), isPending: false }) }));
 import { ApiError, api } from "../src/api/client";
 import { ToastProvider } from "../src/components/ToastProvider";
 import { LoginPage } from "../src/pages/AuthPages";
@@ -23,22 +24,24 @@ describe("auth and detail states", () => {
   it("shows the exact detail 404 message", () => {
     mocks.useAnimeDetail.mockReturnValue({ isLoading: false, isError: true, error: new ApiError("hidden", 404) });
     mocks.useSimilar.mockReturnValue({ isLoading: true });
+    mocks.useListStatuses.mockReturnValue({ data: { items: [] }, isLoading: false });
     render(<MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/anime/4"]}><Routes><Route path="/anime/:id" element={<AnimeDetailPage />} /></Routes></MemoryRouter>);
     expect(screen.getByText("Not found, or hidden by your content settings")).toBeInTheDocument();
   });
   it("asks guests to sign in from Add to list or rating and shows the rating out of ten", () => {
     mocks.useAnimeDetail.mockReturnValue({ isLoading: false, isError: false, data: { id: 4, title: "Test Anime", format: "TV" } });
     mocks.useSimilar.mockReturnValue({ isLoading: false, isError: false, data: [] });
+    mocks.useListStatuses.mockReturnValue({ data: { items: [] }, isLoading: false });
     render(<MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/anime/4"]}><Routes><Route path="/anime/:id" element={<AnimeDetailPage />} /></Routes></MemoryRouter>);
 
-    expect(screen.getByText("/10")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Add to list" }));
+    expect(screen.getByRole("combobox", { name: "Your rating for Test Anime" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Add Test Anime to My list" }));
     expect(screen.getByRole("dialog", { name: "Sign in to save anime" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Sign in" })).toHaveAttribute("href", "/login?next=%2Fanime%2F4");
     expect(screen.getByRole("link", { name: "Create account" })).toHaveAttribute("href", "/register?next=%2Fanime%2F4");
 
     fireEvent.click(screen.getByRole("button", { name: "Close sign-in prompt" }));
-    fireEvent.change(screen.getByRole("combobox", { name: "Your rating out of 10" }), { target: { value: "7" } });
+    fireEvent.change(screen.getByRole("combobox", { name: "Your rating for Test Anime" }), { target: { value: "7" } });
     expect(screen.getByRole("dialog", { name: "Sign in to save anime" })).toBeInTheDocument();
   });
   it("shows similar recommendations for the selected anime without rendering its full details", () => {

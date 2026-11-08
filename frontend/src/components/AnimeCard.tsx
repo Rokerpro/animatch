@@ -4,8 +4,11 @@ import { PosterImage } from "./PosterImage";
 import { ScoreBadge } from "./ScoreBadge";
 import { useAnimeDetail } from "../api/hooks";
 import { useAuth } from "../auth/useAuth";
+import { ListControl } from "./ListControls";
+import { useCardListStatus } from "./listStatus";
 export function AnimeCard({ anime }: { anime: AnimeCardData & Pick<Recommendation, "similarity"> }) {
   const { mature } = useAuth();
+  const listEntry = useCardListStatus(anime.id);
   // Recommendation vectors can lag behind catalog metadata. Recover a missing
   // poster from the canonical anime detail response, which is query-cached.
   const detail = useAnimeDetail(anime.id, mature, !anime.coverImage);
@@ -24,6 +27,7 @@ export function AnimeCard({ anime }: { anime: AnimeCardData & Pick<Recommendatio
         )}
         <ScoreBadge score={anime.score ?? null} />
       </div>
+      <ListControl anime={anime} status={listEntry.status} rating={listEntry.rating} statusLoading={listEntry.loading} />
     </div>
     <div className="anime-card-copy"><div className="anime-card-top"><Link to={`/anime/${anime.id}`}><h2>{anime.title}</h2></Link></div>
     {metadata && <p className="anime-meta">{metadata}</p>}</div>

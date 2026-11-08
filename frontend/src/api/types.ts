@@ -37,3 +37,15 @@ export interface AnimeListParams {
   yearMin?: number; yearMax?: number; minScore?: number; maxEpisodes?: number; status?: string;
   sort?: string; page?: number; pageSize?: number; includeMature: boolean;
 }
+export type ListStatus = "planning" | "watching" | "completed" | "dropped" | "on_hold";
+export type ListSort = "updated" | "rating" | "title";
+export interface ListEntryPut { status?: ListStatus; rating?: number | null }
+export interface ListEntryResponse {
+  id: number; anime_id: number; anime: AnimeCardData; status: ListStatus; rating: number | null;
+  source: "manual" | "mal_import"; added_at: string; updated_at: string;
+}
+export interface ListPageInfo { total: number; current_page: number; last_page: number; per_page: number; has_next_page: boolean }
+export interface ListResponse { items: ListEntryResponse[]; page_info: ListPageInfo }
+export interface ListAnimeStatus { animeId: number; status: ListStatus; rating: number | null }
+export interface ListStatusesResponse { items: ListAnimeStatus[] }
+export interface ListParams { status?: ListStatus; sort: ListSort; page: number; pageSize: number; includeMature: boolean }

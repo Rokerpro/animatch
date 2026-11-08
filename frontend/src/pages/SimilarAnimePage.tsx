@@ -36,7 +36,7 @@ export function SimilarAnimePage() {
       ) : !similar.data?.length ? (
         <EmptyState title={`No similar anime found for ${seed.title}.`} />
       ) : (
-        <PosterGrid label={`Anime similar to ${seed.title}`}>
+        <PosterGrid animeIds={similar.data.map((recommendation) => recommendation.id)} label={`Anime similar to ${seed.title}`}>
           {similar.data.map((recommendation) => (
             <RecommendationCard key={recommendation.id} recommendation={recommendation} />
           ))}

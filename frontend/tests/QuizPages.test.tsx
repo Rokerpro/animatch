@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render as testingRender, screen, waitFor } from "@testing-library/react";
+import type { ReactNode } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { api } from "../src/api/client";
 import type { AnimeCardData } from "../src/api/types";
@@ -21,6 +23,11 @@ function LocationDisplay() { const location = useLocation(); return <output data
 function HistoryBackButton() { const navigate = useNavigate(); return <button onClick={() => navigate(-1)}>History back</button>; }
 function renderRoutes(path: string, start: React.ReactNode) {
   return render(<MemoryRouter initialEntries={[path]}><Navbar /><LocationDisplay /><Routes><Route path="/" element={<LandingPage />} /><Route path="/quiz" element={<QuizPage />} /><Route path="/results" element={<ResultsPage />} /><Route path="*" element={start} /></Routes></MemoryRouter>);
+}
+function render(element: React.ReactElement, options?: Parameters<typeof testingRender>[1]) {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  function Wrapper({ children }: { children: ReactNode }) { return <QueryClientProvider client={client}>{children}</QueryClientProvider>; }
+  return testingRender(element, { ...options, wrapper: Wrapper });
 }
 async function selectAnimeTitle() {
   const input = screen.getByRole("combobox", { name: "Search anime titles" });

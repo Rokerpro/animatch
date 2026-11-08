@@ -12,7 +12,7 @@ export function BrowsePage() {
   const results = useAnime(query); const filters = useFilters(mature);
   return <section className="browse-page"><h1 className="page-title">{query.q ? `Results for “${query.q}”` : "Browse anime"}</h1><FilterBar options={filters.data} />
     {results.isLoading ? <PosterSkeleton /> : results.isError ? <ErrorState message="Could not load anime. Please try again." /> : !results.data?.items.length ? <EmptyState title="No anime match these filters." /> : <>
-      <p className="result-count">{results.data.pageInfo.total.toLocaleString()} anime</p><PosterGrid>{results.data.items.map((anime) => <AnimeCard anime={anime} key={anime.id} />)}</PosterGrid><Pagination page={page} lastPage={results.data.pageInfo.lastPage} />
+      <p className="result-count">{results.data.pageInfo.total.toLocaleString()} anime</p><PosterGrid animeIds={results.data.items.map((anime) => anime.id)}>{results.data.items.map((anime) => <AnimeCard anime={anime} key={anime.id} />)}</PosterGrid><Pagination page={page} lastPage={results.data.pageInfo.lastPage} />
     </>}
   </section>;
 }

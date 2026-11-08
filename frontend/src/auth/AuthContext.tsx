@@ -1,6 +1,6 @@
 import { useCallback, useMemo, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { api } from "../api/client";
+import { api, getErrorMessage } from "../api/client";
 import { queryKeys, useMe } from "../api/hooks";
 import { useToast } from "../components/useToast";
 import { AuthContext } from "./context";
@@ -14,7 +14,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const setMature = useCallback(async (value: boolean) => {
     if (!user) return;
     try { await api.updateMe({ show_mature: value }); await refresh(); showToast("Mature content preference saved", "success"); }
-    catch (error) { showToast(error instanceof Error ? error.message : "Could not save preference", "error"); }
+    catch (error) { showToast(getErrorMessage(error, "Could not save preference"), "error"); }
     await client.invalidateQueries({ queryKey: ["anime"] });
     await client.invalidateQueries({ queryKey: ["similar"] });
   }, [client, refresh, showToast, user]);

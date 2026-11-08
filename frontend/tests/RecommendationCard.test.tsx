@@ -1,19 +1,24 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { describe, expect, it } from "vitest";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { describe, expect, it, vi } from "vitest";
 import { RecommendationCard } from "../src/components/RecommendationCard";
+vi.mock("../src/auth/useAuth", () => ({ useAuth: () => ({ mature: false, user: null }) }));
+function renderRecommendation(recommendation: React.ComponentProps<typeof RecommendationCard>["recommendation"]) {
+  return render(<QueryClientProvider client={new QueryClient()}><MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}><RecommendationCard recommendation={recommendation} /></MemoryRouter></QueryClientProvider>);
+}
 describe("RecommendationCard", () => {
   it("renders the exact reason returned by the API", () => {
-    render(<MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}><RecommendationCard recommendation={{ id: 9, title: "Similar", reason: "Shares a high-ranked theme" }} /></MemoryRouter>);
+    renderRecommendation({ id: 9, title: "Similar", coverImage: "https://img.test/9.jpg", reason: "Shares a high-ranked theme" });
     expect(screen.getByText("Shares a high-ranked theme")).toBeInTheDocument();
   });
   it("does not invent explanation text when the reason is empty", () => {
-    render(<MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}><RecommendationCard recommendation={{ id: 9, title: "Similar", reason: "" }} /></MemoryRouter>);
+    renderRecommendation({ id: 9, title: "Similar", coverImage: "https://img.test/9.jpg", reason: "" });
     expect(screen.queryByText("This recommendation is similar because…")).not.toBeInTheDocument();
   });
   it("shows a shortened reason with a More button that expands the full text", () => {
     const reason = "Matches Sci-fi / technology (Sci-Fi) and Epic / action-packed (Super Power, Adventure) and Fast-paced / action-focused (Action, Adventure).";
-    render(<MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}><RecommendationCard recommendation={{ id: 9, title: "Similar", reason }} /></MemoryRouter>);
+    renderRecommendation({ id: 9, title: "Similar", coverImage: "https://img.test/9.jpg", reason });
     expect(screen.getByText(/…/)).toBeInTheDocument();
     const more = screen.getByRole("button", { name: "More" });
     const reasonText = more.closest(".reason-text");

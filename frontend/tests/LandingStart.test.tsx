@@ -1,4 +1,6 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render as testingRender, screen } from "@testing-library/react";
+import type { ReactNode } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { ApiError, api } from "../src/api/client";
@@ -78,6 +80,11 @@ function routeElement(path = "/") {
 
 function renderRoutes(path = "/") {
   return render(routeElement(path));
+}
+function render(element: React.ReactElement, options?: Parameters<typeof testingRender>[1]) {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  function Wrapper({ children }: { children: ReactNode }) { return <QueryClientProvider client={client}>{children}</QueryClientProvider>; }
+  return testingRender(element, { ...options, wrapper: Wrapper });
 }
 
 async function advanceSearchDebounce() {

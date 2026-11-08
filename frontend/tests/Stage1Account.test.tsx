@@ -15,7 +15,7 @@ import { readSavedQuiz, saveQuiz, clearSavedQuiz } from "../src/quizStorage";
 import { readSavedStart, saveStart, clearSavedStart } from "../src/startStorage";
 
 vi.mock("../src/auth/useAuth", () => ({ useAuth: vi.fn() }));
-vi.mock("../src/api/hooks", () => ({ queryKeys: { me: ["me"] }, useProviders: () => ({ data: { google: false } }), useMe: () => ({ data: { id: 7, email: "person@example.com", display_name: "Person", show_mature: false, created_at: "2026-01-01" }, isLoading: false }) }));
+vi.mock("../src/api/hooks", () => ({ queryKeys: { me: ["me"] }, useProviders: () => ({ data: { google: false } }), useMe: () => ({ data: { id: 7, email: "person@example.com", display_name: "Person", show_mature: false, created_at: "2026-01-01" }, isLoading: false }), useListStatuses: () => ({ data: { items: [] }, isLoading: false }) }));
 
 const user = { id: 7, email: "person@example.com", display_name: "Person", show_mature: false, created_at: "2026-01-01" };
 const recommendation = { id: 3, title: "A title", reason: "Because it fits your answers" };
@@ -92,14 +92,15 @@ describe("stage 1 account flows", () => {
     expect(await screen.findByText("Login page")).toBeInTheDocument();
   });
 
-  it("has no My list link and exposes a keyboard account menu", async () => {
+  it("shows My list but no Browse link and exposes a keyboard account menu", async () => {
     vi.mocked(useAuth).mockReturnValue({ user, authLoading: false, mature: false, refresh: vi.fn(), setMature: vi.fn(), signOut: vi.fn() });
     renderApp(<Navbar />, "/");
-    expect(screen.queryByRole("link", { name: "My list" })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /Person/ }));
+    expect(screen.getByRole("link", { name: "My list" })).toHaveAttribute("href", "/list");
+    expect(screen.queryByRole("link", { name: "Browse" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Account menu" }));
     expect(screen.getByRole("menuitem", { name: "Settings" })).toBeInTheDocument();
     fireEvent.keyDown(screen.getByRole("menu"), { key: "Escape" });
-    expect(screen.getByRole("button", { name: /Person/ })).toHaveFocus();
+    expect(screen.getByRole("button", { name: "Account menu" })).toHaveFocus();
   });
 
   it("shows only Get started and Sign in while signed out", () => {

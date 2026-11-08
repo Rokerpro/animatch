@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, Navigate, useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { ApiError, api } from "../api/client";
+import { ApiError, api, getErrorMessage } from "../api/client";
 import type { QuizQuestion } from "../api/types";
 import type { AnimeCardData } from "../api/types";
 import { RecommendationCard } from "../components/RecommendationCard";
@@ -29,7 +29,7 @@ function startRequestErrorMessage(error: unknown): string {
   ) {
     return FRANCHISE_VALIDATION_MESSAGE;
   }
-  return error.message;
+  return getErrorMessage(error, "Could not get recommendations. Try again.");
 }
 
 export function LandingPage() {
@@ -112,7 +112,7 @@ export function QuizPage() {
       saveQuiz({ answers: currentAnswers, results: response.results, includeMature: mature });
       if (user) {
         try { await api.saveTasteProfile({ quiz_answers: currentAnswers, liked_ids: [] }); markQuizProfileSaved(user.id); showToast("Saved your answers", "success"); }
-        catch (reason) { showToast(reason instanceof Error ? reason.message : "Could not save your profile", "error"); }
+        catch (reason) { showToast(getErrorMessage(reason, "Could not save your profile"), "error"); }
       }
       navigate("/results", { replace: true });
     } catch { setSubmitError(true); } finally { setSubmitting(false); }
@@ -130,7 +130,7 @@ export function QuizPage() {
       clearQuizDraft();
       if (user) {
         try { await api.saveTasteProfile({ quiz_answers: null, liked_ids: likedIds }); markStartProfileSaved(user.id); showToast("Saved your answers", "success"); }
-        catch (reason) { showToast(reason instanceof Error ? reason.message : "Could not save your profile", "error"); }
+        catch (reason) { showToast(getErrorMessage(reason, "Could not save your profile"), "error"); }
       }
       navigate("/results", { replace: true });
     } catch (reason: unknown) {
@@ -231,7 +231,7 @@ function QuizResultsPage() {
   if (!saved) return <Navigate to="/quiz" replace />;
   if (error) return <section className="browse-page"><h1 className="page-title">Recommendations</h1><div className="status-box status-error" role="alert"><CircleAlert aria-hidden="true" /><p>Could not update recommendations for this content setting.</p><button className="text-button" onClick={() => { setSaved({ ...saved, includeMature: !mature }); }}>Retry</button></div></section>;
   return <section className="browse-page results-page"><h1 className="page-title">Recommendations based on your answers</h1>{refreshing ? <><p aria-live="polite">Updating recommendations…</p><PosterSkeleton count={4} /></> : <>{saved.results.length < 10 && <p className="result-count">Fewer recommendations were available for these answers.</p>}
-    {!saved.results.length ? <p>No recommendations were found. Retake the quiz to try different answers.</p> : <PosterGrid label="Quiz recommendations">{saved.results.map((result) => <RecommendationCard key={result.id} recommendation={result} />)}</PosterGrid>}
+    {!saved.results.length ? <p>No recommendations were found. Retake the quiz to try different answers.</p> : <PosterGrid animeIds={saved.results.map((result) => result.id)} label="Quiz recommendations">{saved.results.map((result) => <RecommendationCard key={result.id} recommendation={result} />)}</PosterGrid>}
     </>}<p className="results-account">Create an account to keep these. <Link to="/register?next=/results">Create an account</Link></p>
   </section>;
 }

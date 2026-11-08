@@ -44,14 +44,14 @@ export function Navbar() {
       {showSimilarSearch && <div className="header-similar-search"><Search aria-hidden="true" className="header-similar-search-icon" size={16} /><TitleAutocomplete includeMature={mature} inputLabel="Search anime similar to" onSelect={(anime) => navigate(`/similar/${anime.id}`)} placeholder="Search anime similar to…" selected={[]} /></div>}
       <nav aria-label="Main navigation" className="header-nav">
         {user ? <>
-          <NavLink className="browse-anime-link" to="/browse">Browse</NavLink>
           <NavLink className="for-you-link" to="/for-you">For you</NavLink>
+          <NavLink className="my-list-link" to="/list">My list</NavLink>
           <button aria-label="Include mature anime" aria-pressed={mature} className={`mature-toggle${mature ? " is-active" : ""}`} onClick={() => void setMature(!mature)} title="Show mature content" type="button">{mature ? "18+ on" : "18+"}</button>
           <div className="account-menu-wrap">
             <button aria-label="Account menu" aria-controls="account-menu" aria-expanded={menuOpen} aria-haspopup="menu" className="account-menu-button" onClick={() => setMenuOpen((open) => !open)} ref={buttonRef} type="button"><CircleUserRound aria-hidden="true" size={22} /></button>
             {menuOpen && <div className="account-menu" id="account-menu" onKeyDown={onMenuKeyDown} ref={menuRef} role="menu" aria-label="Account">
-              <NavLink className="account-mobile-link browse-mobile-link" onClick={() => closeMenu()} role="menuitem" to="/browse">Browse</NavLink>
               <NavLink className="account-mobile-link" onClick={() => closeMenu()} role="menuitem" to="/for-you">For you</NavLink>
+              <NavLink className="account-mobile-link" onClick={() => closeMenu()} role="menuitem" to="/list">My list</NavLink>
               <NavLink onClick={() => closeMenu()} role="menuitem" to="/settings">Settings</NavLink>
               <button onClick={() => void handleSignOut()} role="menuitem" type="button">Sign out</button>
             </div>}

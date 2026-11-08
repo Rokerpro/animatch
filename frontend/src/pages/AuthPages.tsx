@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { api } from "../api/client";
+import { api, getErrorMessage } from "../api/client";
 import { useProviders } from "../api/hooks";
 import { useAuth } from "../auth/useAuth";
 import { useToast } from "../components/useToast";
@@ -43,7 +43,7 @@ function AuthForm({ mode }: { mode: "login" | "register" }) {
             if (quiz) markQuizProfileSaved(authenticatedUser.id); if (start) markStartProfileSaved(authenticatedUser.id);
             showToast("Saved your answers", "success");
           }
-        } catch (reason) { showToast(reason instanceof Error ? reason.message : "Could not save your profile", "error"); }
+        } catch (reason) { showToast(getErrorMessage(reason, "Could not save your profile"), "error"); }
       }
       nav(next); showToast("You’re signed in", "success");
     } catch (e) { const message = e instanceof Error ? e.message : "Unable to sign in"; setError(message); }
@@ -70,7 +70,7 @@ export function SettingsPage() {
   async function saveName(event: FormEvent) {
     event.preventDefault(); setNameError(""); setSavingName(true);
     try { await api.updateMe({ display_name: displayName.trim() }); await refresh(); showToast("Display name saved", "success"); }
-    catch (reason) { setNameError(reason instanceof Error ? reason.message : "Could not save display name"); }
+    catch (reason) { setNameError(getErrorMessage(reason, "Could not save display name")); }
     finally { setSavingName(false); }
   }
   async function deleteAccount() {
@@ -80,7 +80,7 @@ export function SettingsPage() {
       await api.deleteMe(); clearSavedQuiz(); clearSavedStart();
       try { await signOut(); } catch { /* Delete already cleared the server session. */ }
       nav("/", { replace: true, state: { showHome: true } }); showToast("Account deleted", "success");
-    } catch (reason) { setDeleteError(reason instanceof Error ? reason.message : "Could not delete account"); }
+    } catch (reason) { setDeleteError(getErrorMessage(reason, "Could not delete account")); }
     finally { setDeleting(false); }
   }
   if (!user) return <Navigate to="/login" replace />;

@@ -9,6 +9,7 @@ import { SimilarAnimePage } from "./pages/SimilarAnimePage";
 import { LoginPage, RegisterPage, SettingsPage } from "./pages/AuthPages";
 import { LandingPage, QuizPage, ResultsPage } from "./pages/QuizPages";
 import { ForYouPage } from "./pages/ForYouPage";
+import { ListPage } from "./pages/ListPage";
 
 function AniListFooter() {
   return (
@@ -49,6 +50,7 @@ export function App() {
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/for-you" element={<ForYouPage />} />
+            <Route path="/list" element={<ListPage />} />
             <Route path="*" element={<p className="browse-page">Page not found</p>} />
           </Routes>
         </PageShell>
