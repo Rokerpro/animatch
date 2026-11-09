@@ -27,7 +27,9 @@ export function AnimeCard({ anime }: { anime: AnimeCardData & Pick<Recommendatio
         )}
         <ScoreBadge score={anime.score ?? null} />
       </div>
-      <ListControl anime={anime} status={listEntry.status} rating={listEntry.rating} statusLoading={listEntry.loading} />
+      <div className="anime-save-control">
+        <ListControl anime={anime} status={listEntry.status} rating={listEntry.rating} statusLoading={listEntry.loading} />
+      </div>
     </div>
     <div className="anime-card-copy"><div className="anime-card-top"><Link to={`/anime/${anime.id}`}><h2>{anime.title}</h2></Link></div>
     {metadata && <p className="anime-meta">{metadata}</p>}</div>

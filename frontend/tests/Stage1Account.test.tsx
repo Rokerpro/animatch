@@ -92,11 +92,11 @@ describe("stage 1 account flows", () => {
     expect(await screen.findByText("Login page")).toBeInTheDocument();
   });
 
-  it("shows My list but no Browse link and exposes a keyboard account menu", async () => {
+  it("shows Browse and My list and exposes a keyboard account menu", async () => {
     vi.mocked(useAuth).mockReturnValue({ user, authLoading: false, mature: false, refresh: vi.fn(), setMature: vi.fn(), signOut: vi.fn() });
     renderApp(<Navbar />, "/");
     expect(screen.getByRole("link", { name: "My list" })).toHaveAttribute("href", "/list");
-    expect(screen.queryByRole("link", { name: "Browse" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Browse" })).toHaveAttribute("href", "/browse");
     fireEvent.click(screen.getByRole("button", { name: "Account menu" }));
     expect(screen.getByRole("menuitem", { name: "Settings" })).toBeInTheDocument();
     fireEvent.keyDown(screen.getByRole("menu"), { key: "Escape" });

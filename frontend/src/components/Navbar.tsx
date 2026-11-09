@@ -13,7 +13,7 @@ export function Navbar() {
   const [authPromptOpen, setAuthPromptOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-  const showSimilarSearch = location.pathname === "/results" || location.pathname.startsWith("/similar/") || location.pathname.startsWith("/anime/");
+  const showSimilarSearch = location.pathname === "/browse" || location.pathname === "/for-you" || location.pathname === "/results" || location.pathname.startsWith("/similar/") || location.pathname.startsWith("/anime/");
   useEffect(() => {
     if (menuOpen) menuRef.current?.querySelector<HTMLElement>("a:not(.account-mobile-link)[role=menuitem]")?.focus();
   }, [menuOpen]);
@@ -43,6 +43,7 @@ export function Navbar() {
       </Link>
       {showSimilarSearch && <div className="header-similar-search"><Search aria-hidden="true" className="header-similar-search-icon" size={16} /><TitleAutocomplete includeMature={mature} inputLabel="Search anime similar to" onSelect={(anime) => navigate(`/similar/${anime.id}`)} placeholder="Search anime similar to…" selected={[]} /></div>}
       <nav aria-label="Main navigation" className="header-nav">
+        <NavLink className="browse-link" to="/browse">Browse</NavLink>
         {user ? <>
           <NavLink className="for-you-link" to="/for-you">For you</NavLink>
           <NavLink className="my-list-link" to="/list">My list</NavLink>
@@ -63,6 +64,6 @@ export function Navbar() {
         </>}
       </nav>
     </div>
-    {authPromptOpen && <AuthPrompt nextPath={`${location.pathname}${location.search}`} onClose={() => setAuthPromptOpen(false)} />}
+    {authPromptOpen && <AuthPrompt message="Sign in to get 18+ contents." nextPath={`${location.pathname}${location.search}`} onClose={() => setAuthPromptOpen(false)} title="Sign in to get 18+ contents" />}
   </header>;
 }

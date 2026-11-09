@@ -29,12 +29,16 @@ describe("auth and detail states", () => {
     expect(screen.getByText("Not found, or hidden by your content settings")).toBeInTheDocument();
   });
   it("asks guests to sign in from Add to list or rating and shows the rating out of ten", () => {
-    mocks.useAnimeDetail.mockReturnValue({ isLoading: false, isError: false, data: { id: 4, title: "Test Anime", format: "TV" } });
+    mocks.useAnimeDetail.mockReturnValue({ isLoading: false, isError: false, data: { id: 4, title: "Test Anime", coverImage: "https://img.test/cover.jpg", format: "TV", score: 84 } });
     mocks.useSimilar.mockReturnValue({ isLoading: false, isError: false, data: [] });
     mocks.useListStatuses.mockReturnValue({ data: { items: [] }, isLoading: false });
     render(<MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/anime/4"]}><Routes><Route path="/anime/:id" element={<AnimeDetailPage />} /></Routes></MemoryRouter>);
 
-    expect(screen.getByRole("combobox", { name: "Your rating for Test Anime" })).toBeInTheDocument();
+    const sidebar = screen.getByRole("complementary", { name: "Anime controls" });
+    expect(sidebar).toContainElement(screen.getByText("AniList score"));
+    expect(sidebar).toContainElement(screen.getByRole("button", { name: "Add Test Anime to My list" }));
+    expect(sidebar).toContainElement(screen.getByRole("combobox", { name: "Your rating for Test Anime" }));
+    expect(screen.getByRole("heading", { name: "Test Anime" }).closest(".detail-main")).not.toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Add Test Anime to My list" }));
     expect(screen.getByRole("dialog", { name: "Sign in to save anime" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Sign in" })).toHaveAttribute("href", "/login?next=%2Fanime%2F4");
@@ -65,7 +69,7 @@ describe("auth and detail states", () => {
     mocks.useAuth.mockReturnValue({ mature: false, user: null, setMature, refresh: vi.fn() });
     render(<MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/quiz"]}><Navbar /></MemoryRouter>);
     fireEvent.click(screen.getByRole("button", { name: "Include mature anime" }));
-    expect(screen.getByRole("dialog", { name: "Sign in to save anime" })).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "Sign in to get 18+ contents" })).toBeInTheDocument();
     expect(setMature).not.toHaveBeenCalled();
 
     cleanup();

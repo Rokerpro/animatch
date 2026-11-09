@@ -2,12 +2,17 @@ import { useEffect, useState } from "react";
 import type { FiltersResponse } from "../api/types";
 import { MultiSelectFilter } from "./MultiSelectFilter";
 import { useFilterParams } from "../hooks/useFilterParams";
+import { SearchInput } from "./SearchInput";
 
 export function FilterBar({ options }: { options?: FiltersResponse }) {
   const [more, setMore] = useState(false);
   const [drawer, setDrawer] = useState(false);
   const [entering, setEntering] = useState(false);
   const { state, setFilter, clearFilters } = useFilterParams();
+  const activeMoreFilterCount = state.genres.length + state.tags.length
+    + Number(Boolean(state.yearMin || state.yearMax))
+    + Number(Boolean(state.maxEpisodes))
+    + Number(Boolean(state.status));
 
   useEffect(() => {
     if (!drawer) return;
@@ -32,68 +37,40 @@ export function FilterBar({ options }: { options?: FiltersResponse }) {
 
   const controls = (
     <>
-      <MultiSelectFilter
-        label="Genre"
-        options={options?.genres ?? []}
-        selected={state.genres}
-        onChange={(values) => setFilter("genres", values)}
-      />
-      <label>
-        Format
-        <select
-          aria-label="Format"
-          value={state.format}
-          onChange={(e) => setFilter("format", e.target.value)}
-        >
-          <option value="">Any</option>
-          {["TV", "MOVIE", "OVA", "ONA", "SPECIAL", "MUSIC"].map((v) => (
-            <option key={v}>{v}</option>
-          ))}
-        </select>
-      </label>
-      <label>
-        Year from
-        <input
-          aria-label="Year from"
-          type="number"
-          value={state.yearMin}
-          onChange={(e) => setFilter("yearMin", e.target.value)}
-          placeholder="Any"
-        />
-      </label>
-      <label>
-        Year to
-        <input
-          aria-label="Year to"
-          type="number"
-          value={state.yearMax}
-          onChange={(e) => setFilter("yearMax", e.target.value)}
-          placeholder="Any"
-        />
-      </label>
-      <label>
-        Sort
-        <select
-          aria-label="Sort"
-          value={state.sort}
-          onChange={(e) => setFilter("sort", e.target.value)}
-        >
-          <option value="popularity">Popularity</option>
-          <option value="score">Score</option>
-          <option value="year">Year</option>
-          <option value="title">Title</option>
-        </select>
-      </label>
-      <button
-        className="more-filters-toggle"
-        aria-expanded={more}
-        onClick={() => setMore(!more)}
-        type="button"
-      >
-        More filters
-      </button>
+      <div className="filter-primary-controls">
+        <SearchInput />
+        <label>
+          Format
+          <select aria-label="Format" value={state.format} onChange={(e) => setFilter("format", e.target.value)}>
+            <option value="">Any format</option>
+            {["TV", "MOVIE", "OVA", "ONA", "SPECIAL", "MUSIC"].map((v) => <option key={v}>{v}</option>)}
+          </select>
+        </label>
+        <label>
+          Min score
+          <input aria-label="Minimum score" type="number" min="0" max="100" value={state.minScore} onChange={(e) => setFilter("minScore", e.target.value)} placeholder="Any" />
+        </label>
+        <label>
+          Sort
+          <select aria-label="Sort" value={state.sort} onChange={(e) => setFilter("sort", e.target.value)}>
+            <option value="popularity">Popularity</option>
+            <option value="score">Score</option>
+            <option value="year">Year</option>
+            <option value="title">Title</option>
+          </select>
+        </label>
+        <button className="more-filters-toggle" aria-controls="more-filter-options" aria-expanded={more} onClick={() => setMore(!more)} type="button">
+          More filters <span className="filter-count">{activeMoreFilterCount}</span>
+        </button>
+      </div>
       {more && (
-        <div className="more-filters">
+        <div className="more-filters" id="more-filter-options">
+          <MultiSelectFilter
+            label="Genre"
+            options={options?.genres ?? []}
+            selected={state.genres}
+            onChange={(values) => setFilter("genres", values)}
+          />
           <MultiSelectFilter
             label="Tags"
             options={options?.tags ?? []}
@@ -101,15 +78,12 @@ export function FilterBar({ options }: { options?: FiltersResponse }) {
             onChange={(values) => setFilter("tags", values)}
           />
           <label>
-            Minimum score
-            <input
-              aria-label="Minimum score"
-              type="number"
-              min="0"
-              max="100"
-              value={state.minScore}
-              onChange={(e) => setFilter("minScore", e.target.value)}
-            />
+            Year from
+            <input aria-label="Year from" type="number" value={state.yearMin} onChange={(e) => setFilter("yearMin", e.target.value)} placeholder="Any" />
+          </label>
+          <label>
+            Year to
+            <input aria-label="Year to" type="number" value={state.yearMax} onChange={(e) => setFilter("yearMax", e.target.value)} placeholder="Any" />
           </label>
           <label>
             Maximum episodes

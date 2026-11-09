@@ -19,16 +19,24 @@ export function AnimeDetailPage() {
   const listStatus = listEntry?.status ?? null; const listRating = listEntry?.rating ?? null;
   return <article className="detail-page">
     <div className="detail-banner" style={anime.bannerImage ? { backgroundImage: `url(${JSON.stringify(anime.bannerImage)})` } : undefined} aria-hidden="true" />
-    <div className="detail-intro"><div className="detail-cover"><PosterImage src={anime.coverImage} alt={anime.title} /></div><div className="detail-heading"><p className="eyebrow">{[anime.format, anime.status].filter(Boolean).join(" · ")}</p><h1>{anime.title}</h1>{anime.titleEnglish && anime.titleEnglish !== anime.title && <p>{anime.titleEnglish}</p>}<div className="detail-anilist-score"><span>AniList score</span><ScoreBadge score={anime.score ?? null} /></div><p className="anime-meta">{[anime.year, anime.episodes ? `${anime.episodes} episodes` : null].filter(Boolean).join(" · ")}</p></div></div>
-    <div className="detail-content"><section><h2>Synopsis</h2><p>{anime.synopsis || "No synopsis available."}</p></section>
+    <div className="detail-layout">
+      <aside aria-label="Anime controls" className="detail-sidebar">
+        <div className="detail-cover"><PosterImage src={anime.coverImage} alt={anime.title} /></div>
+        <div className="detail-anilist-score"><span>AniList score</span><ScoreBadge score={anime.score ?? null} /></div>
+        <section aria-label="List actions" className="detail-list-actions">
+          <ListControl anime={anime} status={listStatus} rating={listRating} statusLoading={Boolean(user) && listStatusQuery.isLoading} variant="detail" />
+          <ListRatingControl anime={anime} status={listStatus} rating={listRating} statusLoading={Boolean(user) && listStatusQuery.isLoading} />
+        </section>
+      </aside>
+      <div className="detail-main">
+        <header className="detail-heading"><p className="eyebrow">{[anime.format, anime.status].filter(Boolean).join(" · ")}</p><h1>{anime.title}</h1>{anime.titleEnglish && anime.titleEnglish !== anime.title && <p>{anime.titleEnglish}</p>}<p className="anime-meta">{[anime.year, anime.episodes ? `${anime.episodes} episodes` : null].filter(Boolean).join(" · ")}</p></header>
+        <div className="detail-content"><section><h2>Synopsis</h2><p>{anime.synopsis || "No synopsis available."}</p></section>
       <section><h2>Details</h2><dl className="detail-list">{[["Popularity", `${(anime.popularity ?? 0).toLocaleString()} users`], ["Studio", anime.studio], ["Season", [anime.season, anime.seasonYear].filter(Boolean).join(" ")], ["Source", anime.source], ["Episodes", anime.episodes], ["Duration", anime.duration ? `${anime.duration} min` : null]].filter(([, value]) => value != null).map(([key, value]) => <div key={String(key)}><dt>{key}</dt><dd>{value}</dd></div>)}</dl></section>
       {!!anime.genres?.length && <section><h2>Genres</h2><div className="tag-list">{anime.genres.map((genre) => <span className="tag-pill" key={genre}>{genre}</span>)}</div></section>}
       {!!tags.length && <TagList tags={tags.map((tag) => tag.name)} />}
-      <section aria-label="List actions" className="detail-list-actions">
-        <ListControl anime={anime} status={listStatus} rating={listRating} statusLoading={Boolean(user) && listStatusQuery.isLoading} variant="detail" />
-        <ListRatingControl anime={anime} status={listStatus} rating={listRating} statusLoading={Boolean(user) && listStatusQuery.isLoading} />
-      </section>
       <section><h2>Similar anime</h2>{similar.isLoading ? <PosterSkeleton count={4} /> : similar.isError ? <ErrorState message="Could not load recommendations." /> : !similar.data?.length ? <p>No similar anime found.</p> : <PosterGrid animeIds={similar.data.map((rec) => rec.id)} label="Similar anime">{similar.data.map((rec) => <RecommendationCard key={rec.id} recommendation={rec} />)}</PosterGrid>}</section>
+        </div>
+      </div>
     </div>
   </article>;
 }

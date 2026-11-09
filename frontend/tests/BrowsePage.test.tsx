@@ -19,4 +19,19 @@ describe("BrowsePage URL state", () => {
     fireEvent.click(screen.getByRole("button", { name: "2" }));
     expect(screen.getByText("?genres=Action&page=2")).toBeInTheDocument();
   });
+  it("keeps secondary filters collapsed and shows their active count on the toggle", () => {
+    mocks.useFilters.mockReturnValue({ data: { genres: ["Action"], tags: ["Thriller"] } });
+    render(<QueryClientProvider client={new QueryClient()}><MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/browse?genres=Action&tags=Thriller&yearMin=2021&status=FINISHED"]}><Routes><Route path="/browse" element={<BrowsePage />} /></Routes></MemoryRouter></QueryClientProvider>);
+
+    const toggle = screen.getByRole("button", { name: /More filters 4/ });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByRole("group", { name: "Genre" })).not.toBeInTheDocument();
+
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("group", { name: "Genre" })).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "Tags" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Year from")).toHaveValue(2021);
+    expect(screen.getByLabelText("Status")).toHaveValue("FINISHED");
+  });
 });
