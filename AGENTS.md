@@ -27,7 +27,4 @@
 - **Testing**: Write tests for new features and bug fixes across backend (pytest) and frontend (Vitest / React Testing Library).
 
 ## Git & Commit Conventions
-- End git commit messages with:
-  `Co-Authored-By: Claude Code <noreply@anthropic.com>`
-- End pull request descriptions with:
-  `🤖 Generated with [Claude Code](https://claude.com/claude-code)`
+-Don't leave behind any evidence that an ai did it
