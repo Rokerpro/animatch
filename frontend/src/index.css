@@ -468,6 +468,7 @@
   .detail-banner::after { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 35%, theme("colors.surface.base")); content: ""; }
   .detail-layout { position: relative; display: grid; grid-template-columns: 220px minmax(0, 1fr); align-items: start; gap: 32px; margin-top: -70px; }
   .detail-sidebar { display: grid; gap: 12px; }
+  .detail-action-stack { display: grid; gap: 9px; }
   .detail-cover { width: 100%; }
   .detail-cover .poster-art { border-radius: 12px; }
   .detail-main { min-width: 0; padding-top: 86px; }
@@ -489,7 +490,7 @@
   .detail-content .tag-toggle:hover { background: theme("colors.accent.hover"); color: theme("colors.content.primary"); }
   .detail-anilist-score { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0; border: 1px solid theme("colors.surface.border"); border-radius: 12px; background: theme("colors.surface.raised"); padding: 9px 11px; color: theme("colors.content.secondary"); font-size: 12px; }
   .detail-anilist-score .score-text { border: 1px solid theme("colors.surface.border"); border-radius: 999px; background: theme("colors.surface.raised"); padding: 4px 8px; }
-  .detail-list-actions { display: grid; gap: 9px; border: 1px solid theme("colors.surface.border"); border-radius: 12px; background: theme("colors.surface.raised"); padding: 10px; }
+  .detail-list-actions { display: grid; gap: 9px; }
   .list-control-detail .list-control-trigger { min-height: 44px; }
   .list-rating-control { display: inline-flex; align-items: center; gap: 9px; color: theme("colors.accent.text"); font-size: 13px; font-weight: 550; }
   .list-rating-control select, .list-sort-control select { min-height: 44px; border: 1px solid theme("colors.accent.ui"); border-radius: 9px; background: theme("colors.surface.base"); padding: 0 10px; color: theme("colors.accent.text"); color-scheme: dark; font-variant-numeric: tabular-nums; }
@@ -765,14 +766,16 @@
   .filter-drawer .filter-primary-controls { grid-template-columns: minmax(0, 1fr); }
   .filter-drawer .more-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .detail-layout { grid-template-columns: minmax(0, 1fr); gap: 14px; margin-top: -52px; }
-  .detail-sidebar { justify-items: start; gap: 9px; }
+  .detail-sidebar { grid-template-columns: 112px minmax(0, 1fr); align-items: start; justify-items: start; gap: 9px 12px; }
   .detail-cover { width: 112px; }
+  .detail-action-stack { display: grid; grid-column: 2; grid-row: 1; align-self: start; gap: 9px; margin-top: 52px; }
+  .detail-action-stack > .list-control, .detail-action-stack .list-control-detail .list-control-trigger { width: 100%; }
+  .detail-list-actions { grid-column: 1 / -1; }
   .detail-main { padding-top: 0; }
   .detail-page { padding-right: 12px; padding-left: 12px; }
   .detail-banner { margin-right: -12px; margin-left: -12px; }
-  .detail-list-actions { width: min(100%, 280px); }
-  .detail-list-actions > .list-control { width: 100%; }
-  .detail-list-actions .list-control-detail .list-control-trigger { width: 100%; justify-content: center; }
+  .detail-list-actions { width: 100%; }
+  .detail-list-actions .list-rating-control { width: fit-content; justify-content: flex-start; }
   .list-controls-row { align-items: stretch; flex-direction: column; gap: 8px; }
   .list-sort-control { justify-content: space-between; }
   .list-sort-control select { flex: 1; }

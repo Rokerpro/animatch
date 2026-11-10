@@ -64,6 +64,6 @@ export function Navbar() {
         </>}
       </nav>
     </div>
-    {authPromptOpen && <AuthPrompt message="Sign in to get 18+ contents." nextPath={`${location.pathname}${location.search}`} onClose={() => setAuthPromptOpen(false)} title="Sign in to get 18+ contents" />}
+    {authPromptOpen && <AuthPrompt message="Sign in or create an account to view mature anime." nextPath={`${location.pathname}${location.search}`} onClose={() => setAuthPromptOpen(false)} title="Sign in to view 18+ content" />}
   </header>;
 }

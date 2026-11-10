@@ -22,9 +22,11 @@ export function AnimeDetailPage() {
     <div className="detail-layout">
       <aside aria-label="Anime controls" className="detail-sidebar">
         <div className="detail-cover"><PosterImage src={anime.coverImage} alt={anime.title} /></div>
-        <div className="detail-anilist-score"><span>AniList score</span><ScoreBadge score={anime.score ?? null} /></div>
-        <section aria-label="List actions" className="detail-list-actions">
+        <div className="detail-action-stack">
+          <div className="detail-anilist-score"><span>AniList score</span><ScoreBadge score={anime.score ?? null} /></div>
           <ListControl anime={anime} status={listStatus} rating={listRating} statusLoading={Boolean(user) && listStatusQuery.isLoading} variant="detail" />
+        </div>
+        <section aria-label="List actions" className="detail-list-actions">
           <ListRatingControl anime={anime} status={listStatus} rating={listRating} statusLoading={Boolean(user) && listStatusQuery.isLoading} />
         </section>
       </aside>
