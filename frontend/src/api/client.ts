@@ -1,4 +1,4 @@
-import type { AnimeDetailData, AnimeListParams, AnimeListResponse, AuthProvidersResponse, CsrfTokenResponse, FiltersResponse, LoginRequest, Recommendation, RegisterRequest, UserResponse, UserUpdateRequest, QuizQuestion, QuizResponse, TasteProfile, ListEntryPut, ListEntryResponse, ListParams, ListResponse, ListStatusesResponse } from "./types";
+import type { AnimeDetailData, AnimeListParams, AnimeListResponse, AuthProvidersResponse, CsrfTokenResponse, FiltersResponse, LoginRequest, Recommendation, RegisterRequest, UserResponse, UserUpdateRequest, QuizQuestion, QuizResponse, TasteProfile, ListEntryPut, ListEntryResponse, ListParams, ListResponse, ListStatusesResponse, MALImportResponse } from "./types";
 
 export function normalizeApiBaseUrl(configuredBase: string | undefined) {
   // Use the same origin by default so Vite or Nginx can proxy /api to the backend.
@@ -68,6 +68,10 @@ export const api = {
   updateListEntry: async (animeId: number, body: ListEntryPut) => {
     const csrf = await api.csrf();
     return request<ListEntryResponse>(`/api/list/${animeId}`, { method: "PUT", headers: { "X-CSRF-Token": csrf.csrf_token }, body: JSON.stringify(body) });
+  },
+  importMALList: async (file: File, dryRun: boolean) => {
+    const csrf = await api.csrf();
+    return request<MALImportResponse>(`/api/list/import?dry_run=${dryRun}`, { method: "POST", headers: { "X-CSRF-Token": csrf.csrf_token, "Content-Type": "application/octet-stream" }, body: file });
   },
   deleteListEntry: async (animeId: number) => {
     const csrf = await api.csrf();

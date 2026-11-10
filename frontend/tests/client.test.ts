@@ -75,4 +75,17 @@ describe("API client", () => {
     expect(String(deletion?.[0])).toBe("/api/list/12");
     expect(deletion?.[1]?.headers).toMatchObject({ "X-CSRF-Token": "csrf-value" });
   });
+  it("uploads MAL export bytes raw with the CSRF header and binary content type", async () => {
+    const file = new File(["<myanimelist />"], "list.xml", { type: "application/xml" });
+    const fetch = vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+      if (String(input).endsWith("/api/auth/csrf")) return new Response(JSON.stringify({ csrf_token: "csrf-value" }), { status: 200, headers: { "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ total_entries: 0, to_import: 0, skipped_existing: 0, unmatched_count: 0, unmatched: [] }), { status: 200, headers: { "Content-Type": "application/json" } });
+    });
+    await api.importMALList(file, true);
+    const [url, init] = fetch.mock.calls.find(([input]) => String(input).includes("/api/list/import"))!;
+    expect(String(url)).toBe("/api/list/import?dry_run=true");
+    expect(init?.method).toBe("POST");
+    expect(init?.body).toBe(file);
+    expect(init?.headers).toMatchObject({ "X-CSRF-Token": "csrf-value", "Content-Type": "application/octet-stream" });
+  });
 });

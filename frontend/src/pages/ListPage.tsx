@@ -56,7 +56,7 @@ export function ListPage() {
   if (list.isError || !list.data) return <section className="browse-page"><h1 className="page-title">My list</h1><ErrorState message={list.error instanceof Error ? list.error.message : "Could not load your list."} onRetry={() => void list.refetch()} /></section>;
 
   return <section className="browse-page my-list-page">
-    <div className="list-page-heading"><div><p className="eyebrow">Your anime</p><h1 className="page-title">My list</h1></div><span className="list-total">{list.data.page_info.total} titles</span></div>
+    <div className="list-page-heading"><div><p className="eyebrow">Your anime</p><h1 className="page-title">My list</h1></div><div className="list-heading-actions"><span className="list-total">{list.data.page_info.total} titles</span><Link className="text-button" to="/import">Import from MyAnimeList</Link></div></div>
     <div className="list-controls-row">
       <div className="list-tabs-shell">
         <div aria-label="Filter list by status" className="list-status-tabs" onKeyDown={(event) => {
@@ -81,7 +81,7 @@ export function ListPage() {
           </article>)}
         </div>
         <Pagination page={page} lastPage={Math.max(1, Math.ceil(list.data.page_info.total / list.data.page_info.per_page))} />
-      </> : <div className="empty-recommendations"><p>{selectedStatus === "all" ? "Your list is empty. Take the quiz to find anime to add." : `No titles in ${listStatusLabels[selectedStatus]} yet.`}</p><Link className="primary-action" to="/quiz">Take the quiz</Link></div>}
+      </> : <div className="empty-recommendations"><p>{selectedStatus === "all" ? "Your list is empty. Take the quiz to find anime to add." : `No titles in ${listStatusLabels[selectedStatus]} yet.`}</p><div className="empty-list-actions"><Link className="primary-action" to="/quiz">Take the quiz</Link><Link className="secondary-action" to="/import">Import from MyAnimeList</Link></div></div>}
     </section>
   </section>;
 }

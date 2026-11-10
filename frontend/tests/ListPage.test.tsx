@@ -36,6 +36,7 @@ describe("My list page", () => {
     renderPage();
     expect(await screen.findByText(/Your list is empty/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Take the quiz" })).toHaveAttribute("href", "/quiz");
+    expect(screen.getAllByRole("link", { name: "Import from MyAnimeList" }).every((link) => link.getAttribute("href") === "/import")).toBe(true);
     expect(api.list).toHaveBeenCalledWith({ status: undefined, sort: "updated", page: 1, pageSize: 24, includeMature: true });
   });
 

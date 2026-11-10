@@ -49,3 +49,5 @@ export interface ListResponse { items: ListEntryResponse[]; page_info: ListPageI
 export interface ListAnimeStatus { animeId: number; status: ListStatus; rating: number | null }
 export interface ListStatusesResponse { items: ListAnimeStatus[] }
 export interface ListParams { status?: ListStatus; sort: ListSort; page: number; pageSize: number; includeMature: boolean }
+export interface MALUnmatchedEntry { title: string; }
+export interface MALImportResponse { total_entries: number; to_import: number; skipped_existing: number; unmatched_count: number; unmatched: MALUnmatchedEntry[] }

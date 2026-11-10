@@ -13,6 +13,7 @@ import { clearQuizDraft, clearSavedQuiz, markQuizProfileSaved, readQuizDraft, re
 import { clearSavedStart, markStartProfileSaved, readSavedStart, saveStart } from "../startStorage";
 import { useOptionalToast } from "../components/useToast";
 import { StartResultsPage } from "./StartResultsPage";
+import { AuthPrompt } from "../components/AuthPrompt";
 
 const FRANCHISE_VALIDATION_MESSAGE =
   "These titles include multiple seasons from the same series. Choose titles from at least 3 different series.";
@@ -68,6 +69,7 @@ export function QuizPage() {
   const viewHeadingRef = useRef<HTMLHeadingElement>(null);
   const mountedViewRef = useRef(false);
   const [announcement, setAnnouncement] = useState("");
+  const [showImportPrompt, setShowImportPrompt] = useState(false);
   useEffect(() => {
     saveQuizDraft({ answers, step, selectedMany, pickedTitles });
   }, [answers, step, selectedMany, pickedTitles]);
@@ -187,7 +189,7 @@ export function QuizPage() {
         <fieldset className="quiz-options"><legend className="sr-only">{question.label}</legend>{question.answers.map((answer) => <label className="quiz-option" key={answer.id}><input type={multiple ? "checkbox" : "radio"} name={question.id} checked={multiple ? selectedMany.includes(answer.id) : answers[question.id] === answer.id} onChange={() => choose(answer.id)} /><span>{answer.label}</span></label>)}</fieldset>
         {step === 0 && <>
           <div aria-label="Or choose another way to get recommendations" className="quiz-alternative" role="separator"><span>or</span></div>
-          <button className="secondary-action quiz-picker-switch" onClick={() => switchView(true)} type="button">Name anime you like instead</button>
+          <div className="quiz-alternative-actions"><button className="secondary-action quiz-picker-switch" onClick={() => switchView(true)} type="button">Name anime you like instead</button><button className="text-button" onClick={() => user ? navigate("/import") : setShowImportPrompt(true)} type="button">Import a file</button></div>
         </>}
         <div className="quiz-actions">{step > 0 && <button className="text-button" disabled={submitting} onClick={() => {
           const previousStep = step - 1;
@@ -200,6 +202,7 @@ export function QuizPage() {
         {submitError && <div className="status-box status-error quiz-error" role="alert"><CircleAlert aria-hidden="true" /><p>Recommendations could not be loaded. Your answers are still here.</p><button className="text-button" onClick={() => void submit()}>Retry</button></div>}
       </div>
     )}
+    {showImportPrompt && <AuthPrompt nextPath="/import" onClose={() => setShowImportPrompt(false)} title="Sign in to import your list" message="Sign in or create an account to import your MyAnimeList export." />}
   </section>;
 }
 
