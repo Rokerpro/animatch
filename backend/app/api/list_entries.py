@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -28,6 +28,16 @@ from app.schemas.list_entries import (
     ListStatus,
     ListStatusesResponse,
 )
+from app.schemas.mal_import import (
+    MALImportOptions,
+    MALImportResponse,
+    MALUnmatchedEntry,
+)
+from app.services.mal_import import (
+    MAX_COMPRESSED_BYTES,
+    MAX_XML_BYTES,
+    parse_mal_xml,
+)
 from app.services.maturity import is_mature_anime, mature_anime_clause
 
 router = APIRouter(tags=["list"])
@@ -37,6 +47,14 @@ LIST_ERRORS = {
     403: {"model": ApiErrorResponse, "description": "Missing or invalid CSRF token."},
     404: {"model": ApiErrorResponse, "description": "Requested resource not found."},
     422: {"model": ApiErrorResponse, "description": "Validation error."},
+}
+IMPORT_ERRORS = {
+    **LIST_ERRORS,
+    400: {"model": ApiErrorResponse, "description": "Invalid or unsafe XML export."},
+    413: {
+        "model": ApiErrorResponse,
+        "description": "Import exceeds an XML size or entry limit.",
+    },
 }
 READ_ERRORS = {
     401: LIST_ERRORS[401],
@@ -227,6 +245,116 @@ async def get_list_statuses(
             )
             for entry in entries
         ]
+    )
+
+
+@router.post(
+    "/list/import",
+    response_model=MALImportResponse,
+    status_code=status.HTTP_200_OK,
+    responses=IMPORT_ERRORS,
+    openapi_extra={
+        "requestBody": {
+            "required": True,
+            "content": {
+                "application/octet-stream": {
+                    "schema": {
+                        "type": "string",
+                        "format": "binary",
+                        "description": (
+                            "Raw MyAnimeList XML bytes. Gzip-compressed XML is "
+                            "detected by its magic bytes."
+                        ),
+                    }
+                }
+            },
+        }
+    },
+    description=(
+        "Imports a plain MyAnimeList XML export or gzip-compressed XML into the "
+        "authenticated user's list. Catalog matching uses MAL IDs only. Existing "
+        "entries are skipped, imported entries are marked with source `mal_import`, "
+        "and `dry_run=true` reports the same summary without writing. The request "
+        "body is raw XML bytes; multipart uploads are not supported."
+    ),
+)
+async def import_mal_list(
+    request: Request,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+    _: Annotated[None, Depends(verify_csrf)],
+    options: Annotated[MALImportOptions, Query()],
+) -> MALImportResponse:
+    """Import new entries from an XML export using only catalog MAL IDs."""
+    body = bytearray()
+    upload_limit = MAX_XML_BYTES
+    async for chunk in request.stream():
+        prefix = bytes(body[:2]) + chunk[: max(0, 2 - len(body))]
+        if len(prefix) == 2 and prefix == b"\x1f\x8b":
+            upload_limit = MAX_COMPRESSED_BYTES
+        if len(body) + len(chunk) > upload_limit:
+            limit_text = (
+                "5 MB compressed" if upload_limit == MAX_COMPRESSED_BYTES else "25 MB"
+            )
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail=f"Request body exceeds the {limit_text} upload limit.",
+            )
+        body.extend(chunk)
+
+    total_entries, parsed_entries = parse_mal_xml(bytes(body))
+    mal_ids = [entry.mal_id for entry in parsed_entries]
+    catalog_result = await db.execute(
+        select(Anime).where(Anime.id_mal.in_(mal_ids)).order_by(Anime.id)
+    )
+    catalog_by_mal_id: dict[int, Anime] = {}
+    for anime in catalog_result.scalars().all():
+        if anime.id_mal is not None:
+            catalog_by_mal_id.setdefault(anime.id_mal, anime)
+
+    matched_anime_ids = [
+        catalog_by_mal_id[item.mal_id].id
+        for item in parsed_entries
+        if item.mal_id in catalog_by_mal_id
+    ]
+    existing_result = await db.execute(
+        select(ListEntry.anime_id).where(
+            ListEntry.user_id == current_user.id,
+            ListEntry.anime_id.in_(matched_anime_ids),
+        )
+    )
+    existing_ids = set(existing_result.scalars().all())
+
+    to_create: list[ListEntry] = []
+    unmatched: list[MALUnmatchedEntry] = []
+    skipped_existing = 0
+    for item in parsed_entries:
+        anime = catalog_by_mal_id.get(item.mal_id)
+        if anime is None:
+            unmatched.append(MALUnmatchedEntry(title=item.title, mal_id=item.mal_id))
+        elif anime.id in existing_ids:
+            skipped_existing += 1
+        else:
+            to_create.append(
+                ListEntry(
+                    user_id=current_user.id,
+                    anime_id=anime.id,
+                    status=item.status,
+                    rating=item.rating,
+                    source="mal_import",
+                )
+            )
+
+    if not options.dry_run and to_create:
+        db.add_all(to_create)
+        await db.commit()
+
+    return MALImportResponse(
+        total_entries=total_entries,
+        to_import=len(to_create),
+        skipped_existing=skipped_existing,
+        unmatched_count=len(unmatched),
+        unmatched=unmatched[:50],
     )
 
 

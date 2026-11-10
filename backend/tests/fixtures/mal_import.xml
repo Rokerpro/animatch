@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<myanimelist>
+  <myinfo><user_id>12345</user_id></myinfo>
+  <anime>
+    <series_animedb_id>16498</series_animedb_id>
+    <series_title>Attack on Titan</series_title>
+    <my_score>9</my_score>
+    <my_status>Completed</my_status>
+  </anime>
+  <anime>
+    <series_animedb_id>5114</series_animedb_id>
+    <series_title>Fullmetal Alchemist: Brotherhood</series_title>
+    <my_score>0</my_score>
+    <my_status>Plan to Watch</my_status>
+  </anime>
+  <manga><series_animedb_id>1</series_animedb_id><series_title>Ignored manga</series_title></manga>
+</myanimelist>

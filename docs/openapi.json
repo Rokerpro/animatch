@@ -1455,6 +1455,162 @@
         }
       }
     },
+    "/api/list/import": {
+      "post": {
+        "tags": [
+          "list"
+        ],
+        "summary": "Import Mal List",
+        "description": "Imports a plain MyAnimeList XML export or gzip-compressed XML into the authenticated user's list. Catalog matching uses MAL IDs only. Existing entries are skipped, imported entries are marked with source `mal_import`, and `dry_run=true` reports the same summary without writing. The request body is raw XML bytes; multipart uploads are not supported.",
+        "operationId": "import_mal_list_api_list_import_post",
+        "parameters": [
+          {
+            "name": "dry_run",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Report the import without writing entries.",
+              "default": false,
+              "title": "Dry Run"
+            },
+            "description": "Report the import without writing entries."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Csrf-Token"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MALImportResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing or invalid CSRF token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Requested resource not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or unsafe XML export.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Import exceeds an XML size or entry limit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/octet-stream": {
+              "schema": {
+                "type": "string",
+                "format": "binary",
+                "description": "Raw MyAnimeList XML bytes. Gzip-compressed XML is detected by its magic bytes."
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/list/{anime_id}": {
       "put": {
         "tags": [
@@ -2854,6 +3010,65 @@
           "items"
         ],
         "title": "ListStatusesResponse"
+      },
+      "MALImportResponse": {
+        "properties": {
+          "total_entries": {
+            "type": "integer",
+            "title": "Total Entries",
+            "description": "Number of anime entries in the XML, including duplicate MAL IDs."
+          },
+          "to_import": {
+            "type": "integer",
+            "title": "To Import",
+            "description": "Number of new list entries imported, or that would be imported in dry-run mode."
+          },
+          "skipped_existing": {
+            "type": "integer",
+            "title": "Skipped Existing",
+            "description": "Entries already present on this user's list."
+          },
+          "unmatched_count": {
+            "type": "integer",
+            "title": "Unmatched Count",
+            "description": "Anime MAL IDs not found in the local catalog."
+          },
+          "unmatched": {
+            "items": {
+              "$ref": "#/components/schemas/MALUnmatchedEntry"
+            },
+            "type": "array",
+            "title": "Unmatched",
+            "description": "First 50 unmatched anime entries."
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_entries",
+          "to_import",
+          "skipped_existing",
+          "unmatched_count",
+          "unmatched"
+        ],
+        "title": "MALImportResponse"
+      },
+      "MALUnmatchedEntry": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "mal_id": {
+            "type": "integer",
+            "title": "Mal Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "mal_id"
+        ],
+        "title": "MALUnmatchedEntry"
       },
       "PageInfo": {
         "properties": {
