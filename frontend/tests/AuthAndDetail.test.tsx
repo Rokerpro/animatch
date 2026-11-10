@@ -69,7 +69,7 @@ describe("auth and detail states", () => {
     mocks.useAuth.mockReturnValue({ mature: false, user: null, setMature, refresh: vi.fn() });
     render(<MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/quiz"]}><Navbar /></MemoryRouter>);
     fireEvent.click(screen.getByRole("button", { name: "Include mature anime" }));
-    expect(screen.getByRole("dialog", { name: "Sign in to get 18+ contents" })).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "Sign in to view 18+ content" })).toBeInTheDocument();
     expect(setMature).not.toHaveBeenCalled();
 
     cleanup();
