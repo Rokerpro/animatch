@@ -56,7 +56,7 @@ This document captures identified tuning opportunities, feature enhancements, an
 
 * **Problem**: Current profile personalization testing is performed against synthetic rating distributions and centered user means.
 * **Proposal**:
-  * Once Phase 5 (user list imports from MyAnimeList/AniList) is active and real multi-title user profiles exist:
+  * Once Phase 7 (user list imports from MyAnimeList/AniList) is active and real multi-title user profiles exist:
     * Re-evaluate rating centering variance ($\sigma_r > 0$) behavior on genuine large watchlists (100+ titles).
     * Evaluate cold-start hybrid decay ($K = 10$) with authentic incremental ratings.
     * Calibrate profile diversity ($\lambda_{\text{profile}}$) vs. seed similarity diversity ($\lambda_{\text{seed}}$).

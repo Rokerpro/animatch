@@ -9,7 +9,8 @@ This directory contains architecture decisions, database schema design, and API 
 - **Phase 5**: Frontend catalog browse and search.
 - **Phase 6**: User profiles, watchlists, and rating systems.
 - **Phase 7**: MyAnimeList import workflows (Jikan API & XML upload).
-- **Phase 8**: Gemini LLM natural language parsing.
-- **Phase 9**: Homepage and UX polish.
-- **Phase 10**: Hardening, security auditing, and deployment ([Phase 10 Notes](phase10_notes.md)).
+- **Phase 8**: Find something new recommendations based on a short quiz and the user's list and taste profile.
+- **Phase 9**: Gemini LLM natural language parsing.
+- **Phase 10**: Returning-user homepage and UX polish.
+- **Phase 11**: Hardening, security auditing, and deployment ([Phase 11 Notes](phase11_notes.md)).
 

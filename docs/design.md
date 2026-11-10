@@ -144,7 +144,7 @@ Score is displayed as a percentage (integer). Missing score → dash.
 ---
 
 ## Recommendation Cards
-Used on the similar-anime row (detail page) and on the personalised homepage (Phase 9).
+Used on the similar-anime row (detail page) and on the personalised homepage (Phase 10).
 
 ```
 ┌──────────────┐

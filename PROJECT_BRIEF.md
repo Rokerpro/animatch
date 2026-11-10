@@ -60,6 +60,11 @@ Dark, sleek, minimal.
 5. Frontend foundation and browse
 6. Watchlist, ratings, taste profile
 7. MAL import
-8. LLM natural-language layer
-9. Homepage and polish
-10. Hardening and deployment
+8. Find something new (signed-in users)
+   - A one-time “Find something new” button on For you helps users explore outside their usual taste; ask 2–3 mood, length, and era questions using the existing quiz engine and `quiz.json` vocabulary.
+   - Exclude titles in every list status and boost genres and tags weighted low by the taste profile. Keep the quality floor; return fewer results rather than pad with weak matches.
+   - Explain the unfamiliar taste and matched quiz answers using only real shared features; never say “because you liked X.”
+   - With an empty list, show normal quiz results and say so plainly. Apply the existing server-side mature-content rules.
+9. LLM natural-language layer
+10. Returning-user homepage polish
+11. Hardening and deployment
