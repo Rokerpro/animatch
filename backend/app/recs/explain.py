@@ -498,3 +498,17 @@ def build_quiz_explanation(
         quiz_answers=matched_answers,
         reason=reason,
     )
+
+
+def build_novelty_reason(explanation: Explanation, novelty_features: list[str]) -> str:
+    """Add a concrete, candidate-verified unfamiliar-feature phrase to a quiz reason."""
+    features = sorted(set(novelty_features), key=str.casefold)[:2]
+    if not features:
+        return explanation.reason
+    matched = _join(explanation.quiz_answers, limit=3)
+    lead = (
+        f"Matches your {matched} preferences"
+        if matched
+        else "Matches your quiz preferences"
+    )
+    return f"{lead}; a different direction with {', '.join(features)}."

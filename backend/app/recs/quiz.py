@@ -44,6 +44,7 @@ THEME_GENRES: dict[str, tuple[str, ...]] = {
     "slice_of_life": ("Slice of Life",),
     "action": ("Action", "Adventure"),
 }
+NEW_QUIZ_QUESTION_IDS = frozenset({"mood", "length", "era"})
 
 _CACHED_QUIZ: dict[str, Any] | None = None
 
@@ -71,6 +72,22 @@ def get_quiz_questions() -> list[dict[str, Any]]:
         }
         clean_questions.append(clean_q)
     return clean_questions
+
+
+def validate_quiz_answers(
+    answers: dict[str, str], allowed_question_ids: set[str] | None = None
+) -> dict[str, str]:
+    """Validate question and answer ids using the canonical quiz vocabulary."""
+    q_map = {q["id"]: q for q in load_quiz_data().get("questions", [])}
+    for qid, aid in answers.items():
+        q = q_map.get(qid)
+        if q is None:
+            raise ValueError(f"Invalid quiz question id: {qid}")
+        if allowed_question_ids is not None and qid not in allowed_question_ids:
+            raise ValueError(f"Question is not allowed for this quiz: {qid}")
+        if not any(a["id"] == aid for a in q.get("answers", [])):
+            raise ValueError(f"Invalid answer id '{aid}' for question '{qid}'")
+    return answers
 
 
 def parse_quiz_answers(

@@ -1861,6 +1861,140 @@
         }
       }
     },
+    "/api/recs/new": {
+      "post": {
+        "tags": [
+          "recommendations"
+        ],
+        "summary": "Post New Recommendations",
+        "description": "Recommend quiz-matched titles outside the user's existing taste.",
+        "operationId": "post_new_recommendations_api_recs_new_post",
+        "parameters": [
+          {
+            "name": "n",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "default": 10,
+              "title": "N"
+            }
+          },
+          {
+            "name": "includeMature",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Includemature"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Csrf-Token"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewRecommendationsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NewRecommendationsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing or invalid CSRF token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/recs/start": {
       "post": {
         "tags": [
@@ -3069,6 +3203,55 @@
           "mal_id"
         ],
         "title": "MALUnmatchedEntry"
+      },
+      "NewRecommendationsRequest": {
+        "properties": {
+          "quiz_answers": {
+            "additionalProperties": {
+              "type": "string",
+              "maxLength": 64
+            },
+            "propertyNames": {
+              "maxLength": 64
+            },
+            "type": "object",
+            "maxProperties": 3,
+            "minProperties": 1,
+            "title": "Quiz Answers",
+            "description": "One to three approved quiz answers."
+          }
+        },
+        "type": "object",
+        "required": [
+          "quiz_answers"
+        ],
+        "title": "NewRecommendationsRequest",
+        "description": "Short quiz submitted for personalized discovery recommendations."
+      },
+      "NewRecommendationsResponse": {
+        "properties": {
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/RecResult"
+            },
+            "type": "array",
+            "title": "Results"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "novelty",
+              "quiz_fallback"
+            ],
+            "title": "Mode"
+          }
+        },
+        "type": "object",
+        "required": [
+          "results",
+          "mode"
+        ],
+        "title": "NewRecommendationsResponse"
       },
       "PageInfo": {
         "properties": {

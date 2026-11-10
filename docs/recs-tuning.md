@@ -69,3 +69,25 @@ This document captures identified tuning opportunities, feature enhancements, an
 * The length gate uses the entry title's episode count. Franchises such as *My Hero Academia*, whose first season has 13 episodes, may never match “long”; consider using franchise episode totals.
 * Keep `REC_QUIZ_QUALITY_WEIGHT` at `0.25` by default. Comparing it with `0.10` produced nearly identical recommendation lists.
 * Keep `REC_START_METHOD` at `A`; revisit mixed-taste inputs later with real user data.
+
+---
+
+## 7. Phase 8: Find Something New
+
+`POST /api/recs/new` uses the standard quiz relevance score, quiz quality bonus,
+salient-feature gate, episode and year constraints, franchise entry-point
+selection, and MMR ordering. It excludes every title and franchise on the
+signed-in user's list, plus liked IDs from the taste profile. The quality floor
+and salient gate run before novelty scoring; novelty cannot restore a candidate
+removed by either filter.
+
+The novelty term is the mean underexploration of a candidate's genres and
+eligible tags. Features with low-magnitude profile weights contribute more;
+strongly represented or disliked features contribute less. Generic tags use the
+same stoplist as recommendation explanations. When no usable profile vector can
+be built, the endpoint uses normal quiz ranking and returns mode `quiz_fallback`;
+otherwise it returns mode `novelty`.
+
+* `REC_NEW_NOVELTY_WEIGHT` controls the additive novelty bonus. Its conservative
+  default is `0.08`; increase it only after confirming quiz relevance remains
+  the main ranking signal and the quality-floor behavior remains intact.

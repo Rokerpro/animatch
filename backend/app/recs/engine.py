@@ -356,6 +356,8 @@ def _filter_and_relax_candidates(
     include_mature: bool = False,
     n: int = 10,
     candidate_filter: Callable[[AnimeRecord], bool] | None = None,
+    exclude_franchise_ids: set[int] | None = None,
+    strict_quality_floor: bool = False,
 ) -> list[int]:
     """Filters candidates based on exclusions, format, duration, mature filter,
     unreleased / no-year titles, then relaxes score and popularity floors if
@@ -389,6 +391,10 @@ def _filter_and_relax_candidates(
             and rec.franchise_id == seed_franchise_id
         ):
             continue
+        if rec.franchise_id is not None and rec.franchise_id in (
+            exclude_franchise_ids or set()
+        ):
+            continue
 
         # Exclude titles with no start year (season_year is NULL)
         if rec.season_year is None:
@@ -412,7 +418,7 @@ def _filter_and_relax_candidates(
 
         base_candidates.append(idx)
 
-    if len(base_candidates) <= n:
+    if len(base_candidates) <= n and not strict_quality_floor:
         return base_candidates
 
     # Step 0: Apply quality floor
@@ -422,6 +428,8 @@ def _filter_and_relax_candidates(
         if (index.records[idx].average_score or 0) >= settings.REC_MIN_SCORE
         and index.records[idx].popularity >= settings.REC_MIN_POPULARITY
     ]
+    if strict_quality_floor:
+        return filtered
     if len(filtered) >= n:
         return filtered
 
@@ -982,6 +990,12 @@ def recommend_from_quiz(
     include_mature: bool = False,
     index: VectorIndex | None = None,
     query_vec: np.ndarray | None = None,
+    exclude_ids: set[int] | None = None,
+    exclude_franchise_ids: set[int] | None = None,
+    strict_quality_floor: bool = False,
+    novelty_weights: dict[str, float] | None = None,
+    novelty_weight: float = 0.0,
+    novelty_reasons: bool = False,
 ) -> list[RecResult]:
     """Endpoint 4c: Recommends anime based on quiz answers with soft penalties."""
     if index is None:
@@ -998,6 +1012,9 @@ def recommend_from_quiz(
         index,
         include_mature=include_mature,
         n=n,
+        exclude_ids=exclude_ids,
+        exclude_franchise_ids=exclude_franchise_ids,
+        strict_quality_floor=strict_quality_floor,
     )
     if not candidates:
         return []
@@ -1028,6 +1045,27 @@ def recommend_from_quiz(
 
     # Apply soft penalties for episode / year constraints
     final_scores = apply_quiz_soft_penalties(final_scores, cand_records, constraints)
+    novelty_scores = np.zeros(len(candidates), dtype=np.float64)
+    if novelty_weights:
+        for pos, record in enumerate(cand_records):
+            features = [("genre", genre) for genre in record.genres] + [
+                ("tag", tag)
+                for tag, rank in record.raw_tag_ranks.items()
+                if rank >= 60 and tag not in record.tag_spoilers and is_salient_tag(tag)
+            ]
+            novelty_scores[pos] = (
+                sum(
+                    max(
+                        0.0,
+                        1.0 - min(abs(novelty_weights.get(f"{kind}:{name}", 0.0)), 1.0),
+                    )
+                    for kind, name in features
+                )
+                / len(features)
+                if features
+                else 0.0
+            )
+        final_scores = final_scores + novelty_weight * novelty_scores
 
     # Collapse franchises to one entry per franchise
     collapsed = _collapse_franchises(
@@ -1053,6 +1091,22 @@ def recommend_from_quiz(
         explanation = build_quiz_explanation(
             answers, rec, index.matrix[cand_idx], index
         )
+        if novelty_reasons and novelty_weights:
+            from app.recs.explain import build_novelty_reason
+
+            novelty_features = [
+                name
+                for name in rec.genres
+                if abs(novelty_weights.get(f"genre:{name}", 0.0)) < 0.5
+            ] + [
+                name
+                for name, rank in rec.raw_tag_ranks.items()
+                if rank >= 60
+                and name not in rec.tag_spoilers
+                and is_salient_tag(name)
+                and abs(novelty_weights.get(f"tag:{name}", 0.0)) < 0.5
+            ]
+            explanation.reason = build_novelty_reason(explanation, novelty_features)
 
         results.append(
             RecResult(

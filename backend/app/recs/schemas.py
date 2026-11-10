@@ -1,6 +1,8 @@
 """Pydantic schemas for recommendation API responses."""
 
-from pydantic import BaseModel, ConfigDict, Field
+from typing import Annotated, Literal
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from pydantic.alias_generators import to_camel
 
 from app.schemas.anime import AnimeCard
@@ -54,6 +56,30 @@ class QuizResponse(BaseModel):
     )
 
     model_config = ConfigDict(populate_by_name=True)
+
+
+class NewRecommendationsRequest(BaseModel):
+    """Short quiz submitted for personalized discovery recommendations."""
+
+    quiz_answers: dict[
+        Annotated[str, Field(max_length=64)], Annotated[str, Field(max_length=64)]
+    ] = Field(
+        min_length=1, max_length=3, description="One to three approved quiz answers."
+    )
+
+    @field_validator("quiz_answers")
+    @classmethod
+    def validate_quiz_answers(cls, answers: dict[str, str]) -> dict[str, str]:
+        from app.recs.quiz import NEW_QUIZ_QUESTION_IDS, validate_quiz_answers
+
+        return validate_quiz_answers(
+            answers, allowed_question_ids=NEW_QUIZ_QUESTION_IDS
+        )
+
+
+class NewRecommendationsResponse(BaseModel):
+    results: list[RecResult]
+    mode: Literal["novelty", "quiz_fallback"]
 
 
 class RecStartRequest(BaseModel):

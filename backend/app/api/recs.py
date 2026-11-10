@@ -10,32 +10,121 @@ Endpoints:
 from __future__ import annotations
 
 import logging
-from typing import Annotated
+from typing import Annotated, Any
 
 import numpy as np
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_current_user, get_optional_user
+from app.api.deps import get_current_user, get_optional_user, verify_csrf
 from app.core.config import settings
 from app.db.session import get_db
 from app.models.list_entry import ListEntry
 from app.models.user import User
 from app.recs.engine import (
     MatureSeedError,
+    build_taste_vector,
     recommend_from_profile,
     recommend_from_quiz,
     recommend_from_start,
     recommend_similar,
 )
 from app.recs.quiz import build_quiz_vector, get_quiz_questions
-from app.recs.schemas import QuizAnswerRequest, QuizResponse, RecResult, RecStartRequest
+from app.recs.schemas import (
+    NewRecommendationsRequest,
+    NewRecommendationsResponse,
+    QuizAnswerRequest,
+    QuizResponse,
+    RecResult,
+    RecStartRequest,
+)
 from app.recs.vectors import get_index
+from app.schemas.errors import ApiErrorResponse
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["recommendations"])
+
+
+@router.post(
+    "/recs/new",
+    response_model=NewRecommendationsResponse,
+    responses={
+        401: {"model": ApiErrorResponse, "description": "Unauthenticated."},
+        403: {
+            "model": ApiErrorResponse,
+            "description": "Missing or invalid CSRF token.",
+        },
+        422: {"model": ApiErrorResponse, "description": "Validation error."},
+    },
+)
+async def post_new_recommendations(
+    payload: NewRecommendationsRequest,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _: Annotated[None, Depends(verify_csrf)],
+    n: Annotated[int, Query(ge=1, le=50)] = settings.REC_DEFAULT_N,
+    include_mature: Annotated[bool, Query(alias="includeMature")] = False,
+) -> NewRecommendationsResponse:
+    """Recommend quiz-matched titles outside the user's existing taste."""
+    index = get_index()
+    if index.is_empty():
+        return NewRecommendationsResponse(results=[], mode="quiz_fallback")
+
+    rows = await db.execute(
+        select(ListEntry).where(ListEntry.user_id == current_user.id)
+    )
+    entries = rows.scalars().all()
+    listed_ids = {entry.anime_id for entry in entries}
+    user_items: list[dict[str, Any]] = [
+        {"anime_id": entry.anime_id, "status": entry.status, "rating": entry.rating}
+        for entry in entries
+    ]
+    profile = current_user.taste_profile or {}
+    liked_ids = list(profile.get("liked_ids", []))
+    user_items.extend(
+        {"anime_id": anime_id, "status": "completed", "rating": 10}
+        for anime_id in liked_ids
+        if anime_id not in listed_ids
+    )
+    listed_franchises = {
+        record.franchise_id
+        for anime_id in listed_ids
+        if (record := index.get(anime_id)) is not None
+        and record.franchise_id is not None
+    }
+    quiz_prior = None
+    if profile.get("quiz_prior_vec"):
+        quiz_prior = np.asarray(profile["quiz_prior_vec"], dtype=np.float32)
+    elif profile.get("quiz_answers"):
+        quiz_prior, _, _ = build_quiz_vector(profile["quiz_answers"], index)
+
+    taste_vec = build_taste_vector(user_items, quiz_prior, index)
+    has_profile_signal = bool(np.any(taste_vec != 0))
+    novelty_weights: dict[str, float] = {}
+    if has_profile_signal:
+        for pos, name in enumerate(index.all_genres):
+            novelty_weights[f"genre:{name}"] = float(taste_vec[index.genre_start + pos])
+        for pos, name in enumerate(index.all_tags):
+            novelty_weights[f"tag:{name}"] = float(taste_vec[index.tag_start + pos])
+
+    results = recommend_from_quiz(
+        answers=payload.quiz_answers,
+        n=min(n, settings.REC_MAX_N),
+        include_mature=include_mature or current_user.show_mature,
+        index=index,
+        exclude_ids=listed_ids | set(liked_ids),
+        exclude_franchise_ids=listed_franchises,
+        strict_quality_floor=True,
+        novelty_weights=novelty_weights if has_profile_signal else None,
+        novelty_weight=settings.REC_NEW_NOVELTY_WEIGHT if has_profile_signal else 0.0,
+        novelty_reasons=has_profile_signal,
+    )
+    return NewRecommendationsResponse(
+        results=results,
+        mode="novelty" if has_profile_signal else "quiz_fallback",
+    )
 
 
 @router.post("/recs/start", response_model=list[RecResult])

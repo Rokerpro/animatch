@@ -92,6 +92,8 @@ class Settings(BaseSettings):
     REC_QUIZ_SOFT_PENALTY_YEAR: float = 0.15
     # Quiz-only quality bonus, independently configurable for evaluation.
     REC_QUIZ_QUALITY_WEIGHT: float = 0.25
+    # Conservative additive novelty boost for Phase 8 discovery recommendations.
+    REC_NEW_NOVELTY_WEIGHT: float = 0.08
 
     # Minimum number of shared salient features (genres + non-spoiler tags
     # with rank >= 60 on both titles) required for a recommendation to be shown.
