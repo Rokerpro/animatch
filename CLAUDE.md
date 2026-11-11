@@ -1,3 +1,5 @@
+@AGENTS.md
+
 # AniMatch Development Instructions
 
 ## Build & Development Commands
