@@ -88,4 +88,16 @@ describe("API client", () => {
     expect(init?.body).toBe(file);
     expect(init?.headers).toMatchObject({ "X-CSRF-Token": "csrf-value", "Content-Type": "application/octet-stream" });
   });
+  it("posts only quiz_answers to Find something new with a CSRF header", async () => {
+    const fetch = vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+      if (String(input).endsWith("/api/auth/csrf")) return new Response(JSON.stringify({ csrf_token: "csrf-new" }), { status: 200, headers: { "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ results: [], mode: "quiz_fallback" }), { status: 200, headers: { "Content-Type": "application/json" } });
+    });
+    await api.newRecommendations({ quiz_answers: { mood: "epic", era: "recent" } });
+    const [url, init] = fetch.mock.calls.find(([input]) => String(input).endsWith("/api/recs/new"))!;
+    expect(String(url)).toBe("/api/recs/new");
+    expect(init?.method).toBe("POST");
+    expect(init?.headers).toMatchObject({ "X-CSRF-Token": "csrf-new" });
+    expect(JSON.parse(String(init?.body))).toEqual({ quiz_answers: { mood: "epic", era: "recent" } });
+  });
 });

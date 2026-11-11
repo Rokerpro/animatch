@@ -1,4 +1,4 @@
-import type { AnimeDetailData, AnimeListParams, AnimeListResponse, AuthProvidersResponse, CsrfTokenResponse, FiltersResponse, LoginRequest, Recommendation, RegisterRequest, UserResponse, UserUpdateRequest, QuizQuestion, QuizResponse, TasteProfile, ListEntryPut, ListEntryResponse, ListParams, ListResponse, ListStatusesResponse, MALImportResponse } from "./types";
+import type { AnimeDetailData, AnimeListParams, AnimeListResponse, AuthProvidersResponse, CsrfTokenResponse, FiltersResponse, LoginRequest, Recommendation, RegisterRequest, UserResponse, UserUpdateRequest, QuizQuestion, QuizResponse, TasteProfile, ListEntryPut, ListEntryResponse, ListParams, ListResponse, ListStatusesResponse, MALImportResponse, NewRecommendationsRequest, NewRecommendationsResponse } from "./types";
 
 export function normalizeApiBaseUrl(configuredBase: string | undefined) {
   // Use the same origin by default so Vite or Nginx can proxy /api to the backend.
@@ -56,6 +56,10 @@ export const api = {
   detail: (id: number, includeMature: boolean) => request<AnimeDetailData>(`/api/anime/${id}?includeMature=${includeMature}`),
   similar: (id: number, includeMature: boolean) => request<Recommendation[]>(`/api/recs/similar/${id}?includeMature=${includeMature}`),
   quiz: (signal?: AbortSignal) => request<QuizQuestion[]>("/api/quiz", { signal }),
+  newRecommendations: async (body: NewRecommendationsRequest) => {
+    const csrf = await api.csrf();
+    return request<NewRecommendationsResponse>("/api/recs/new", { method: "POST", headers: { "X-CSRF-Token": csrf.csrf_token }, body: JSON.stringify(body) });
+  },
   quizRecommendations: (answers: Record<string, string>, includeMature: boolean) => request<QuizResponse>("/api/recs/quiz", { method: "POST", body: JSON.stringify({ answers, includeMature }) }),
   startRecommendations: (likedIds: number[], includeMature: boolean) => request<Recommendation[]>("/api/recs/start", { method: "POST", body: JSON.stringify({ liked_ids: likedIds, include_mature: includeMature }) }),
   myRecommendations: (includeMature: boolean) => request<Recommendation[]>(`/api/recs/me?includeMature=${includeMature}`),

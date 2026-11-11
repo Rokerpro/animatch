@@ -11,6 +11,7 @@ import { LandingPage, QuizPage, ResultsPage } from "./pages/QuizPages";
 import { ForYouPage } from "./pages/ForYouPage";
 import { ListPage } from "./pages/ListPage";
 import { MALImportPage } from "./pages/MALImportPage";
+import { NewPage } from "./pages/NewPage";
 
 function AniListFooter() {
   return (
@@ -53,6 +54,7 @@ export function App() {
             <Route path="/for-you" element={<ForYouPage />} />
             <Route path="/list" element={<ListPage />} />
             <Route path="/import" element={<MALImportPage />} />
+            <Route path="/new" element={<NewPage />} />
             <Route path="*" element={<p className="browse-page">Page not found</p>} />
           </Routes>
         </PageShell>

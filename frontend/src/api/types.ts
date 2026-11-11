@@ -21,6 +21,8 @@ export interface Recommendation extends AnimeCardData {
 export interface QuizAnswerOption { id: string; label: string }
 export interface QuizQuestion { id: string; label: string; type?: string; answers: QuizAnswerOption[] }
 export interface QuizResponse { results: Recommendation[]; quizVecStored: boolean }
+export interface NewRecommendationsRequest { quiz_answers: Record<string, string> }
+export interface NewRecommendationsResponse { results: Recommendation[]; mode: "novelty" | "quiz_fallback" }
 export interface FiltersResponse { genres: string[]; tags: string[] }
 export interface UserResponse {
   id: number; email: string; display_name: string; show_mature: boolean;
