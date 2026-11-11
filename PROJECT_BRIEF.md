@@ -65,6 +65,6 @@ Dark, sleek, minimal.
    - Exclude titles in every list status and boost genres and tags weighted low by the taste profile. Keep the quality floor; return fewer results rather than pad with weak matches.
    - Explain the unfamiliar taste and matched quiz answers using only real shared features; never say “because you liked X.”
    - With an empty list, show normal quiz results and say so plainly. Apply the existing server-side mature-content rules.
-9. LLM natural-language layer
+9. LLM natural-language layer (backend complete)
 10. Returning-user homepage polish
 11. Hardening and deployment

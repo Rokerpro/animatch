@@ -48,6 +48,7 @@ Key environment variables:
 - `JWT_SECRET_KEY`: Secret key for signing session JWT cookies.
 - `CORS_ORIGINS`: Allowed origins (defaults to `["http://localhost:5173"]`).
 - `GEMINI_API_KEY`: Google Gemini API key (for LLM discovery layer).
+- `NL_MAX_CHARS`, `NL_TIMEOUT_SECONDS`, `NL_DAILY_LIMIT`: natural-language request size, provider timeout, and per-user daily quota.
 - `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`: Optional Google OAuth credentials.
 
 ### Google OAuth Setup (Optional)
@@ -67,6 +68,13 @@ Email and password authentication works out of the box without Google credential
 5. If Google credentials are not set, endpoints return a clean 400 "not configured" response and automated tests mock the provider.
 
 ---
+
+### Enable the natural-language box
+
+Get a Gemini API key from Google AI Studio and set `GEMINI_API_KEY` in
+`backend/.env`. The natural-language box stays hidden when the key is empty.
+The default per-user limit is 20 requests per UTC day; `NL_DAILY_LIMIT` can
+change that value.
 
 ## 🔐 Accounts and Authentication (Phase 3)
 
