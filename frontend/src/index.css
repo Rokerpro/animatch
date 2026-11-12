@@ -837,9 +837,40 @@
 .new-fallback-notice a { color: theme("colors.accent.text"); text-decoration: underline; text-underline-offset: 2px; }
 .new-results-page { min-width: 0; }
 .new-results-page > .poster-grid { margin-top: 20px; }
+.for-you-heading-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.ask-page { min-width: 0; max-width: 1060px; margin-inline: auto; }
+.ask-page-heading { display: grid; justify-items: start; gap: 8px; margin-bottom: 24px; }
+.ask-page-heading .page-title { margin: 0; }
+.ask-page-heading > p:not(.eyebrow) { max-width: 62ch; color: theme("colors.content.secondary"); line-height: 1.6; }
+.ask-page a { color: theme("colors.accent.text"); text-decoration: underline; text-underline-offset: 3px; }
+.ask-form { display: grid; gap: 12px; max-width: 760px; min-width: 0; }
+.ask-form > label { color: theme("colors.content.primary"); font-weight: 550; }
+.ask-form textarea { display: block; width: 100%; min-width: 0; resize: vertical; border: 1px solid theme("colors.surface.border"); border-radius: 12px; background: theme("colors.surface.raised"); padding: 14px; color: theme("colors.content.primary"); line-height: 1.6; }
+.ask-form textarea:focus-visible { outline: 2px solid theme("colors.accent.ui"); outline-offset: 2px; }
+.ask-counter, .ask-privacy { margin: 0; color: theme("colors.content.secondary"); font-size: 13px; }
+.ask-counter { justify-self: end; }
+.ask-counter.is-over-limit { color: theme("colors.status.error"); }
+.ask-examples { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+.ask-example { max-width: 100%; border: 1px solid theme("colors.surface.border"); border-radius: 999px; background: theme("colors.surface.raised"); padding: 7px 11px; color: theme("colors.content.secondary"); text-align: left; overflow-wrap: anywhere; cursor: pointer; }
+.ask-example:hover { border-color: theme("colors.accent.ui"); color: theme("colors.content.primary"); }
+.ask-form > .primary-action { justify-self: start; }
+.ask-error { border: 1px solid theme("colors.status.error"); border-radius: 10px; background: theme("colors.status.errorSurface"); padding: 12px 14px; color: theme("colors.status.error"); overflow-wrap: anywhere; }
+.ask-error p { margin: 0 0 8px; }
+.ask-error a { color: inherit; }
+.ask-understood { margin: 20px 0; min-width: 0; }
+.ask-understood h2 { margin: 0 0 12px; font-size: 18px; }
+.ask-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; padding: 0; list-style: none; }
+.ask-chips li { max-width: 100%; border: 1px solid theme("colors.surface.border"); border-radius: 999px; background: theme("colors.surface.raised"); padding: 7px 11px; color: theme("colors.content.secondary"); overflow-wrap: anywhere; }
+.ask-chips a { color: theme("colors.accent.text"); }
+.ask-unmatched { color: theme("colors.content.secondary"); overflow-wrap: anywhere; }
+.ask-empty-results { margin-top: 20px; }
+.ask-empty-results p { overflow-wrap: anywhere; }
+.ask-results > .poster-grid { margin-top: 18px; }
 
 @media (max-width: 480px) {
   .for-you-heading { align-items: flex-start; flex-direction: column; gap: 10px; }
+  .for-you-heading-actions { width: 100%; flex-direction: column; }
+  .for-you-heading-actions > a, .ask-form > .primary-action { width: 100%; }
   .new-page-heading .primary-action, .new-quiz-form > .primary-action { width: 100%; }
 }
 

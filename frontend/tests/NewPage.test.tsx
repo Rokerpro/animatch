@@ -17,6 +17,7 @@ vi.mock("../src/api/client", async (load) => {
     api: {
       ...actual.api,
       quiz: vi.fn(),
+      features: vi.fn(),
       newRecommendations: vi.fn(),
       saveTasteProfile: vi.fn(),
       myRecommendations: vi.fn(),
@@ -66,6 +67,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(useAuth).mockReturnValue({ user: signedInUser, mature: false, authLoading: false, refresh: vi.fn(), setMature: vi.fn(), signOut: vi.fn() });
   vi.mocked(api.quiz).mockResolvedValue(questions);
+  vi.mocked(api.features).mockResolvedValue({ natural_language: true });
   vi.mocked(api.newRecommendations).mockResolvedValue(result);
   vi.mocked(api.myRecommendations).mockResolvedValue([]);
   vi.mocked(api.listStatuses).mockResolvedValue({ items: [] });
