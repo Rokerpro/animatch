@@ -434,3 +434,29 @@ async def test_account_deletion_cascades_list_and_profile_only_for_deleted_user(
     assert (
         await db_session.execute(select(User).where(User.id == owner_id))
     ).scalar_one_or_none() is None, "deleted user profile must be removed"
+
+
+@pytest.mark.asyncio
+async def test_account_export_contains_only_own_data(
+    client, seeded_catalog, register_user
+):
+    guest = await client.get("/api/auth/me/export")
+    assert guest.status_code == 401
+
+    csrf = await register_user("export@example.com")
+    saved = await client.put(
+        "/api/list/154587",
+        json={"status": "completed", "rating": 9},
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert saved.status_code == 200
+
+    response = await client.get("/api/auth/me/export")
+    assert response.status_code == 200
+    assert "attachment" in response.headers["content-disposition"]
+    assert response.headers["cache-control"] == "no-store"
+    data = response.json()
+    assert data["account"]["email"] == "export@example.com"
+    assert "password_hash" not in str(data)
+    assert [e["anime_id"] for e in data["list"]] == [154587]
+    assert data["list"][0]["rating"] == 9 and data["list"][0]["title"]

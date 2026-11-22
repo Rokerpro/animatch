@@ -28,6 +28,7 @@ from app.core.security import (
     verify_password,
 )
 from app.db.session import get_db
+from app.models.list_entry import ListEntry
 from app.models.user import User
 from app.schemas.user import (
     AuthProvidersResponse,
@@ -438,6 +439,55 @@ async def get_taste_profile(
             liked_ids=current_user.taste_profile.get("liked_ids", []),
         )
     return TasteProfileResponse()
+
+
+@router.get("/me/export")
+async def export_me(
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> JSONResponse:
+    """Download the signed-in user's own data as a JSON file."""
+    result = await db.execute(
+        select(ListEntry)
+        .where(ListEntry.user_id == current_user.id)
+        .order_by(ListEntry.added_at, ListEntry.id)
+    )
+    entries = [
+        {
+            "anime_id": entry.anime_id,
+            "title": (
+                entry.anime.title_english
+                or entry.anime.title_romaji
+                or entry.anime.title_native
+            ),
+            "status": entry.status,
+            "rating": entry.rating,
+            "source": entry.source,
+            "added_at": entry.added_at.isoformat(),
+            "updated_at": entry.updated_at.isoformat(),
+        }
+        for entry in result.scalars().all()
+    ]
+    data = {
+        "exported_at": datetime.now(UTC).isoformat(),
+        "account": {
+            "email": current_user.email,
+            "display_name": current_user.display_name,
+            "show_mature": current_user.show_mature,
+            "email_verified": current_user.email_verified_at is not None,
+            "google_linked": current_user.google_sub is not None,
+            "created_at": current_user.created_at.isoformat(),
+        },
+        "taste_profile": current_user.taste_profile,
+        "list": entries,
+    }
+    return JSONResponse(
+        data,
+        headers={
+            "Content-Disposition": 'attachment; filename="animatch-export.json"',
+            "Cache-Control": "no-store",
+        },
+    )
 
 
 @router.delete("/me")
