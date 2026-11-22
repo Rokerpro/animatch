@@ -14,7 +14,7 @@ from datetime import UTC, datetime
 from typing import Annotated, Any
 
 import numpy as np
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, status
 from fastapi.responses import JSONResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -326,14 +326,20 @@ async def get_quiz() -> list[dict]:
 @router.post("/recs/quiz", response_model=QuizResponse)
 async def post_quiz_recommendations(
     payload: QuizAnswerRequest,
+    request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[User | None, Depends(get_optional_user)] = None,
+    x_csrf_token: Annotated[str | None, Header(alias="X-CSRF-Token")] = None,
 ) -> QuizResponse:
     """Computes recommendations from quiz answers.
 
     If the caller is authenticated, the resulting quiz vector is saved
     to the user's taste_profile as quiz_prior_vec.
     """
+    if current_user:
+        # Signed-in calls persist the taste profile, so they need CSRF protection.
+        verify_csrf(request, x_csrf_token)
+
     index = get_index()
     if index.is_empty():
         return QuizResponse(results=[], quizVecStored=False)

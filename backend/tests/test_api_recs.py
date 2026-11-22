@@ -264,3 +264,20 @@ async def test_recs_me_unauthorized(client: AsyncClient):
     """GET /api/recs/me without auth returns 401."""
     response = await client.get("/api/recs/me")
     assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_quiz_signed_in_requires_csrf_token(
+    client: AsyncClient, start_index, register_user
+):
+    csrf = await register_user("quiz-csrf@example.com")
+    body = {"answers": {"mood": "cozy"}}
+
+    missing = await client.post("/api/recs/quiz", json=body)
+    assert missing.status_code == 403
+
+    allowed = await client.post(
+        "/api/recs/quiz", json=body, headers={"X-CSRF-Token": csrf}
+    )
+    assert allowed.status_code == 200
+    assert allowed.json()["quizVecStored"] is True

@@ -172,14 +172,17 @@ export const api = {
       body: JSON.stringify(body),
     });
   },
-  quizRecommendations: (
+  quizRecommendations: async (
     answers: Record<string, string>,
     includeMature: boolean
-  ) =>
-    request<QuizResponse>("/api/recs/quiz", {
+  ) => {
+    const csrf = await api.csrf();
+    return request<QuizResponse>("/api/recs/quiz", {
       method: "POST",
+      headers: { "X-CSRF-Token": csrf.csrf_token },
       body: JSON.stringify({ answers, includeMature }),
-    }),
+    });
+  },
   startRecommendations: (likedIds: number[], includeMature: boolean) =>
     request<Recommendation[]>("/api/recs/start", {
       method: "POST",
