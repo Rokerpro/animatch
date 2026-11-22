@@ -56,6 +56,12 @@ class Settings(BaseSettings):
             return [i.strip() for i in stripped.split(",") if i.strip()]
         return v if isinstance(v, list) else []
 
+    # Optional shared store for rate limiting across workers (redis://host:6379/0).
+    REDIS_URL: str = ""
+    # Requests per minute per client IP; 0 disables the limit.
+    RATE_LIMIT_RECS_PER_MINUTE: int = 60
+    RATE_LIMIT_CATALOG_PER_MINUTE: int = 240
+
     # Database
     DATABASE_URL: str = "sqlite+aiosqlite:///./animatch.db"
 

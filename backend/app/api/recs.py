@@ -21,6 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_optional_user, verify_csrf
 from app.core.config import settings
+from app.core.throttle import throttle
 from app.db.session import get_db
 from app.models.list_entry import ListEntry
 from app.models.natural_language_usage import NaturalLanguageUsage
@@ -59,7 +60,10 @@ from app.services.natural_language import (
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(tags=["recommendations"])
+router = APIRouter(
+    tags=["recommendations"],
+    dependencies=[Depends(throttle("recs", "RATE_LIMIT_RECS_PER_MINUTE"))],
+)
 
 
 def _error_response(status_code: int, detail: str, code: str) -> JSONResponse:

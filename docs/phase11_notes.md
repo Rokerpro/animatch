@@ -39,8 +39,6 @@ trusts the Docker bridge range (`172.16.0.0/12`) for the nginx container.
 
 - Choose a host, TLS termination (Caddy or a cloud load balancer), and a domain.
 - Database backups and monitoring or error alerting.
-- The in-memory rate limiter is per process; use a shared store if the backend
-  runs with more than one worker or replica.
 
 ## Operations
 
@@ -56,3 +54,12 @@ trusts the Docker bridge range (`172.16.0.0/12`) for the nginx container.
 - **Email:** set `EMAIL_BACKEND=smtp` with `SMTP_*` and `EMAIL_FROM` for password
   reset and verification mail. The links point at `FRONTEND_URL/reset-password`
   and `FRONTEND_URL/verify-email`; those frontend pages still need to be built.
+
+## Request throttling
+
+`app/core/throttle.py` limits `/api/recs/*` (`RATE_LIMIT_RECS_PER_MINUTE`, 60) and
+the catalog routes (`RATE_LIMIT_CATALOG_PER_MINUTE`, 240) per client IP, returning
+429 with `Retry-After`. Counters are in memory unless `REDIS_URL` is set (the prod
+compose includes Redis), so multiple workers share one limit. If Redis is
+unreachable the limiter fails open. The login/register limiter in
+`app/core/rate_limit.py` is still per process.

@@ -24,6 +24,15 @@ from app.services.catalog_sync import CatalogSyncService
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
 
+@pytest.fixture(autouse=True)
+def _reset_throttle():
+    from app.core.throttle import reset_throttle_state
+
+    reset_throttle_state()
+    yield
+    reset_throttle_state()
+
+
 @pytest.fixture
 def anilist_page1_data() -> dict[str, Any]:
     with open(FIXTURES_DIR / "anilist_page1.json", encoding="utf-8") as f:

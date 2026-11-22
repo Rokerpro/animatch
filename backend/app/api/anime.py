@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.text import normalize_title_search
+from app.core.throttle import throttle
 from app.db.session import get_db
 from app.models.anime import Anime, Genre, Tag, anime_genres, anime_tags
 from app.schemas.anime import (
@@ -28,7 +29,10 @@ from app.services.maturity import (
 )
 from app.services.title_search import normalized_title_column, title_search_clause
 
-router = APIRouter(tags=["anime"])
+router = APIRouter(
+    tags=["anime"],
+    dependencies=[Depends(throttle("catalog", "RATE_LIMIT_CATALOG_PER_MINUTE"))],
+)
 
 ALLOWED_SORTS = {"popularity", "score", "year", "title"}
 
