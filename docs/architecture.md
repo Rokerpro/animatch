@@ -25,3 +25,13 @@ recommendations. Usage is counted per user and UTC day in
 `NL_DAILY_LIMIT`. Provider failures return a generic service error without
 provider response details.
 
+## Mature-content visibility
+
+The server hides a title when AniList marks the title `isAdult`, when it has the
+Hentai or Ecchi genre, or when it has an adult-flagged tag whose per-title
+`anime_tags.rank` is at least `MATURE_TAG_MIN_RANK` (default `60`, an integer
+percentage). The first two title/genre rules are unconditional. This setting
+changes visibility everywhere that applies the mature-content toggle, including
+browse, filters, detail, lists, and recommendation seeds/results. Adult-flagged
+tag names remain excluded from the tag vocabulary while mature content is off.
+

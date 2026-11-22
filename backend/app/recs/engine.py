@@ -379,7 +379,7 @@ def _filter_and_relax_candidates(
     base_candidates: list[int] = []
     for idx, rec in enumerate(index.records):
         # Mature filter
-        if rec.is_adult and not include_mature:
+        if rec.is_mature and not include_mature:
             continue
         # Excluded items (user list, seed)
         if rec.id in exclude:
@@ -591,7 +591,7 @@ def recommend_similar(
     if seed_record is None:
         return []
 
-    if seed_record.is_adult and not include_mature:
+    if seed_record.is_mature and not include_mature:
         raise MatureSeedError(f"Seed anime {anime_id} is mature content.")
 
     seed_vec = index.vec(anime_id)
@@ -1432,12 +1432,18 @@ async def rebuild_index_from_db(session: AsyncSession) -> VectorIndex:
         Tag.name,
         anime_tags.c.rank,
         anime_tags.c.is_spoiler,
+        Tag.is_adult,
     ).join(Tag, anime_tags.c.tag_id == Tag.id)
     tag_res = await session.execute(tag_stmt)
     anime_to_tags: dict[int, list[dict[str, Any]]] = defaultdict(list)
-    for aid, tname, trank, is_sp in tag_res.fetchall():
+    for aid, tname, trank, is_sp, is_adult_tag in tag_res.fetchall():
         anime_to_tags[aid].append(
-            {"name": tname, "rank": trank or 0, "is_spoiler": bool(is_sp)}
+            {
+                "name": tname,
+                "rank": trank or 0,
+                "is_spoiler": bool(is_sp),
+                "is_adult": bool(is_adult_tag),
+            }
         )
 
     items = []

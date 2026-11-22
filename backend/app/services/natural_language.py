@@ -14,7 +14,7 @@ from app.core.config import settings
 from app.core.text import normalize_title_search
 from app.models.anime import Anime
 from app.recs.quiz import load_quiz_data
-from app.services.maturity import is_mature_anime
+from app.services.maturity import is_mature_anime, load_anime_tag_ranks
 from app.services.title_search import find_title_matches
 
 logger = logging.getLogger(__name__)
@@ -192,6 +192,10 @@ async def resolve_seed_title(
             and (len(scored) == 1 or scored[0][0] - scored[1][0] >= 0.12)
         ):
             candidate = scored[0][1]
-    if candidate is None or (not include_mature and is_mature_anime(candidate)):
+    if candidate is None:
         return None
+    if not include_mature:
+        tag_ranks = await load_anime_tag_ranks(db, candidate)
+        if is_mature_anime(candidate, tag_ranks):
+            return None
     return candidate

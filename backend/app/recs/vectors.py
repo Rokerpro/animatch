@@ -34,6 +34,8 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 from sklearn.preprocessing import normalize
 
+from app.core.config import settings
+
 if TYPE_CHECKING:
     pass
 
@@ -75,6 +77,7 @@ class AnimeRecord:
         None  # AniList status string, e.g. "FINISHED", "NOT_YET_RELEASED"
     )
     is_adult: bool = False
+    is_mature: bool = False
     genres: list[str] = field(default_factory=list)
     tags: list[str] = field(default_factory=list)  # names only (rank encoded in vector)
     tag_ranks: dict[str, float] = field(default_factory=dict)  # tag_name -> rank/100
@@ -188,6 +191,7 @@ class VectorIndex:
             tag_ranks: dict[str, float] = {}
             raw_tag_ranks: dict[str, int] = {}
             tag_spoilers: set[str] = set()
+            has_ranked_adult_tag = False
             for t in item.get("tags") or []:
                 if isinstance(t, dict):
                     tname = t["name"]
@@ -195,6 +199,8 @@ class VectorIndex:
                     trank = float(raw_r) / 100.0
                     if t.get("is_spoiler"):
                         tag_spoilers.add(tname)
+                    if t.get("is_adult") and raw_r >= settings.MATURE_TAG_MIN_RANK:
+                        has_ranked_adult_tag = True
                 else:
                     tname = t
                     raw_r = 0
@@ -235,6 +241,14 @@ class VectorIndex:
                     season_year=item.get("season_year"),
                     status=item.get("status"),
                     is_adult=bool(item.get("is_adult", False)),
+                    is_mature=(
+                        bool(item.get("is_adult", False))
+                        or has_ranked_adult_tag
+                        or any(
+                            genre.lower() in {"hentai", "ecchi"}
+                            for genre in item.get("genres") or []
+                        )
+                    ),
                     genres=list(item.get("genres") or []),
                     tags=tag_names,
                     tag_ranks=tag_ranks,

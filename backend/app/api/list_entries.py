@@ -38,7 +38,11 @@ from app.services.mal_import import (
     MAX_XML_BYTES,
     parse_mal_xml,
 )
-from app.services.maturity import is_mature_anime, mature_anime_clause
+from app.services.maturity import (
+    is_mature_anime,
+    load_anime_tag_ranks,
+    mature_anime_clause,
+)
 
 router = APIRouter(tags=["list"])
 
@@ -391,7 +395,8 @@ async def put_list_entry(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Anime with id {anime_id} not found",
         )
-    if not current_user.show_mature and is_mature_anime(anime):
+    tag_ranks = await load_anime_tag_ranks(db, anime)
+    if not current_user.show_mature and is_mature_anime(anime, tag_ranks):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Anime with id {anime_id} not found",
