@@ -36,6 +36,10 @@ class User(Base):
         String(100),
         nullable=False,
     )
+    email_verified_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
     show_mature: Mapped[bool] = mapped_column(
         Boolean,
         default=False,

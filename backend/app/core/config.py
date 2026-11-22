@@ -74,6 +74,18 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_SECRET: str = ""
     GOOGLE_REDIRECT_URI: str = "http://localhost:8000/api/auth/google/callback"
 
+    # Transactional email. "log" writes messages to the application log (development);
+    # "smtp" sends through the configured server.
+    EMAIL_BACKEND: str = "log"
+    EMAIL_FROM: str = "AniMatch <no-reply@localhost>"
+    SMTP_HOST: str = ""
+    SMTP_PORT: int = 587
+    SMTP_USERNAME: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_STARTTLS: bool = True
+    PASSWORD_RESET_TTL_MINUTES: int = 60
+    EMAIL_VERIFY_TTL_HOURS: int = 48
+
     # Gemini LLM
     GEMINI_API_KEY: str = ""
     GEMINI_MODEL: str = "gemini-2.5-flash"

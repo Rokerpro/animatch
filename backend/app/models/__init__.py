@@ -6,6 +6,7 @@ from app.models.anime import (
     anime_relations,
     anime_tags,
 )
+from app.models.email_token import TOKEN_PURPOSES, EmailToken
 from app.models.list_entry import LIST_SOURCES, LIST_STATUSES, ListEntry
 from app.models.natural_language_usage import NaturalLanguageUsage
 from app.models.user import User
@@ -17,6 +18,8 @@ __all__ = [
     "anime_genres",
     "anime_relations",
     "anime_tags",
+    "EmailToken",
+    "TOKEN_PURPOSES",
     "ListEntry",
     "NaturalLanguageUsage",
     "LIST_SOURCES",
