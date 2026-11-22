@@ -271,8 +271,16 @@ async def put_taste_profile(
     await db.refresh(current_user)
 
     return TasteProfileResponse(
-        quiz_answers=current_user.taste_profile.get("quiz_answers") if current_user.taste_profile else None,
-        liked_ids=current_user.taste_profile.get("liked_ids", []) if current_user.taste_profile else [],
+        quiz_answers=(
+            current_user.taste_profile.get("quiz_answers")
+            if current_user.taste_profile
+            else None
+        ),
+        liked_ids=(
+            current_user.taste_profile.get("liked_ids", [])
+            if current_user.taste_profile
+            else []
+        ),
     )
 
 

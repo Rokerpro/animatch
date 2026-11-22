@@ -46,9 +46,7 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("__pk"),
     )
     op.create_index("ix_anime_relations_anime_id", "anime_relations", ["anime_id"])
-    op.create_index(
-        "ix_anime_relations_related_id", "anime_relations", ["related_id"]
-    )
+    op.create_index("ix_anime_relations_related_id", "anime_relations", ["related_id"])
     op.create_index(
         "ix_anime_relations_pair",
         "anime_relations",

@@ -6,8 +6,9 @@ Create Date: 2026-10-26 20:35:00.000000
 
 """
 
-from alembic import op
 import sqlalchemy as sa
+
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "c5e9a1b2d3f4"
@@ -19,7 +20,9 @@ depends_on = None
 def upgrade() -> None:
     with op.batch_alter_table("anime_tags", schema=None) as batch_op:
         batch_op.add_column(
-            sa.Column("is_spoiler", sa.Boolean(), nullable=False, server_default=sa.false())
+            sa.Column(
+                "is_spoiler", sa.Boolean(), nullable=False, server_default=sa.false()
+            )
         )
 
 

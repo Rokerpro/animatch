@@ -362,7 +362,6 @@ async def test_anime_detail_returns_spoiler_tag_flag(
     assert any(tag["isSpoiler"] is True for tag in tags)
 
 
-
 @pytest.mark.asyncio
 async def test_anime_filters_endpoint(client: AsyncClient, seeded_catalog: None):
     """GET /api/anime/filters is routed correctly before /api/anime/{id} and returns filters object."""

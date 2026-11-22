@@ -693,4 +693,3 @@ async def test_get_auth_providers(client: AsyncClient):
     data = res.json()
     assert "google" in data
     assert isinstance(data["google"], bool)
-
