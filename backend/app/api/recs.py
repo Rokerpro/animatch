@@ -43,6 +43,7 @@ from app.recs.schemas import (
     NaturalLanguageUnderstood,
     NewRecommendationsRequest,
     NewRecommendationsResponse,
+    PreviousNaturalLanguageState,
     QuizAnswerRequest,
     QuizResponse,
     RecFeedbackResponse,
@@ -144,7 +145,10 @@ async def post_recommendation_request(
             "natural_language_daily_limit",
         )
     try:
-        translated = await translate_request(payload.text)
+        translated = await translate_request(
+            payload.text,
+            payload.previous.model_dump() if payload.previous else None,
+        )
     except GeminiUnavailable:
         return _error_response(
             503,
@@ -209,7 +213,13 @@ async def post_recommendation_request(
         include_mature=effective_mature,
         index=index,
     )
-    return NaturalLanguageResponse(results=results, understood=understood)
+    return NaturalLanguageResponse(
+        results=results,
+        understood=understood,
+        state=PreviousNaturalLanguageState(
+            quiz_answers=answers, seed_titles=translated["seed_titles"]
+        ),
+    )
 
 
 @router.post(

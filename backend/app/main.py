@@ -11,6 +11,7 @@ from app.api.auth import router as auth_router
 from app.api.health import router as health_router
 from app.api.list_entries import router as list_entries_router
 from app.api.recs import router as recs_router
+from app.core.api_version import ApiVersionMiddleware
 from app.core.config import settings, setup_error_reporting, setup_logging
 from app.core.request_id import RequestIdMiddleware
 from app.db.session import AsyncSessionLocal
@@ -78,6 +79,8 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    app.add_middleware(ApiVersionMiddleware)
 
     # Outermost, so every log line and response carries the request ID
     app.add_middleware(RequestIdMiddleware)

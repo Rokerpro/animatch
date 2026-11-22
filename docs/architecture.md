@@ -25,6 +25,19 @@ recommendations. Usage is counted per user and UTC day in
 `NL_DAILY_LIMIT`. Provider failures return a generic service error without
 provider response details.
 
+Follow-ups are stateless: the response includes a `state` (validated quiz answers
+and seed titles) that the client echoes back as `previous` with a short refinement
+such as "shorter". The server re-validates `previous` against the quiz vocabulary
+and sends it to Gemini as data; the follow-up counts against the daily limit.
+
+## API versioning and operations endpoints
+
+Every route is also served under `/api/v1/...` (a path rewrite in
+`app/core/api_version.py`); external clients should use that prefix, which leaves
+room for a future `/api/v2` with changed response casing. `/api/health/live`
+reports process liveness and `/api/health/ready` returns 503 until the database
+responds and the recommendation index is loaded.
+
 ## Mature-content visibility
 
 The server hides a title when AniList marks the title `isAdult`, when it has the
