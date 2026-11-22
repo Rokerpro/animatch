@@ -80,9 +80,13 @@ async def queue_verification_email(
     )
 
 
-def set_auth_cookies(response: Response, user_id: int, user_email: str) -> str:
+def set_auth_cookies(
+    response: Response, user_id: int, user_email: str, session_version: int = 0
+) -> str:
     """Sets secure httpOnly session cookie and readable CSRF token cookie."""
-    access_token = create_access_token({"sub": str(user_id), "email": user_email})
+    access_token = create_access_token(
+        {"sub": str(user_id), "email": user_email, "sv": session_version}
+    )
     csrf_token = generate_csrf_token()
     is_prod = settings.ENVIRONMENT == "production"
 
@@ -200,7 +204,7 @@ async def register(
 
     auth_rate_limiter.record_success(ip=client_ip, email=payload.email)
     await queue_verification_email(db, user, background)
-    set_auth_cookies(response, user.id, user.email)
+    set_auth_cookies(response, user.id, user.email, user.session_version)
 
     return UserResponse.model_validate(user)
 
@@ -229,7 +233,7 @@ async def login(
         )
 
     auth_rate_limiter.record_success(ip=client_ip, email=payload.email)
-    set_auth_cookies(response, user.id, user.email)
+    set_auth_cookies(response, user.id, user.email, user.session_version)
 
     return UserResponse.model_validate(user)
 
@@ -293,6 +297,8 @@ async def reset_password(
             detail="This reset link is invalid or has expired.",
         )
     user.password_hash = hash_password(payload.password)
+    # Invalidate every session issued before the reset.
+    user.session_version += 1
     if user.email_verified_at is None:
         user.email_verified_at = datetime.now(UTC)
     await db.commit()
@@ -659,12 +665,12 @@ async def google_callback(
         res = JSONResponse(
             content=UserResponse.model_validate(user).model_dump(mode="json")
         )
-        set_auth_cookies(res, user.id, user.email)
+        set_auth_cookies(res, user.id, user.email, user.session_version)
         return res
 
     # Otherwise redirect to frontend fixed URL from config (not request input)
     redirect_res = RedirectResponse(
         url=f"{settings.FRONTEND_URL}/", status_code=status.HTTP_302_FOUND
     )
-    set_auth_cookies(redirect_res, user.id, user.email)
+    set_auth_cookies(redirect_res, user.id, user.email, user.session_version)
     return redirect_res

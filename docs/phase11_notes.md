@@ -35,6 +35,13 @@ trusts the Docker bridge range (`172.16.0.0/12`) for the nginx container.
   `POST /api/recs/quiz` now requires the token when the caller is signed in,
   because it saves the taste profile.
 
+## Session revocation
+
+`users.session_version` is embedded in the session JWT (`sv`). A password reset
+increments it, so every session issued earlier stops authenticating. Tokens issued
+before this change have no `sv` and are treated as version 0, so existing sessions
+stay valid until the first reset.
+
 ## Still open
 
 - Choose a host, TLS termination (Caddy or a cloud load balancer), and a domain.

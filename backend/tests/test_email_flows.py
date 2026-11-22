@@ -204,3 +204,32 @@ def test_email_sender_selection(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr("app.services.email.settings.EMAIL_BACKEND", "smtp")
     monkeypatch.setattr("app.services.email.settings.SMTP_HOST", "smtp.example.com")
     assert isinstance(get_email_sender(), SmtpEmailSender)
+
+
+@pytest.mark.asyncio
+async def test_password_reset_revokes_existing_sessions(
+    client: AsyncClient, outbox: list
+):
+    await register(client, "revoke@example.com")
+    old_cookie = client.cookies.get("access_token")
+    assert (await client.get("/api/auth/me")).json()["email"] == "revoke@example.com"
+
+    outbox.clear()
+    await client.post("/api/auth/forgot-password", json={"email": "revoke@example.com"})
+    reset = await client.post(
+        "/api/auth/reset-password",
+        json={"token": token_from(outbox[0]), "password": "brand_new_password_987"},
+    )
+    assert reset.status_code == 200
+
+    # The pre-reset session no longer authenticates.
+    client.cookies.set("access_token", old_cookie)
+    assert (await client.get("/api/auth/me")).json() is None
+
+    client.cookies.clear()
+    login = await client.post(
+        "/api/auth/login",
+        json={"email": "revoke@example.com", "password": "brand_new_password_987"},
+    )
+    assert login.status_code == 200
+    assert (await client.get("/api/auth/me")).json()["email"] == "revoke@example.com"

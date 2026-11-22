@@ -73,6 +73,13 @@ async def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+    if payload.get("sv", 0) != user.session_version:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired session token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     return user
 
 
@@ -99,7 +106,10 @@ async def get_optional_user(
         return None
 
     result = await db.execute(select(User).where(User.id == user_id))
-    return result.scalar_one_or_none()
+    user = result.scalar_one_or_none()
+    if user is None or payload.get("sv", 0) != user.session_version:
+        return None
+    return user
 
 
 def verify_csrf(
