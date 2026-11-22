@@ -33,6 +33,26 @@ class Settings(BaseSettings):
                 pass
         return v if isinstance(v, list) else []
 
+    # Reverse proxies (IPs or CIDRs) whose X-Forwarded-For header is trusted for
+    # per-IP rate limiting. Empty means the header is ignored entirely.
+    TRUSTED_PROXIES: list[str] | str = []
+
+    @field_validator("TRUSTED_PROXIES", mode="before")
+    @classmethod
+    def assemble_trusted_proxies(cls, v: str | list[str]) -> list[str]:
+        if isinstance(v, str):
+            stripped = v.strip()
+            if stripped.startswith("["):
+                import json
+
+                try:
+                    parsed = json.loads(stripped)
+                    return [str(i).strip() for i in parsed if str(i).strip()]
+                except Exception:
+                    return []
+            return [i.strip() for i in stripped.split(",") if i.strip()]
+        return v if isinstance(v, list) else []
+
     # Database
     DATABASE_URL: str = "sqlite+aiosqlite:///./animatch.db"
 

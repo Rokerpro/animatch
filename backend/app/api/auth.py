@@ -8,6 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_optional_user, verify_csrf
+from app.core.client_ip import resolve_client_ip
 from app.core.config import settings
 from app.core.rate_limit import auth_rate_limiter
 from app.core.security import (
@@ -36,11 +37,11 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 def get_client_ip(request: Request) -> str:
-    """Extracts client IP address safely considering reverse proxies."""
-    forwarded = request.headers.get("X-Forwarded-For")
-    if forwarded:
-        return forwarded.split(",")[0].strip()
-    return request.client.host if request.client else "127.0.0.1"
+    """Return the client IP, honoring X-Forwarded-For only from trusted proxies."""
+    return resolve_client_ip(
+        request.client.host if request.client else None,
+        request.headers.get("X-Forwarded-For"),
+    )
 
 
 def set_auth_cookies(response: Response, user_id: int, user_email: str) -> str:
