@@ -18,3 +18,26 @@
 The chain is read right to left and the first address outside the trusted set is
 the client, so entries a caller prepends cannot spoof an IP. The compose file
 trusts the Docker bridge range (`172.16.0.0/12`) for the nginx container.
+
+## Implemented: CI, deployment, and hardening
+
+- `.github/workflows/ci.yml` runs ruff, black, pytest, eslint, prettier, tsc,
+  vitest, and the frontend build on pushes to `main` and on pull requests.
+- `docker-compose.prod.yml` runs Postgres (`asyncpg`), the backend in
+  `ENVIRONMENT=production`, and the nginx frontend, with secrets from the
+  environment and no source bind mounts. Run `alembic upgrade head` once after
+  the first start, then sync the catalog with `python -m app.cli sync-catalog`.
+- The backend image runs as a non-root user and has a `/api/health` healthcheck.
+- nginx sends `nosniff`, `X-Frame-Options`, `Referrer-Policy`, and a CSP, and
+  hides its version.
+- CSRF audit: every state-changing route with a session requires the CSRF
+  token. `register` and `login` have no session yet and are rate limited.
+  `POST /api/recs/quiz` now requires the token when the caller is signed in,
+  because it saves the taste profile.
+
+## Still open
+
+- Choose a host, TLS termination (Caddy or a cloud load balancer), and a domain.
+- Database backups and monitoring or error alerting.
+- The in-memory rate limiter is per process; use a shared store if the backend
+  runs with more than one worker or replica.
