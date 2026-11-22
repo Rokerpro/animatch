@@ -11,7 +11,8 @@ from app.api.auth import router as auth_router
 from app.api.health import router as health_router
 from app.api.list_entries import router as list_entries_router
 from app.api.recs import router as recs_router
-from app.core.config import settings, setup_logging
+from app.core.config import settings, setup_error_reporting, setup_logging
+from app.core.request_id import RequestIdMiddleware
 from app.db.session import AsyncSessionLocal
 from app.recs.engine import rebuild_index_from_db
 
@@ -22,6 +23,7 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Handles startup and shutdown events."""
     setup_logging()
+    setup_error_reporting()
     placeholder = (
         "change-this-in-production-to-a-secure-random-secret-key-at-least-32-chars"
     )
@@ -72,6 +74,9 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # Outermost, so every log line and response carries the request ID
+    app.add_middleware(RequestIdMiddleware)
 
     # Mount API routes
     app.include_router(health_router, prefix="/api")

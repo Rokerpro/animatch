@@ -8,6 +8,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
     LOG_LEVEL: str = "INFO"
+    # Optional error reporting; leave empty to disable.
+    SENTRY_DSN: str = ""
+    SENTRY_TRACES_SAMPLE_RATE: float = 0.0
     APP_VERSION: str = "0.1.0"
     APP_NAME: str = "AniMatch API"
 
@@ -185,12 +188,32 @@ def setup_logging() -> None:
     """Configures structured logging for the application."""
     log_level = getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO)
     log_format = (
-        "%(asctime)s | %(levelname)-8s | %(name)s:%(funcName)s:%(lineno)d - %(message)s"
+        "%(asctime)s | %(levelname)-8s | %(request_id)s | "
+        "%(name)s:%(funcName)s:%(lineno)d - %(message)s"
     )
 
+    from app.core.request_id import RequestIdFilter
+
+    handler = logging.StreamHandler(sys.stdout)
+    handler.addFilter(RequestIdFilter())
     logging.basicConfig(
         level=log_level,
         format=log_format,
-        handlers=[logging.StreamHandler(sys.stdout)],
+        handlers=[handler],
         force=True,
+    )
+
+
+def setup_error_reporting() -> None:
+    """Initialise Sentry when SENTRY_DSN is set. Sends no personal data by default."""
+    if not settings.SENTRY_DSN:
+        return
+    import sentry_sdk
+
+    sentry_sdk.init(
+        dsn=settings.SENTRY_DSN,
+        environment=settings.ENVIRONMENT,
+        release=settings.APP_VERSION,
+        traces_sample_rate=settings.SENTRY_TRACES_SAMPLE_RATE,
+        send_default_pii=False,
     )
