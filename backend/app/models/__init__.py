@@ -9,6 +9,7 @@ from app.models.anime import (
 from app.models.email_token import TOKEN_PURPOSES, EmailToken
 from app.models.list_entry import LIST_SOURCES, LIST_STATUSES, ListEntry
 from app.models.natural_language_usage import NaturalLanguageUsage
+from app.models.rec_feedback import RecFeedback
 from app.models.user import User
 
 __all__ = [
@@ -22,6 +23,7 @@ __all__ = [
     "TOKEN_PURPOSES",
     "ListEntry",
     "NaturalLanguageUsage",
+    "RecFeedback",
     "LIST_SOURCES",
     "LIST_STATUSES",
     "User",

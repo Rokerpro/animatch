@@ -29,6 +29,7 @@ from app.core.security import (
 )
 from app.db.session import get_db
 from app.models.list_entry import ListEntry
+from app.models.rec_feedback import RecFeedback
 from app.models.user import User
 from app.schemas.user import (
     AuthProvidersResponse,
@@ -468,6 +469,11 @@ async def export_me(
         }
         for entry in result.scalars().all()
     ]
+    hidden = await db.execute(
+        select(RecFeedback.anime_id)
+        .where(RecFeedback.user_id == current_user.id)
+        .order_by(RecFeedback.anime_id)
+    )
     data = {
         "exported_at": datetime.now(UTC).isoformat(),
         "account": {
@@ -480,6 +486,7 @@ async def export_me(
         },
         "taste_profile": current_user.taste_profile,
         "list": entries,
+        "not_interested_anime_ids": list(hidden.scalars().all()),
     }
     return JSONResponse(
         data,

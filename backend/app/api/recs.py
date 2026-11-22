@@ -16,7 +16,7 @@ from typing import Annotated, Any
 import numpy as np
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, status
 from fastapi.responses import JSONResponse
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_optional_user, verify_csrf
@@ -24,6 +24,7 @@ from app.core.config import settings
 from app.db.session import get_db
 from app.models.list_entry import ListEntry
 from app.models.natural_language_usage import NaturalLanguageUsage
+from app.models.rec_feedback import RecFeedback
 from app.models.user import User
 from app.recs.engine import (
     MatureSeedError,
@@ -42,6 +43,7 @@ from app.recs.schemas import (
     NewRecommendationsResponse,
     QuizAnswerRequest,
     QuizResponse,
+    RecFeedbackResponse,
     RecResult,
     RecStartRequest,
     UnderstoodQuizAnswer,
@@ -86,6 +88,14 @@ async def _take_natural_language_quota(db: AsyncSession, user_id: int) -> bool:
         db.add(row)
     await db.commit()
     return True
+
+
+async def load_hidden_ids(db: AsyncSession, user_id: int) -> set[int]:
+    """Return titles the user marked "not interested"."""
+    rows = await db.execute(
+        select(RecFeedback.anime_id).where(RecFeedback.user_id == user_id)
+    )
+    return set(rows.scalars().all())
 
 
 @router.post(
@@ -222,10 +232,17 @@ async def post_new_recommendations(
     )
     entries = rows.scalars().all()
     listed_ids = {entry.anime_id for entry in entries}
+    hidden_ids = await load_hidden_ids(db, current_user.id)
     user_items: list[dict[str, Any]] = [
         {"anime_id": entry.anime_id, "status": entry.status, "rating": entry.rating}
         for entry in entries
     ]
+    # "Not interested" counts like a dropped title: excluded and pushed away from.
+    user_items.extend(
+        {"anime_id": anime_id, "status": "dropped"}
+        for anime_id in hidden_ids
+        if anime_id not in listed_ids
+    )
     profile = current_user.taste_profile or {}
     liked_ids = list(profile.get("liked_ids", []))
     user_items.extend(
@@ -259,7 +276,7 @@ async def post_new_recommendations(
         n=min(n, settings.REC_MAX_N),
         include_mature=include_mature or current_user.show_mature,
         index=index,
-        exclude_ids=listed_ids | set(liked_ids),
+        exclude_ids=listed_ids | hidden_ids | set(liked_ids),
         exclude_franchise_ids=listed_franchises,
         strict_quality_floor=True,
         novelty_weights=novelty_weights if has_profile_signal else None,
@@ -478,10 +495,16 @@ async def get_my_recommendations(
         liked_ids = tp.get("liked_ids", [])
 
     listed_ids = {item["anime_id"] for item in user_items}
+    hidden_ids = await load_hidden_ids(db, current_user.id)
+    user_items.extend(
+        {"anime_id": anime_id, "status": "dropped"}
+        for anime_id in hidden_ids
+        if anime_id not in listed_ids
+    )
     user_items.extend(
         {"anime_id": anime_id, "status": "completed", "rating": 10}
         for anime_id in liked_ids
-        if anime_id not in listed_ids
+        if anime_id not in listed_ids and anime_id not in hidden_ids
     )
     liked_franchises = {
         record.franchise_id
@@ -522,3 +545,53 @@ async def get_my_recommendations(
         quiz_prior_vec=quiz_prior,
         index=index,
     )
+
+
+@router.get("/recs/feedback", response_model=RecFeedbackResponse)
+async def get_rec_feedback(
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> RecFeedbackResponse:
+    """List the titles the user asked not to see recommended."""
+    ids = await load_hidden_ids(db, current_user.id)
+    return RecFeedbackResponse(anime_ids=sorted(ids))
+
+
+@router.put("/recs/feedback/{anime_id}", response_model=RecFeedbackResponse)
+async def put_rec_feedback(
+    anime_id: int,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _: Annotated[None, Depends(verify_csrf)],
+) -> RecFeedbackResponse:
+    """Mark a title "not interested" so it stops being recommended. Idempotent."""
+    record = get_index().get(anime_id)
+    if record is None or (record.is_mature and not current_user.show_mature):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Anime not found."
+        )
+    hidden = await load_hidden_ids(db, current_user.id)
+    if anime_id not in hidden:
+        db.add(RecFeedback(user_id=current_user.id, anime_id=anime_id))
+        await db.commit()
+        hidden.add(anime_id)
+    return RecFeedbackResponse(anime_ids=sorted(hidden))
+
+
+@router.delete("/recs/feedback/{anime_id}", response_model=RecFeedbackResponse)
+async def delete_rec_feedback(
+    anime_id: int,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _: Annotated[None, Depends(verify_csrf)],
+) -> RecFeedbackResponse:
+    """Undo "not interested" for a title. Idempotent."""
+    await db.execute(
+        delete(RecFeedback).where(
+            RecFeedback.user_id == current_user.id,
+            RecFeedback.anime_id == anime_id,
+        )
+    )
+    await db.commit()
+    ids = await load_hidden_ids(db, current_user.id)
+    return RecFeedbackResponse(anime_ids=sorted(ids))

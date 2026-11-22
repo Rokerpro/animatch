@@ -127,3 +127,9 @@ class RecStartRequest(BaseModel):
     liked_ids: list[int] | None = Field(default=None, max_length=5)
     include_mature: bool = False
     limit: int = Field(default=20, ge=1, le=40)
+
+
+class RecFeedbackResponse(BaseModel):
+    """Titles the signed-in user asked not to be recommended."""
+
+    anime_ids: list[int]
