@@ -6,18 +6,20 @@ import math
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi.responses import JSONResponse, Response
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.api.deps import get_current_user, verify_csrf
 from app.db.session import get_db
-from app.models.anime import Anime
+from app.models.anime import Anime, Genre, anime_genres
 from app.models.list_entry import ListEntry
 from app.models.user import User
 from app.schemas.anime import AnimeCard
 from app.schemas.errors import ApiErrorResponse
 from app.schemas.list_entries import (
+    GenreCount,
     ListAnimeStatus,
     ListDeleteResponse,
     ListEntryPut,
@@ -25,6 +27,7 @@ from app.schemas.list_entries import (
     ListPageInfo,
     ListResponse,
     ListSort,
+    ListStatsResponse,
     ListStatus,
     ListStatusesResponse,
 )
@@ -36,6 +39,7 @@ from app.schemas.mal_import import (
 from app.services.mal_import import (
     MAX_COMPRESSED_BYTES,
     MAX_XML_BYTES,
+    build_mal_xml,
     parse_mal_xml,
 )
 from app.services.maturity import (
@@ -45,6 +49,8 @@ from app.services.maturity import (
 )
 
 router = APIRouter(tags=["list"])
+
+LIST_STATUS_ORDER = ("planning", "watching", "completed", "on_hold", "dropped")
 
 LIST_ERRORS = {
     401: {"model": ApiErrorResponse, "description": "Unauthenticated."},
@@ -184,6 +190,128 @@ async def get_list(
             per_page=page_size,
             has_next_page=page < last_page,
         ),
+    )
+
+
+@router.get(
+    "/list/stats",
+    response_model=ListStatsResponse,
+    responses=READ_ERRORS,
+    description="Summary counts, rating distribution, and top genres for the user's list.",
+)
+async def get_list_stats(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+    include_mature: Annotated[bool, Query(alias="includeMature")] = False,
+) -> ListStatsResponse:
+    """Aggregate the authenticated user's list in the database."""
+    base = (
+        select(ListEntry.id)
+        .join(ListEntry.anime)
+        .where(ListEntry.user_id == current_user.id)
+    )
+    if not include_mature:
+        base = base.where(~mature_anime_clause())
+    ids = base.subquery()
+
+    status_rows = await db.execute(
+        select(ListEntry.status, func.count())
+        .where(ListEntry.id.in_(select(ids.c.id)))
+        .group_by(ListEntry.status)
+    )
+    by_status = {name: 0 for name in LIST_STATUS_ORDER}
+    by_status.update({name: count for name, count in status_rows.all()})
+
+    rating_rows = await db.execute(
+        select(ListEntry.rating, func.count())
+        .where(ListEntry.id.in_(select(ids.c.id)), ListEntry.rating.is_not(None))
+        .group_by(ListEntry.rating)
+    )
+    distribution = {str(score): 0 for score in range(1, 11)}
+    rated = 0
+    weighted = 0
+    for score, count in rating_rows.all():
+        distribution[str(score)] = count
+        rated += count
+        weighted += score * count
+
+    genre_rows = await db.execute(
+        select(Genre.name, func.count().label("n"))
+        .join(anime_genres, anime_genres.c.genre_id == Genre.id)
+        .join(ListEntry, ListEntry.anime_id == anime_genres.c.anime_id)
+        .where(ListEntry.id.in_(select(ids.c.id)))
+        .group_by(Genre.name)
+        .order_by(func.count().desc(), Genre.name)
+        .limit(5)
+    )
+    return ListStatsResponse(
+        total=sum(by_status.values()),
+        by_status=by_status,
+        rated_count=rated,
+        mean_rating=round(weighted / rated, 2) if rated else None,
+        rating_distribution=distribution,
+        top_genres=[GenreCount(genre=g, count=n) for g, n in genre_rows.all()],
+    )
+
+
+@router.get(
+    "/list/export",
+    responses={**READ_ERRORS, 200: {"description": "JSON or MAL XML download."}},
+    description=(
+        "Download the user's list. `format=json` (default) or `format=xml` for a "
+        "MyAnimeList-compatible file that this site's importer also accepts."
+    ),
+)
+async def export_list(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+    export_format: Annotated[
+        str, Query(alias="format", pattern="^(json|xml)$")
+    ] = "json",
+    include_mature: Annotated[bool, Query(alias="includeMature")] = False,
+) -> Response:
+    """Export the authenticated user's list, hiding mature titles by default."""
+    query = (
+        select(ListEntry)
+        .join(ListEntry.anime)
+        .where(ListEntry.user_id == current_user.id)
+        .order_by(ListEntry.added_at, ListEntry.id)
+    )
+    if not include_mature:
+        query = query.where(~mature_anime_clause())
+    entries = (await db.execute(query)).scalars().all()
+    headers = {"Cache-Control": "no-store"}
+
+    def title_of(entry: ListEntry) -> str:
+        anime = entry.anime
+        return anime.title_english or anime.title_romaji or anime.title_native or ""
+
+    if export_format == "xml":
+        rows = [
+            (entry.anime.id_mal, title_of(entry), entry.status, entry.rating)
+            for entry in entries
+            if entry.anime.id_mal
+        ]
+        headers["Content-Disposition"] = 'attachment; filename="animatch-list.xml"'
+        return Response(
+            build_mal_xml(rows), media_type="application/xml", headers=headers
+        )
+
+    headers["Content-Disposition"] = 'attachment; filename="animatch-list.json"'
+    return JSONResponse(
+        [
+            {
+                "anime_id": entry.anime_id,
+                "mal_id": entry.anime.id_mal,
+                "title": title_of(entry),
+                "status": entry.status,
+                "rating": entry.rating,
+                "added_at": entry.added_at.isoformat(),
+                "updated_at": entry.updated_at.isoformat(),
+            }
+            for entry in entries
+        ],
+        headers=headers,
     )
 
 
