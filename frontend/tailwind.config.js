@@ -43,7 +43,9 @@ export default {
         menu: "0 14px 32px rgba(0, 0, 0, 0.28)",
         drawer: "0 -18px 48px rgba(0, 0, 0, 0.34)",
       },
-      fontFamily: { sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"] },
+      fontFamily: {
+        sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+      },
       transitionDuration: { DEFAULT: "180ms" },
     },
   },

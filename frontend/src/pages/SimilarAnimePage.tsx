@@ -3,7 +3,11 @@ import { useAnimeDetail, useSimilar } from "../api/hooks";
 import { useAuth } from "../auth/useAuth";
 import { PosterGrid } from "../components/PosterGrid";
 import { RecommendationCard } from "../components/RecommendationCard";
-import { EmptyState, ErrorState, PosterSkeleton } from "../components/RequestStates";
+import {
+  EmptyState,
+  ErrorState,
+  PosterSkeleton,
+} from "../components/RequestStates";
 import { PosterImage } from "../components/PosterImage";
 
 export function SimilarAnimePage() {
@@ -13,10 +17,18 @@ export function SimilarAnimePage() {
   const similar = useSimilar(id, mature);
 
   if (anime.isLoading) {
-    return <section className="browse-page"><PosterSkeleton count={4} /></section>;
+    return (
+      <section className="browse-page">
+        <PosterSkeleton count={4} />
+      </section>
+    );
   }
   if (anime.isError || !anime.data) {
-    return <section className="browse-page"><ErrorState message="Could not load the selected anime." /></section>;
+    return (
+      <section className="browse-page">
+        <ErrorState message="Could not load the selected anime." />
+      </section>
+    );
   }
 
   const seed = anime.data;
@@ -31,14 +43,22 @@ export function SimilarAnimePage() {
           <p>{[seed.format, seed.year].filter(Boolean).join(" · ")}</p>
         </div>
       </div>
-      {similar.isLoading ? <PosterSkeleton count={4} /> : similar.isError ? (
+      {similar.isLoading ? (
+        <PosterSkeleton count={4} />
+      ) : similar.isError ? (
         <ErrorState message="Could not load similar anime. Please try again." />
       ) : !similar.data?.length ? (
         <EmptyState title={`No similar anime found for ${seed.title}.`} />
       ) : (
-        <PosterGrid animeIds={similar.data.map((recommendation) => recommendation.id)} label={`Anime similar to ${seed.title}`}>
+        <PosterGrid
+          animeIds={similar.data.map((recommendation) => recommendation.id)}
+          label={`Anime similar to ${seed.title}`}
+        >
           {similar.data.map((recommendation) => (
-            <RecommendationCard key={recommendation.id} recommendation={recommendation} />
+            <RecommendationCard
+              key={recommendation.id}
+              recommendation={recommendation}
+            />
           ))}
         </PosterGrid>
       )}

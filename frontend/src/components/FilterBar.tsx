@@ -9,10 +9,12 @@ export function FilterBar({ options }: { options?: FiltersResponse }) {
   const [drawer, setDrawer] = useState(false);
   const [entering, setEntering] = useState(false);
   const { state, setFilter, clearFilters } = useFilterParams();
-  const activeMoreFilterCount = state.genres.length + state.tags.length
-    + Number(Boolean(state.yearMin || state.yearMax))
-    + Number(Boolean(state.maxEpisodes))
-    + Number(Boolean(state.status));
+  const activeMoreFilterCount =
+    state.genres.length +
+    state.tags.length +
+    Number(Boolean(state.yearMin || state.yearMax)) +
+    Number(Boolean(state.maxEpisodes)) +
+    Number(Boolean(state.status));
 
   useEffect(() => {
     if (!drawer) return;
@@ -22,16 +24,42 @@ export function FilterBar({ options }: { options?: FiltersResponse }) {
       if (event.key === "Escape") setDrawer(false);
     };
     window.addEventListener("keydown", closeOnEscape);
-    return () => { clearTimeout(timer); window.removeEventListener("keydown", closeOnEscape); };
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("keydown", closeOnEscape);
+    };
   }, [drawer]);
 
-  const chips: { key: keyof typeof state; value: string; removeValue?: string }[] = [
-    ...state.genres.map((value) => ({ key: "genres" as const, value, removeValue: value })),
+  const chips: {
+    key: keyof typeof state;
+    value: string;
+    removeValue?: string;
+  }[] = [
+    ...state.genres.map((value) => ({
+      key: "genres" as const,
+      value,
+      removeValue: value,
+    })),
     ...(state.format ? [{ key: "format" as const, value: state.format }] : []),
-    ...(state.yearMin || state.yearMax ? [{ key: "yearMin" as const, value: `${state.yearMin || "Any"}–${state.yearMax || "Any"}` }] : []),
-    ...state.tags.map((value) => ({ key: "tags" as const, value, removeValue: value })),
-    ...(state.minScore ? [{ key: "minScore" as const, value: `Score ≥ ${state.minScore}` }] : []),
-    ...(state.maxEpisodes ? [{ key: "maxEpisodes" as const, value: `≤ ${state.maxEpisodes} eps` }] : []),
+    ...(state.yearMin || state.yearMax
+      ? [
+          {
+            key: "yearMin" as const,
+            value: `${state.yearMin || "Any"}–${state.yearMax || "Any"}`,
+          },
+        ]
+      : []),
+    ...state.tags.map((value) => ({
+      key: "tags" as const,
+      value,
+      removeValue: value,
+    })),
+    ...(state.minScore
+      ? [{ key: "minScore" as const, value: `Score ≥ ${state.minScore}` }]
+      : []),
+    ...(state.maxEpisodes
+      ? [{ key: "maxEpisodes" as const, value: `≤ ${state.maxEpisodes} eps` }]
+      : []),
     ...(state.status ? [{ key: "status" as const, value: state.status }] : []),
   ];
 
@@ -41,26 +69,51 @@ export function FilterBar({ options }: { options?: FiltersResponse }) {
         <SearchInput />
         <label>
           Format
-          <select aria-label="Format" value={state.format} onChange={(e) => setFilter("format", e.target.value)}>
+          <select
+            aria-label="Format"
+            value={state.format}
+            onChange={(e) => setFilter("format", e.target.value)}
+          >
             <option value="">Any format</option>
-            {["TV", "MOVIE", "OVA", "ONA", "SPECIAL", "MUSIC"].map((v) => <option key={v}>{v}</option>)}
+            {["TV", "MOVIE", "OVA", "ONA", "SPECIAL", "MUSIC"].map((v) => (
+              <option key={v}>{v}</option>
+            ))}
           </select>
         </label>
         <label>
           Min score
-          <input aria-label="Minimum score" type="number" min="0" max="100" value={state.minScore} onChange={(e) => setFilter("minScore", e.target.value)} placeholder="Any" />
+          <input
+            aria-label="Minimum score"
+            type="number"
+            min="0"
+            max="100"
+            value={state.minScore}
+            onChange={(e) => setFilter("minScore", e.target.value)}
+            placeholder="Any"
+          />
         </label>
         <label>
           Sort
-          <select aria-label="Sort" value={state.sort} onChange={(e) => setFilter("sort", e.target.value)}>
+          <select
+            aria-label="Sort"
+            value={state.sort}
+            onChange={(e) => setFilter("sort", e.target.value)}
+          >
             <option value="popularity">Popularity</option>
             <option value="score">Score</option>
             <option value="year">Year</option>
             <option value="title">Title</option>
           </select>
         </label>
-        <button className="more-filters-toggle" aria-controls="more-filter-options" aria-expanded={more} onClick={() => setMore(!more)} type="button">
-          More filters <span className="filter-count">{activeMoreFilterCount}</span>
+        <button
+          className="more-filters-toggle"
+          aria-controls="more-filter-options"
+          aria-expanded={more}
+          onClick={() => setMore(!more)}
+          type="button"
+        >
+          More filters{" "}
+          <span className="filter-count">{activeMoreFilterCount}</span>
         </button>
       </div>
       {more && (
@@ -79,11 +132,23 @@ export function FilterBar({ options }: { options?: FiltersResponse }) {
           />
           <label>
             Year from
-            <input aria-label="Year from" type="number" value={state.yearMin} onChange={(e) => setFilter("yearMin", e.target.value)} placeholder="Any" />
+            <input
+              aria-label="Year from"
+              type="number"
+              value={state.yearMin}
+              onChange={(e) => setFilter("yearMin", e.target.value)}
+              placeholder="Any"
+            />
           </label>
           <label>
             Year to
-            <input aria-label="Year to" type="number" value={state.yearMax} onChange={(e) => setFilter("yearMax", e.target.value)} placeholder="Any" />
+            <input
+              aria-label="Year to"
+              type="number"
+              value={state.yearMax}
+              onChange={(e) => setFilter("yearMax", e.target.value)}
+              placeholder="Any"
+            />
           </label>
           <label>
             Maximum episodes
@@ -103,11 +168,15 @@ export function FilterBar({ options }: { options?: FiltersResponse }) {
               onChange={(e) => setFilter("status", e.target.value)}
             >
               <option value="">Any</option>
-              {["FINISHED", "RELEASING", "NOT_YET_RELEASED", "CANCELLED", "HIATUS"].map(
-                (v) => (
-                  <option key={v}>{v}</option>
-                )
-              )}
+              {[
+                "FINISHED",
+                "RELEASING",
+                "NOT_YET_RELEASED",
+                "CANCELLED",
+                "HIATUS",
+              ].map((v) => (
+                <option key={v}>{v}</option>
+              ))}
             </select>
           </label>
         </div>

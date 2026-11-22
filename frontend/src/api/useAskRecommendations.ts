@@ -14,7 +14,8 @@ export function useAskRecommendations() {
         if (controllerRef.current === controller) controllerRef.current = null;
       });
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["my-recommendations"] }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["my-recommendations"] }),
   });
   useEffect(() => () => controllerRef.current?.abort(), []);
   return { ...mutation, abort: () => controllerRef.current?.abort() };

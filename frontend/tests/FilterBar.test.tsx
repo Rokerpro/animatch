@@ -2,10 +2,21 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 import { FilterBar } from "../src/components/FilterBar";
-function LocationText() { const location = useLocation(); return <output>{location.search}</output>; }
+function LocationText() {
+  const location = useLocation();
+  return <output>{location.search}</output>;
+}
 describe("FilterBar", () => {
   it("sets URL filters and exposes removable chips and clear all", () => {
-    render(<MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/browse"]}><FilterBar options={{ genres: ["Action"], tags: ["Time Loop"] }} /><LocationText /></MemoryRouter>);
+    render(
+      <MemoryRouter
+        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+        initialEntries={["/browse"]}
+      >
+        <FilterBar options={{ genres: ["Action"], tags: ["Time Loop"] }} />
+        <LocationText />
+      </MemoryRouter>
+    );
     fireEvent.click(screen.getByRole("button", { name: /More filters/ }));
     fireEvent.click(screen.getByLabelText("Action"));
     expect(screen.getByText("?genres=Action")).toBeInTheDocument();

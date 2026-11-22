@@ -17,7 +17,13 @@ import { AskPage } from "./pages/AskPage";
 function AniListFooter() {
   return (
     <footer className="app-footer">
-      <p>Anime data provided by <a href="https://anilist.co" rel="noreferrer">AniList</a>.</p>
+      <p>
+        Anime data provided by{" "}
+        <a href="https://anilist.co" rel="noreferrer">
+          AniList
+        </a>
+        .
+      </p>
     </footer>
   );
 }
@@ -57,7 +63,10 @@ export function App() {
             <Route path="/import" element={<MALImportPage />} />
             <Route path="/new" element={<NewPage />} />
             <Route path="/ask" element={<AskPage />} />
-            <Route path="*" element={<p className="browse-page">Page not found</p>} />
+            <Route
+              path="*"
+              element={<p className="browse-page">Page not found</p>}
+            />
           </Routes>
         </PageShell>
       </AuthProvider>
