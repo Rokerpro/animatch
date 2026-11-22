@@ -22,6 +22,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import get_current_user, get_optional_user, verify_csrf
 from app.core.config import settings
 from app.core.throttle import throttle
+from app.core.ttl_cache import TTLCache
 from app.db.session import get_db
 from app.models.list_entry import ListEntry
 from app.models.natural_language_usage import NaturalLanguageUsage
@@ -50,7 +51,7 @@ from app.recs.schemas import (
     UnderstoodQuizAnswer,
     UnderstoodSeedTitle,
 )
-from app.recs.vectors import get_index
+from app.recs.vectors import get_index, get_index_version
 from app.schemas.errors import ApiErrorResponse
 from app.services.natural_language import (
     GeminiUnavailable,
@@ -59,6 +60,11 @@ from app.services.natural_language import (
 )
 
 logger = logging.getLogger(__name__)
+
+# Similar-title results without a taste profile depend only on the request and the
+# index, so they are cached. The index version is part of the key, so a rebuilt
+# index never serves stale results.
+_similar_cache: TTLCache[list[RecResult]] = TTLCache(max_entries=512, ttl_seconds=600)
 
 router = APIRouter(
     tags=["recommendations"],
@@ -431,6 +437,13 @@ async def get_similar_anime(
         if "quiz_prior_vec" in tp:
             quiz_prior = np.array(tp["quiz_prior_vec"], dtype=np.float32)
 
+    cache_key = None
+    if not user_items and quiz_prior is None:
+        cache_key = (get_index_version(), anime_id, n, effective_mature)
+        cached = _similar_cache.get(cache_key)
+        if cached is not None:
+            return cached
+
     try:
         results = recommend_similar(
             anime_id=anime_id,
@@ -446,6 +459,8 @@ async def get_similar_anime(
             detail="Anime not found or is restricted content.",
         ) from err
 
+    if cache_key is not None:
+        _similar_cache.set(cache_key, results)
     return results
 
 

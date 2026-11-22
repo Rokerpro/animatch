@@ -26,11 +26,14 @@ FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
 @pytest.fixture(autouse=True)
 def _reset_throttle():
+    from app.api.recs import _similar_cache
     from app.core.throttle import reset_throttle_state
 
     reset_throttle_state()
+    _similar_cache.clear()
     yield
     reset_throttle_state()
+    _similar_cache.clear()
 
 
 @pytest.fixture

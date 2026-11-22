@@ -453,6 +453,7 @@ class VectorIndex:
 # Module-level singleton — rebuilt by the engine on startup and after syncs.
 # ---------------------------------------------------------------------------
 _INDEX: VectorIndex = VectorIndex()
+_INDEX_VERSION = 0
 
 
 def get_index() -> VectorIndex:
@@ -460,7 +461,13 @@ def get_index() -> VectorIndex:
     return _INDEX
 
 
+def get_index_version() -> int:
+    """Return a counter that changes whenever the global index is replaced."""
+    return _INDEX_VERSION
+
+
 def set_index(index: VectorIndex) -> None:
     """Replaces the global VectorIndex (called after sync or at startup)."""
-    global _INDEX
+    global _INDEX, _INDEX_VERSION
     _INDEX = index
+    _INDEX_VERSION += 1
