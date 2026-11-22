@@ -15,6 +15,7 @@ from app.core.config import settings, setup_error_reporting, setup_logging
 from app.core.request_id import RequestIdMiddleware
 from app.db.session import AsyncSessionLocal
 from app.recs.engine import rebuild_index_from_db
+from app.recs.refresh import catalog_fingerprint, index_refresher
 
 logger = logging.getLogger(__name__)
 
@@ -38,13 +39,16 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     logger.info(f"Starting {settings.APP_NAME} in {settings.ENVIRONMENT} mode")
 
     # Initialise in-memory vector index if database exists
+    fingerprint = None
     try:
         async with AsyncSessionLocal() as session:
             await rebuild_index_from_db(session)
+            fingerprint = await catalog_fingerprint(session)
     except Exception as exc:
         logger.warning("Could not initialize vector index on startup: %s", exc)
 
-    yield
+    async with index_refresher(fingerprint):
+        yield
     logger.info(f"Shutting down {settings.APP_NAME}")
 
 

@@ -41,3 +41,18 @@ trusts the Docker bridge range (`172.16.0.0/12`) for the nginx container.
 - Database backups and monitoring or error alerting.
 - The in-memory rate limiter is per process; use a shared store if the backend
   runs with more than one worker or replica.
+
+## Operations
+
+- **Catalog refresh:** schedule an incremental sync with the host's cron (or a
+  scheduled container), for example weekly:
+  `docker compose -f docker-compose.prod.yml exec -T backend python -m app.cli sync-catalog --since 7d`
+  (see `parse_since` in `app/cli.py` for accepted formats). With
+  `INDEX_REFRESH_MINUTES` above 0 the API polls a catalog fingerprint and
+  rebuilds the in-memory recommendation index after a sync, so no restart is needed.
+- **Request IDs:** every response carries `X-Request-ID` and every log line
+  includes it. A well-formed incoming ID is reused so proxies can correlate.
+- **Error reporting:** set `SENTRY_DSN` to enable Sentry; personal data is not sent.
+- **Email:** set `EMAIL_BACKEND=smtp` with `SMTP_*` and `EMAIL_FROM` for password
+  reset and verification mail. The links point at `FRONTEND_URL/reset-password`
+  and `FRONTEND_URL/verify-email`; those frontend pages still need to be built.

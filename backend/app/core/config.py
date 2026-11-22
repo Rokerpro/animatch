@@ -100,6 +100,9 @@ class Settings(BaseSettings):
     # this relevance percentage. isAdult, Hentai, and Ecchi remain hard rules.
     MATURE_TAG_MIN_RANK: int = 60
 
+    # Minutes between checks for a re-synced catalog; 0 disables the refresher.
+    INDEX_REFRESH_MINUTES: int = 0
+
     # Recommendation Engine
     REC_GENRE_DIM_WEIGHT: float = 3.0
     REC_TAG_DIM_WEIGHT: float = 2.0
