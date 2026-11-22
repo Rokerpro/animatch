@@ -46,8 +46,8 @@ trusts the Docker bridge range (`172.16.0.0/12`) for the nginx container.
 
 - **Catalog refresh:** schedule an incremental sync with the host's cron (or a
   scheduled container), for example weekly:
-  `docker compose -f docker-compose.prod.yml exec -T backend python -m app.cli sync-catalog --since 7d`
-  (see `parse_since` in `app/cli.py` for accepted formats). With
+  `docker compose -f docker-compose.prod.yml exec -T backend python -m app.cli sync-catalog --since "$(date -d '7 days ago' +%s)"`
+  (`--since` takes an epoch or an ISO date). With
   `INDEX_REFRESH_MINUTES` above 0 the API polls a catalog fingerprint and
   rebuilds the in-memory recommendation index after a sync, so no restart is needed.
 - **Request IDs:** every response carries `X-Request-ID` and every log line
