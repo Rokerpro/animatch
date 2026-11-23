@@ -15,3 +15,4 @@ class ValidationErrorItem(BaseModel):
 
 class ApiErrorResponse(BaseModel):
     detail: str | list[ValidationErrorItem]
+    code: str | None = None

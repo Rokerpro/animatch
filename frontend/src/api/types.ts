@@ -53,3 +53,25 @@ export interface ListStatusesResponse { items: ListAnimeStatus[] }
 export interface ListParams { status?: ListStatus; sort: ListSort; page: number; pageSize: number; includeMature: boolean }
 export interface MALUnmatchedEntry { title: string; }
 export interface MALImportResponse { total_entries: number; to_import: number; skipped_existing: number; unmatched_count: number; unmatched: MALUnmatchedEntry[] }
+export interface FeaturesResponse { natural_language: boolean }
+export interface NaturalLanguageRequest { text: string }
+export interface UnderstoodQuizAnswer { question_id: string; question_label: string; answer_id: string; answer_label: string }
+export interface UnderstoodSeedTitle { id: number; title: string }
+export interface NaturalLanguageUnderstood {
+  quiz_answers: UnderstoodQuizAnswer[];
+  matched_seed_titles: UnderstoodSeedTitle[];
+  unmatched_seed_titles: string[];
+}
+export interface NaturalLanguageResponse {
+  results: Recommendation[];
+  understood: NaturalLanguageUnderstood;
+  message?: string | null;
+}
+export interface ValidationErrorItem {
+  loc: Array<string | number>;
+  msg: string;
+  type: string;
+  input?: unknown;
+  ctx?: Record<string, unknown> | null;
+}
+export interface ApiErrorResponse { detail: string | ValidationErrorItem[]; code?: string | null }

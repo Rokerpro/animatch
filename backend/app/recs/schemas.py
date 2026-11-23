@@ -5,6 +5,7 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from pydantic.alias_generators import to_camel
 
+from app.core.config import settings
 from app.schemas.anime import AnimeCard
 
 
@@ -80,6 +81,45 @@ class NewRecommendationsRequest(BaseModel):
 class NewRecommendationsResponse(BaseModel):
     results: list[RecResult]
     mode: Literal["novelty", "quiz_fallback"]
+
+
+class NaturalLanguageRequest(BaseModel):
+    text: str = Field(min_length=1, max_length=settings.NL_MAX_CHARS)
+
+    model_config = ConfigDict(extra="forbid")
+
+    @field_validator("text", mode="before")
+    @classmethod
+    def trim_text(cls, value: object) -> object:
+        return value.strip() if isinstance(value, str) else value
+
+
+class UnderstoodQuizAnswer(BaseModel):
+    question_id: str
+    question_label: str
+    answer_id: str
+    answer_label: str
+
+
+class UnderstoodSeedTitle(BaseModel):
+    id: int
+    title: str
+
+
+class NaturalLanguageUnderstood(BaseModel):
+    quiz_answers: list[UnderstoodQuizAnswer]
+    matched_seed_titles: list[UnderstoodSeedTitle]
+    unmatched_seed_titles: list[str]
+
+
+class NaturalLanguageResponse(BaseModel):
+    results: list[RecResult]
+    understood: NaturalLanguageUnderstood
+    message: str | None = None
+
+
+class FeaturesResponse(BaseModel):
+    natural_language: bool
 
 
 class RecStartRequest(BaseModel):

@@ -7,6 +7,7 @@ from app.models.anime import (
     anime_tags,
 )
 from app.models.list_entry import LIST_SOURCES, LIST_STATUSES, ListEntry
+from app.models.natural_language_usage import NaturalLanguageUsage
 from app.models.user import User
 
 __all__ = [
@@ -17,6 +18,7 @@ __all__ = [
     "anime_relations",
     "anime_tags",
     "ListEntry",
+    "NaturalLanguageUsage",
     "LIST_SOURCES",
     "LIST_STATUSES",
     "User",

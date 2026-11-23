@@ -10,10 +10,12 @@ Endpoints:
 from __future__ import annotations
 
 import logging
+from datetime import UTC, datetime
 from typing import Annotated, Any
 
 import numpy as np
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.responses import JSONResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -21,6 +23,7 @@ from app.api.deps import get_current_user, get_optional_user, verify_csrf
 from app.core.config import settings
 from app.db.session import get_db
 from app.models.list_entry import ListEntry
+from app.models.natural_language_usage import NaturalLanguageUsage
 from app.models.user import User
 from app.recs.engine import (
     MatureSeedError,
@@ -32,19 +35,161 @@ from app.recs.engine import (
 )
 from app.recs.quiz import build_quiz_vector, get_quiz_questions
 from app.recs.schemas import (
+    NaturalLanguageRequest,
+    NaturalLanguageResponse,
+    NaturalLanguageUnderstood,
     NewRecommendationsRequest,
     NewRecommendationsResponse,
     QuizAnswerRequest,
     QuizResponse,
     RecResult,
     RecStartRequest,
+    UnderstoodQuizAnswer,
+    UnderstoodSeedTitle,
 )
 from app.recs.vectors import get_index
 from app.schemas.errors import ApiErrorResponse
+from app.services.natural_language import (
+    GeminiUnavailable,
+    resolve_seed_title,
+    translate_request,
+)
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["recommendations"])
+
+
+def _error_response(status_code: int, detail: str, code: str) -> JSONResponse:
+    """Return the shared error shape with a stable machine-readable code."""
+    return JSONResponse(
+        status_code=status_code,
+        content=ApiErrorResponse(detail=detail, code=code).model_dump(),
+    )
+
+
+async def _take_natural_language_quota(db: AsyncSession, user_id: int) -> bool:
+    """Increment a user's UTC-day quota; return False once it is exhausted."""
+    today = datetime.now(UTC).date()
+    row = await db.scalar(
+        select(NaturalLanguageUsage).where(
+            NaturalLanguageUsage.user_id == user_id,
+            NaturalLanguageUsage.usage_date == today,
+        )
+    )
+    if row is not None:
+        if row.request_count >= settings.NL_DAILY_LIMIT:
+            return False
+        row.request_count += 1
+    else:
+        row = NaturalLanguageUsage(user_id=user_id, usage_date=today, request_count=1)
+        db.add(row)
+    await db.commit()
+    return True
+
+
+@router.post(
+    "/recs/ask",
+    response_model=NaturalLanguageResponse,
+    responses={
+        401: {"model": ApiErrorResponse, "description": "Unauthenticated."},
+        403: {"model": ApiErrorResponse, "description": "CSRF validation failed."},
+        422: {"model": ApiErrorResponse, "description": "Invalid request."},
+        429: {"model": ApiErrorResponse, "description": "Daily request limit reached."},
+        503: {
+            "model": ApiErrorResponse,
+            "description": "Natural-language service unavailable.",
+        },
+    },
+)
+async def post_recommendation_request(
+    payload: NaturalLanguageRequest,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _: Annotated[None, Depends(verify_csrf)],
+    n: Annotated[int, Query(ge=1, le=50)] = settings.REC_DEFAULT_N,
+    include_mature: Annotated[bool, Query(alias="includeMature")] = False,
+) -> NaturalLanguageResponse | JSONResponse:
+    """Translate a request into inputs for the existing recommendation engine."""
+    if not settings.GEMINI_API_KEY.strip():
+        return _error_response(
+            503,
+            "Natural-language recommendations are not configured.",
+            "natural_language_unavailable",
+        )
+    if not await _take_natural_language_quota(db, current_user.id):
+        return _error_response(
+            429,
+            "Daily natural-language request limit reached. Try again tomorrow.",
+            "natural_language_daily_limit",
+        )
+    try:
+        translated = await translate_request(payload.text)
+    except GeminiUnavailable:
+        return _error_response(
+            503,
+            "Natural-language recommendations are temporarily unavailable.",
+            "natural_language_provider_unavailable",
+        )
+
+    quiz = {question["id"]: question for question in get_quiz_questions()}
+    answers = translated["quiz_answers"]
+    understood_answers = [
+        UnderstoodQuizAnswer(
+            question_id=question_id,
+            question_label=quiz[question_id]["label"],
+            answer_id=answer_id,
+            answer_label=next(
+                answer["label"]
+                for answer in quiz[question_id]["answers"]
+                if answer["id"] == answer_id
+            ),
+        )
+        for question_id, answer_id in answers.items()
+    ]
+
+    effective_mature = include_mature or current_user.show_mature
+    matched: list[UnderstoodSeedTitle] = []
+    unmatched: list[str] = []
+    seed_ids: list[int] = []
+    for title in translated["seed_titles"]:
+        anime = await resolve_seed_title(db, title, include_mature=effective_mature)
+        if anime is None:
+            unmatched.append(title)
+        else:
+            matched.append(
+                UnderstoodSeedTitle(
+                    id=anime.id,
+                    title=anime.title_english
+                    or anime.title_romaji
+                    or anime.title_native
+                    or title,
+                )
+            )
+            if anime.id not in seed_ids:
+                seed_ids.append(anime.id)
+
+    understood = NaturalLanguageUnderstood(
+        quiz_answers=understood_answers,
+        matched_seed_titles=matched,
+        unmatched_seed_titles=unmatched,
+    )
+    if not answers and not seed_ids:
+        return NaturalLanguageResponse(
+            results=[],
+            understood=understood,
+            message="Tell us the mood you want or name a few anime you enjoy.",
+        )
+
+    index = get_index()
+    results = recommend_from_start(
+        quiz_answers=answers or None,
+        liked_ids=seed_ids or None,
+        n=min(n, settings.REC_MAX_N),
+        include_mature=effective_mature,
+        index=index,
+    )
+    return NaturalLanguageResponse(results=results, understood=understood)
 
 
 @router.post(

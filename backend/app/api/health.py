@@ -8,10 +8,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.db.session import get_db
+from app.recs.schemas import FeaturesResponse
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["Health"])
+
+
+@router.get("/features", response_model=FeaturesResponse)
+async def get_features() -> FeaturesResponse:
+    """Return public feature availability without exposing configuration."""
+    return FeaturesResponse(natural_language=bool(settings.GEMINI_API_KEY.strip()))
 
 
 class HealthResponse(BaseModel):

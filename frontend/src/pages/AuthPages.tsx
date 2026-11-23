@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { api, getErrorMessage } from "../api/client";
-import { useProviders } from "../api/hooks";
+import { queryKeys, useProviders } from "../api/hooks";
 import { useAuth } from "../auth/useAuth";
 import { useToast } from "../components/useToast";
 import { safeNextPath } from "../auth/nextPath";
@@ -10,50 +10,53 @@ import { CircleAlert } from "lucide-react";
 import { clearSavedQuiz, markQuizProfileSaved, readSavedQuiz } from "../quizStorage";
 import { clearSavedStart, markStartProfileSaved, readSavedStart } from "../startStorage";
 function AuthForm({ mode }: { mode: "login" | "register" }) {
-  const [email, setEmail] = useState(""); const [password, setPassword] = useState(""); const [name, setName] = useState(""); const [error, setError] = useState("");
-  const providers = useProviders(); const { user, refresh } = useAuth(); const nav = useNavigate(); const [search] = useSearchParams(); const queryClient = useQueryClient(); const { showToast } = useToast();
+  const [email, setEmail] = useState(""); const [password, setPassword] = useState(""); const [name, setName] = useState(""); const [error, setError] = useState(""); const [submitting, setSubmitting] = useState(false);
+  const providers = useProviders(); const { user } = useAuth(); const nav = useNavigate(); const [search] = useSearchParams(); const queryClient = useQueryClient(); const { showToast } = useToast();
   const next = safeNextPath(search.get("next"));
   if (user) return <Navigate to={next} replace />;
   async function submit(event: FormEvent) {
-    event.preventDefault(); setError("");
+    event.preventDefault(); if (submitting) return; setSubmitting(true); setError("");
     try {
       const authenticatedUser = mode === "login"
         ? await api.login({ email, password })
         : await api.register({ email, password, display_name: name || undefined });
-      await refresh(); await queryClient.invalidateQueries();
+      queryClient.setQueryData(queryKeys.me, authenticatedUser);
       const quiz = readSavedQuiz(); const start = readSavedStart();
       const localProfile = { quiz_answers: quiz?.answers ?? null, liked_ids: start?.liked_ids ?? [] };
       const hasLocalData = Boolean(quiz || start);
       const needsProfileSave = Boolean((quiz && quiz.profileSavedFor !== authenticatedUser.id) || (start && start.profile_saved_for !== authenticatedUser.id));
       if ((mode === "login" && hasLocalData) || (mode === "register" && needsProfileSave)) {
-        try {
-          if (mode === "login") {
-            const profile = await api.tasteProfile();
-            const hasProfile = Boolean(profile.quiz_answers && Object.keys(profile.quiz_answers).length) || profile.liked_ids.length > 0;
-            if (hasProfile) {
-              if (quiz) markQuizProfileSaved(authenticatedUser.id); if (start) markStartProfileSaved(authenticatedUser.id);
-              showToast("Your saved profile was kept", "info");
-            } else if (needsProfileSave) {
+        void (async () => {
+          try {
+            if (mode === "login") {
+              const profile = await api.tasteProfile();
+              const hasProfile = Boolean(profile.quiz_answers && Object.keys(profile.quiz_answers).length) || profile.liked_ids.length > 0;
+              if (hasProfile) {
+                if (quiz) markQuizProfileSaved(authenticatedUser.id); if (start) markStartProfileSaved(authenticatedUser.id);
+                showToast("Your saved profile was kept", "info");
+              } else if (needsProfileSave) {
+                await api.saveTasteProfile(localProfile);
+                if (quiz) markQuizProfileSaved(authenticatedUser.id); if (start) markStartProfileSaved(authenticatedUser.id);
+                showToast("Saved your answers", "success");
+              }
+            } else {
               await api.saveTasteProfile(localProfile);
               if (quiz) markQuizProfileSaved(authenticatedUser.id); if (start) markStartProfileSaved(authenticatedUser.id);
               showToast("Saved your answers", "success");
             }
-          } else {
-            await api.saveTasteProfile(localProfile);
-            if (quiz) markQuizProfileSaved(authenticatedUser.id); if (start) markStartProfileSaved(authenticatedUser.id);
-            showToast("Saved your answers", "success");
-          }
-        } catch (reason) { showToast(getErrorMessage(reason, "Could not save your profile"), "error"); }
+          } catch (reason) { showToast(getErrorMessage(reason, "Could not save your profile"), "error"); }
+        })();
       }
       nav(next); showToast("You’re signed in", "success");
     } catch (e) { const message = e instanceof Error ? e.message : "Unable to sign in"; setError(message); }
+    finally { setSubmitting(false); }
   }
   return <section className="auth-page"><h1>{mode === "login" ? "Sign in" : "Create an account"}</h1>
     <form className="auth-form" onSubmit={submit}>
     {mode === "register" && <label>Display name<input value={name} onChange={(e) => setName(e.target.value)} autoComplete="nickname" /></label>}
       <label>Email<input type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} /></label>
       <label>Password<input type="password" required minLength={mode === "register" ? 10 : 1} autoComplete={mode === "login" ? "current-password" : "new-password"} value={password} onChange={(e) => setPassword(e.target.value)} /></label>
-      {error && <div className="status-box status-error auth-error" role="alert"><CircleAlert aria-hidden="true" /><p>{error}</p></div>}<button type="submit">{mode === "login" ? "Sign in" : "Register"}</button>
+      {error && <div className="status-box status-error auth-error" role="alert"><CircleAlert aria-hidden="true" /><p>{error}</p></div>}<button disabled={submitting} type="submit">{submitting ? mode === "login" ? "Signing in…" : "Creating account…" : mode === "login" ? "Sign in" : "Register"}</button>
     </form>
     {providers.data?.google && <a className="google-button" href={api.googleLogin()}>Continue with Google</a>}
     <p>{mode === "login" ? <>New here? <Link to="/register">Create an account</Link></> : <>Already registered? <Link to="/login">Sign in</Link></>}</p>

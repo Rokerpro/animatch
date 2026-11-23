@@ -1,4 +1,4 @@
-import type { AnimeDetailData, AnimeListParams, AnimeListResponse, AuthProvidersResponse, CsrfTokenResponse, FiltersResponse, LoginRequest, Recommendation, RegisterRequest, UserResponse, UserUpdateRequest, QuizQuestion, QuizResponse, TasteProfile, ListEntryPut, ListEntryResponse, ListParams, ListResponse, ListStatusesResponse, MALImportResponse, NewRecommendationsRequest, NewRecommendationsResponse } from "./types";
+import type { AnimeDetailData, AnimeListParams, AnimeListResponse, AuthProvidersResponse, CsrfTokenResponse, FeaturesResponse, FiltersResponse, LoginRequest, NaturalLanguageRequest, NaturalLanguageResponse, Recommendation, RegisterRequest, UserResponse, UserUpdateRequest, QuizQuestion, QuizResponse, TasteProfile, ListEntryPut, ListEntryResponse, ListParams, ListResponse, ListStatusesResponse, MALImportResponse, NewRecommendationsRequest, NewRecommendationsResponse } from "./types";
 
 export function normalizeApiBaseUrl(configuredBase: string | undefined) {
   // Use the same origin by default so Vite or Nginx can proxy /api to the backend.
@@ -7,7 +7,7 @@ export function normalizeApiBaseUrl(configuredBase: string | undefined) {
 }
 const baseUrl = normalizeApiBaseUrl(import.meta.env.VITE_API_URL);
 export class ApiError extends Error {
-  constructor(message: string, public status: number) { super(message); this.name = "ApiError"; }
+  constructor(message: string, public status: number, public code?: string) { super(message); this.name = "ApiError"; }
 }
 export function apiDetailMessage(detail: unknown, fallback = "Request failed"): string {
   if (typeof detail === "string" && detail.trim()) return detail;
@@ -25,21 +25,45 @@ export function getErrorMessage(error: unknown, fallback: string): string {
   return error instanceof Error && error.message.trim() ? error.message : fallback;
 }
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const response = await fetch(`${baseUrl}${path}`, {
-    ...init, credentials: "include",
-    headers: { ...(init.body ? { "Content-Type": "application/json" } : {}), ...init.headers },
-  });
-  if (!response.ok) {
-    let message = response.statusText || "Request failed";
-    try {
-      const data: unknown = await response.json();
-      if (data && typeof data === "object" && "detail" in data) {
-        message = apiDetailMessage((data as { detail?: unknown }).detail, message);
-      }
-    } catch { /* response has no JSON body */ }
-    throw new ApiError(typeof message === "string" ? message : "Request failed", response.status);
+  const controller = new AbortController();
+  let timedOut = false;
+  const timeoutId = window.setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, 15_000);
+  const forwardAbort = () => controller.abort();
+  if (init.signal?.aborted) controller.abort();
+  else init.signal?.addEventListener("abort", forwardAbort, { once: true });
+
+  try {
+    const response = await fetch(`${baseUrl}${path}`, {
+      ...init,
+      credentials: "include",
+      signal: controller.signal,
+      headers: { ...(init.body ? { "Content-Type": "application/json" } : {}), ...init.headers },
+    });
+    if (!response.ok) {
+      let message = response.statusText || "Request failed";
+      let code: string | undefined;
+      try {
+        const data: unknown = await response.json();
+        if (data && typeof data === "object" && "detail" in data) {
+          message = apiDetailMessage((data as { detail?: unknown }).detail, message);
+        }
+        if (data && typeof data === "object" && "code" in data && typeof (data as { code?: unknown }).code === "string") code = (data as { code: string }).code;
+      } catch { /* response has no JSON body */ }
+      throw new ApiError(typeof message === "string" ? message : "Request failed", response.status, code);
+    }
+    return await response.json() as T;
+  } catch (error) {
+    if (timedOut) {
+      throw new ApiError("The server took too long to respond. Check that the backend is running and try again.", 0);
+    }
+    throw error;
+  } finally {
+    window.clearTimeout(timeoutId);
+    init.signal?.removeEventListener("abort", forwardAbort);
   }
-  return response.json() as Promise<T>;
 }
 export function buildAnimeQuery(params: AnimeListParams): string {
   const query = new URLSearchParams();
@@ -51,6 +75,11 @@ export function buildAnimeQuery(params: AnimeListParams): string {
   return query.toString();
 }
 export const api = {
+  features: (signal?: AbortSignal) => request<FeaturesResponse>("/api/features", { signal }),
+  askRecommendations: async (body: NaturalLanguageRequest, signal?: AbortSignal) => {
+    const csrf = await api.csrf(signal);
+    return request<NaturalLanguageResponse>("/api/recs/ask", { method: "POST", headers: { "X-CSRF-Token": csrf.csrf_token }, body: JSON.stringify(body), signal });
+  },
   anime: (params: AnimeListParams, signal?: AbortSignal) => request<AnimeListResponse>(`/api/anime?${buildAnimeQuery(params)}`, { signal }),
   filters: (includeMature: boolean) => request<FiltersResponse>(`/api/anime/filters?includeMature=${includeMature}`),
   detail: (id: number, includeMature: boolean) => request<AnimeDetailData>(`/api/anime/${id}?includeMature=${includeMature}`),
@@ -99,7 +128,7 @@ export const api = {
     return request<Record<string, string>>("/api/auth/me", { method: "DELETE", headers: { "X-CSRF-Token": csrf.csrf_token } });
   },
   googleLogin: () => `${baseUrl}/api/auth/google/login`,
-  csrf: () => request<CsrfTokenResponse>("/api/auth/csrf"),
+  csrf: (signal?: AbortSignal) => request<CsrfTokenResponse>("/api/auth/csrf", { signal }),
   updateMe: async (body: UserUpdateRequest) => {
     const csrf = await api.csrf();
     return request<UserResponse>("/api/auth/me", { method: "PATCH", headers: { "X-CSRF-Token": csrf.csrf_token }, body: JSON.stringify(body) });

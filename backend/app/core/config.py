@@ -57,6 +57,9 @@ class Settings(BaseSettings):
     # Gemini LLM
     GEMINI_API_KEY: str = ""
     GEMINI_MODEL: str = "gemini-2.5-flash"
+    NL_MAX_CHARS: int = 300
+    NL_TIMEOUT_SECONDS: float = 10.0
+    NL_DAILY_LIMIT: int = 20
 
     # Recommendation Engine
     REC_GENRE_DIM_WEIGHT: float = 3.0

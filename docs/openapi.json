@@ -5,6 +5,28 @@
     "version": "0.1.0"
   },
   "paths": {
+    "/api/features": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Get Features",
+        "description": "Return public feature availability without exposing configuration.",
+        "operationId": "get_features_api_features_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeaturesResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/health": {
       "get": {
         "tags": [
@@ -1371,10 +1393,10 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "Comma-separated anime IDs (1\u201350). Empty or non-integer values are rejected.",
+              "description": "Comma-separated anime IDs (1–50). Empty or non-integer values are rejected.",
               "title": "Ids"
             },
-            "description": "Comma-separated anime IDs (1\u201350). Empty or non-integer values are rejected."
+            "description": "Comma-separated anime IDs (1–50). Empty or non-integer values are rejected."
           },
           {
             "name": "includeMature",
@@ -1850,6 +1872,160 @@
           },
           "422": {
             "description": "Validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/recs/ask": {
+      "post": {
+        "tags": [
+          "recommendations"
+        ],
+        "summary": "Post Recommendation Request",
+        "description": "Translate a request into inputs for the existing recommendation engine.",
+        "operationId": "post_recommendation_request_api_recs_ask_post",
+        "parameters": [
+          {
+            "name": "n",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "default": 10,
+              "title": "N"
+            }
+          },
+          {
+            "name": "includeMature",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Includemature"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Csrf-Token"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NaturalLanguageRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NaturalLanguageResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "CSRF validation failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Daily request limit reached.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Natural-language service unavailable.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2774,6 +2950,17 @@
               }
             ],
             "title": "Detail"
+          },
+          "code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code"
           }
         },
         "type": "object",
@@ -2844,6 +3031,19 @@
         "type": "object",
         "title": "ExplanationSchema",
         "description": "Structured explanation attached to every recommendation result."
+      },
+      "FeaturesResponse": {
+        "properties": {
+          "natural_language": {
+            "type": "boolean",
+            "title": "Natural Language"
+          }
+        },
+        "type": "object",
+        "required": [
+          "natural_language"
+        ],
+        "title": "FeaturesResponse"
       },
       "FiltersResponse": {
         "properties": {
@@ -3203,6 +3403,85 @@
           "mal_id"
         ],
         "title": "MALUnmatchedEntry"
+      },
+      "NaturalLanguageRequest": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Text"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "title": "NaturalLanguageRequest"
+      },
+      "NaturalLanguageResponse": {
+        "properties": {
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/RecResult"
+            },
+            "type": "array",
+            "title": "Results"
+          },
+          "understood": {
+            "$ref": "#/components/schemas/NaturalLanguageUnderstood"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "results",
+          "understood"
+        ],
+        "title": "NaturalLanguageResponse"
+      },
+      "NaturalLanguageUnderstood": {
+        "properties": {
+          "quiz_answers": {
+            "items": {
+              "$ref": "#/components/schemas/UnderstoodQuizAnswer"
+            },
+            "type": "array",
+            "title": "Quiz Answers"
+          },
+          "matched_seed_titles": {
+            "items": {
+              "$ref": "#/components/schemas/UnderstoodSeedTitle"
+            },
+            "type": "array",
+            "title": "Matched Seed Titles"
+          },
+          "unmatched_seed_titles": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Unmatched Seed Titles"
+          }
+        },
+        "type": "object",
+        "required": [
+          "quiz_answers",
+          "matched_seed_titles",
+          "unmatched_seed_titles"
+        ],
+        "title": "NaturalLanguageUnderstood"
       },
       "NewRecommendationsRequest": {
         "properties": {
@@ -3707,6 +3986,52 @@
         "type": "object",
         "title": "TasteProfileResponse",
         "description": "Schema for GET /api/me/taste-profile."
+      },
+      "UnderstoodQuizAnswer": {
+        "properties": {
+          "question_id": {
+            "type": "string",
+            "title": "Question Id"
+          },
+          "question_label": {
+            "type": "string",
+            "title": "Question Label"
+          },
+          "answer_id": {
+            "type": "string",
+            "title": "Answer Id"
+          },
+          "answer_label": {
+            "type": "string",
+            "title": "Answer Label"
+          }
+        },
+        "type": "object",
+        "required": [
+          "question_id",
+          "question_label",
+          "answer_id",
+          "answer_label"
+        ],
+        "title": "UnderstoodQuizAnswer"
+      },
+      "UnderstoodSeedTitle": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title"
+        ],
+        "title": "UnderstoodSeedTitle"
       },
       "UserLoginRequest": {
         "properties": {
