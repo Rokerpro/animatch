@@ -27,22 +27,22 @@ async def test_stats_summarise_the_list(client, seeded_catalog, register_user):
     await fill(client, await register_user("stats@example.com"))
     data = (await client.get("/api/list/stats")).json()
     assert data["total"] == 3
-    assert data["by_status"]["completed"] == 2
-    assert data["by_status"]["watching"] == 1
-    assert data["by_status"]["dropped"] == 0
-    assert data["rated_count"] == 2
-    assert data["mean_rating"] == 9.0
-    assert data["rating_distribution"]["8"] == 1
-    assert data["rating_distribution"]["10"] == 1
-    assert len(data["top_genres"]) <= 5
+    assert data["byStatus"]["completed"] == 2
+    assert data["byStatus"]["watching"] == 1
+    assert data["byStatus"]["dropped"] == 0
+    assert data["ratedCount"] == 2
+    assert data["meanRating"] == 9.0
+    assert data["ratingDistribution"]["8"] == 1
+    assert data["ratingDistribution"]["10"] == 1
+    assert len(data["topGenres"]) <= 5
 
 
 @pytest.mark.asyncio
 async def test_stats_are_empty_for_new_user(client, register_user):
     await register_user("empty-stats@example.com")
     data = (await client.get("/api/list/stats")).json()
-    assert data["total"] == 0 and data["mean_rating"] is None
-    assert data["top_genres"] == []
+    assert data["total"] == 0 and data["meanRating"] is None
+    assert data["topGenres"] == []
 
 
 @pytest.mark.asyncio

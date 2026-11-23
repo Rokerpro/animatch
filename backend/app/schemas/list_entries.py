@@ -5,9 +5,8 @@ from enum import StrEnum
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
-from pydantic.alias_generators import to_camel
 
-from app.schemas.anime import AnimeCard
+from app.schemas.anime import AnimeCard, BaseSchema, PageInfo
 
 
 class ListStatus(StrEnum):
@@ -63,8 +62,8 @@ class ListEntryPut(BaseModel):
         return self
 
 
-class ListEntryResponse(BaseModel):
-    """Persisted entry shape; entry keys remain snake_case by contract."""
+class ListEntryResponse(BaseSchema):
+    """Persisted entry shape, serialized with camelCase keys like the rest of the API."""
 
     id: int
     anime_id: int
@@ -76,26 +75,16 @@ class ListEntryResponse(BaseModel):
     updated_at: datetime
 
 
-class ListPageInfo(BaseModel):
-    total: int
-    current_page: int
-    last_page: int
-    per_page: int
-    has_next_page: bool
-
-
-class ListResponse(BaseModel):
+class ListResponse(BaseSchema):
     items: list[ListEntryResponse]
-    page_info: ListPageInfo
+    page_info: PageInfo
 
 
 class ListDeleteResponse(BaseModel):
     message: str
 
 
-class ListAnimeStatus(BaseModel):
-    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
-
+class ListAnimeStatus(BaseSchema):
     anime_id: int
     status: ListStatus
     rating: int | None
@@ -110,7 +99,7 @@ class GenreCount(BaseModel):
     count: int
 
 
-class ListStatsResponse(BaseModel):
+class ListStatsResponse(BaseSchema):
     """Summary of a user's list. Counts exclude mature titles unless requested."""
 
     total: int

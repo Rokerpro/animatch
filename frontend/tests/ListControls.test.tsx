@@ -99,13 +99,13 @@ describe("list controls", () => {
   it("creates an unlisted title as completed when it is rated", async () => {
     const update = vi.spyOn(api, "updateListEntry").mockResolvedValue({
       id: 4,
-      anime_id: 7,
+      animeId: 7,
       anime,
       status: "completed",
       rating: 8,
       source: "manual",
-      added_at: "today",
-      updated_at: "today",
+      addedAt: "today",
+      updatedAt: "today",
     });
     renderWithProviders(
       <ListRatingControl anime={anime} status={null} rating={null} />
@@ -143,13 +143,13 @@ describe("list controls", () => {
   it("clears an existing rating by sending null", async () => {
     const update = vi.spyOn(api, "updateListEntry").mockResolvedValue({
       id: 4,
-      anime_id: 7,
+      animeId: 7,
       anime,
       status: "watching",
       rating: null,
       source: "manual",
-      added_at: "today",
-      updated_at: "today",
+      addedAt: "today",
+      updatedAt: "today",
     });
     renderWithProviders(
       <ListRatingControl anime={anime} status="watching" rating={8} />

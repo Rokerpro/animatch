@@ -30,14 +30,15 @@ async def test_list_crud_filters_sort_and_pagination(
         res = await client.put(f"/api/list/{anime_id}", json=payload, headers=headers)
         assert res.status_code == 200, f"create payload {payload}: {res.text}"
         assert "coverImage" in res.json()["anime"], f"missing coverImage: {res.json()}"
-        assert "anime_id" in res.json() and "animeId" not in res.json()
+        assert "animeId" in res.json() and "anime_id" not in res.json()
+        assert {"addedAt", "updatedAt"} <= res.json().keys()
     updated = await client.put(
         f"/api/list/{ids[0]}", json={"status": "watching", "rating": 7}, headers=headers
     )
     assert updated.status_code == 200, f"update payload failed: {updated.text}"
     filtered = await client.get("/api/list?status=completed")
     assert filtered.status_code == 200 and [
-        x["anime_id"] for x in filtered.json()["items"]
+        x["animeId"] for x in filtered.json()["items"]
     ] == [ids[2]], f"status filter payload: {filtered.json()}"
     by_rating = await client.get("/api/list?sort=rating")
     assert [x["rating"] for x in by_rating.json()["items"]] == [
@@ -55,7 +56,7 @@ async def test_list_crud_filters_sort_and_pagination(
         row.updated_at = datetime(2025, 1, 1, tzinfo=UTC) + timedelta(days=rank)
     await db_session.commit()
     by_updated = await client.get("/api/list?sort=updated")
-    assert [x["anime_id"] for x in by_updated.json()["items"]] == [
+    assert [x["animeId"] for x in by_updated.json()["items"]] == [
         row.anime_id for row in reversed(rows)
     ], f"updated sort payload: {by_updated.json()}"
     by_title = await client.get("/api/list?sort=title")
@@ -63,7 +64,7 @@ async def test_list_crud_filters_sort_and_pagination(
     assert titles == sorted(titles), f"title sort payload: {by_title.json()}"
     page = await client.get("/api/list?page=1&pageSize=2")
     assert (
-        page.json()["page_info"]["total"] == 4 and len(page.json()["items"]) == 2
+        page.json()["pageInfo"]["total"] == 4 and len(page.json()["items"]) == 2
     ), f"pagination payload: {page.json()}"
     assert (await client.get("/api/list?pageSize=51")).status_code == 422
     assert (await client.get("/api/list?sort=unknown")).status_code == 422
@@ -158,10 +159,10 @@ async def test_list_pagination_counts_and_pages_only_visible_entries(
         ).json()
         for page in (1, 2, 3)
     ]
-    assert [page["page_info"]["total"] for page in pages] == [24, 24, 24]
+    assert [page["pageInfo"]["total"] for page in pages] == [24, 24, 24]
     assert [len(page["items"]) for page in pages] == [10, 10, 4]
-    assert [page["page_info"]["last_page"] for page in pages] == [3, 3, 3]
-    assert [page["page_info"]["has_next_page"] for page in pages] == [True, True, False]
+    assert [page["pageInfo"]["lastPage"] for page in pages] == [3, 3, 3]
+    assert [page["pageInfo"]["hasNextPage"] for page in pages] == [True, True, False]
 
 
 @pytest.mark.asyncio

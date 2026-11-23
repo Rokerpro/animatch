@@ -16,7 +16,7 @@ from app.db.session import get_db
 from app.models.anime import Anime, Genre, anime_genres
 from app.models.list_entry import ListEntry
 from app.models.user import User
-from app.schemas.anime import AnimeCard
+from app.schemas.anime import AnimeCard, PageInfo
 from app.schemas.errors import ApiErrorResponse
 from app.schemas.list_entries import (
     GenreCount,
@@ -24,7 +24,6 @@ from app.schemas.list_entries import (
     ListDeleteResponse,
     ListEntryPut,
     ListEntryResponse,
-    ListPageInfo,
     ListResponse,
     ListSort,
     ListStatsResponse,
@@ -101,7 +100,7 @@ def serialize_anime_card(anime: Anime) -> AnimeCard:
 
 
 def serialize_list_entry(entry: ListEntry) -> ListEntryResponse:
-    """Serialize a list row with legacy snake_case entry keys."""
+    """Serialize a list row for the list API."""
     return ListEntryResponse(
         id=entry.id,
         anime_id=entry.anime_id,
@@ -183,7 +182,7 @@ async def get_list(
     last_page = max(1, math.ceil(total / page_size))
     return ListResponse(
         items=[serialize_list_entry(entry) for entry in entries],
-        page_info=ListPageInfo(
+        page_info=PageInfo(
             total=total,
             current_page=page,
             last_page=last_page,
