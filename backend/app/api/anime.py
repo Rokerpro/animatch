@@ -20,7 +20,12 @@ from app.schemas.anime import (
     PageInfo,
     TagDetail,
 )
-from app.services.maturity import MATURE_GENRES, is_mature_anime, mature_anime_clause
+from app.services.maturity import (
+    MATURE_GENRES,
+    is_mature_anime,
+    load_anime_tag_ranks,
+    mature_anime_clause,
+)
 from app.services.title_search import normalized_title_column, title_search_clause
 
 router = APIRouter(tags=["anime"])
@@ -360,7 +365,8 @@ async def get_anime_detail(
         )
 
     # Server-side mature content check
-    if not include_mature and is_mature_anime(anime):
+    tag_ranks = await load_anime_tag_ranks(db, anime)
+    if not include_mature and is_mature_anime(anime, tag_ranks):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Anime with id {id} not found",

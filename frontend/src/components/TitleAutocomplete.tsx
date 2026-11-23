@@ -41,7 +41,10 @@ export function TitleAutocomplete({
     (loading || error || hasSearched || results.length > 0);
 
   useEffect(() => {
-    const timeout = window.setTimeout(() => setDebouncedQuery(query.trim()), 300);
+    const timeout = window.setTimeout(
+      () => setDebouncedQuery(query.trim()),
+      300
+    );
     return () => window.clearTimeout(timeout);
   }, [query]);
 
@@ -64,7 +67,7 @@ export function TitleAutocomplete({
     void api
       .anime(
         { q: search, page: 1, pageSize: 6, includeMature },
-        controller.signal,
+        controller.signal
       )
       .then((response) => {
         if (!controller.signal.aborted) {
@@ -123,7 +126,7 @@ export function TitleAutocomplete({
     } else if (event.key === "ArrowUp") {
       event.preventDefault();
       setActiveIndex((current) =>
-        current <= 0 ? results.length - 1 : current - 1,
+        current <= 0 ? results.length - 1 : current - 1
       );
     }
   }
@@ -152,7 +155,9 @@ export function TitleAutocomplete({
         type="search"
         value={query}
       />
-      {atMaximum && <p className="autocomplete-limit-note">Maximum of 5 titles selected.</p>}
+      {atMaximum && (
+        <p className="autocomplete-limit-note">Maximum of 5 titles selected.</p>
+      )}
       {open && (
         <div className="autocomplete-popover">
           <ul
@@ -179,17 +184,31 @@ export function TitleAutocomplete({
                 >
                   <img alt="" src={anime.coverImage ?? ""} />
                   <span className="autocomplete-option-copy">
-                    <span className="autocomplete-option-title">{anime.title}</span>
-                    {metadata && <span className="autocomplete-option-meta">{metadata}</span>}
+                    <span className="autocomplete-option-title">
+                      {anime.title}
+                    </span>
+                    {metadata && (
+                      <span className="autocomplete-option-meta">
+                        {metadata}
+                      </span>
+                    )}
                   </span>
-                  {alreadySelected && <span className="autocomplete-added">Added</span>}
+                  {alreadySelected && (
+                    <span className="autocomplete-added">Added</span>
+                  )}
                 </li>
               );
             })}
           </ul>
-          {loading && <p className="autocomplete-status" role="status">Searching…</p>}
+          {loading && (
+            <p className="autocomplete-status" role="status">
+              Searching…
+            </p>
+          )}
           {!loading && !error && results.length === 0 && (
-            <p className="autocomplete-status" role="status">No anime found</p>
+            <p className="autocomplete-status" role="status">
+              No anime found
+            </p>
           )}
           {error && (
             <div className="autocomplete-error" role="alert">

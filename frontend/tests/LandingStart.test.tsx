@@ -1,4 +1,9 @@
-import { act, fireEvent, render as testingRender, screen } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render as testingRender,
+  screen,
+} from "@testing-library/react";
 import type { ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -81,9 +86,18 @@ function routeElement(path = "/") {
 function renderRoutes(path = "/") {
   return render(routeElement(path));
 }
-function render(element: React.ReactElement, options?: Parameters<typeof testingRender>[1]) {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  function Wrapper({ children }: { children: ReactNode }) { return <QueryClientProvider client={client}>{children}</QueryClientProvider>; }
+function render(
+  element: React.ReactElement,
+  options?: Parameters<typeof testingRender>[1]
+) {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  function Wrapper({ children }: { children: ReactNode }) {
+    return (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    );
+  }
   return testingRender(element, { ...options, wrapper: Wrapper });
 }
 
@@ -110,10 +124,18 @@ beforeEach(() => {
   clearSavedQuiz();
   clearSavedStart();
   vi.mocked(api.anime).mockReset().mockResolvedValue(animeResponse(anime));
-  vi.mocked(api.quiz).mockReset().mockResolvedValue([
-    { id: "mood", label: "What mood?", answers: [{ id: "cozy", label: "Cozy" }] },
-  ]);
-  vi.mocked(api.startRecommendations).mockReset().mockResolvedValue([recommendation]);
+  vi.mocked(api.quiz)
+    .mockReset()
+    .mockResolvedValue([
+      {
+        id: "mood",
+        label: "What mood?",
+        answers: [{ id: "cozy", label: "Cozy" }],
+      },
+    ]);
+  vi.mocked(api.startRecommendations)
+    .mockReset()
+    .mockResolvedValue([recommendation]);
 });
 
 afterEach(() => {
@@ -129,7 +151,7 @@ describe("TitleAutocomplete", () => {
         includeMature={authState.mature}
         onSelect={onSelect}
         selected={[]}
-      />,
+      />
     );
     const input = screen.getByRole("combobox", { name: "Search anime titles" });
     fireEvent.focus(input);
@@ -140,10 +162,12 @@ describe("TitleAutocomplete", () => {
     });
     expect(api.anime).not.toHaveBeenCalled();
     await advanceSearchDebounce();
-    await act(async () => { await Promise.resolve(); });
+    await act(async () => {
+      await Promise.resolve();
+    });
     expect(api.anime).toHaveBeenCalledWith(
       { q: "anime", page: 1, pageSize: 6, includeMature: true },
-      expect.any(AbortSignal),
+      expect.any(AbortSignal)
     );
     expect(screen.getAllByRole("option")).toHaveLength(6);
     expect(input).toHaveAttribute("aria-expanded", "true");
@@ -166,16 +190,22 @@ describe("TitleAutocomplete", () => {
   });
 
   it("aborts the prior request when the query changes", async () => {
-    let resolveStale: (response: ReturnType<typeof animeResponse>) => void = () => undefined;
+    let resolveStale: (
+      response: ReturnType<typeof animeResponse>
+    ) => void = () => undefined;
     vi.mocked(api.anime)
       .mockReturnValueOnce(
         new Promise((resolve) => {
           resolveStale = resolve;
-        }),
+        })
       )
       .mockResolvedValueOnce(animeResponse([anime[1]]));
     render(
-      <TitleAutocomplete includeMature={false} onSelect={vi.fn()} selected={[]} />,
+      <TitleAutocomplete
+        includeMature={false}
+        onSelect={vi.fn()}
+        selected={[]}
+      />
     );
     const input = screen.getByRole("combobox", { name: "Search anime titles" });
     fireEvent.focus(input);
@@ -201,7 +231,11 @@ describe("TitleAutocomplete", () => {
       .mockRejectedValueOnce(new Error("offline"))
       .mockResolvedValue(animeResponse(anime));
     render(
-      <TitleAutocomplete includeMature={false} onSelect={onSelect} selected={[]} />,
+      <TitleAutocomplete
+        includeMature={false}
+        onSelect={onSelect}
+        selected={[]}
+      />
     );
     const input = screen.getByRole("combobox", { name: "Search anime titles" });
     fireEvent.focus(input);
@@ -212,7 +246,7 @@ describe("TitleAutocomplete", () => {
     fireEvent.change(input, { target: { value: "network" } });
     await advanceSearchDebounce();
     expect(screen.getByRole("alert")).toHaveTextContent(
-      "Could not load anime. Try again.",
+      "Could not load anime. Try again."
     );
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
     await act(async () => Promise.resolve());
@@ -223,7 +257,9 @@ describe("TitleAutocomplete", () => {
 describe("home page", () => {
   it("does not show the similar-anime search outside the results header", () => {
     renderRoutes("/");
-    expect(screen.queryByRole("combobox", { name: "Search anime similar to" })).toBeNull();
+    expect(
+      screen.queryByRole("combobox", { name: "Search anime similar to" })
+    ).toBeNull();
   });
 });
 
@@ -232,16 +268,21 @@ describe("title recommendation entry", () => {
     authState.mature = true;
     renderRoutes("/quiz?mode=titles");
     await act(async () => Promise.resolve());
-    expect(screen.getByRole("heading", { name: "Name anime you like" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Name anime you like" })
+    ).toBeInTheDocument();
     const submit = screen.getByRole("button", { name: "Get recommendations" });
-    const search = screen.getByRole("combobox", { name: "Search anime titles" });
+    const search = screen.getByRole("combobox", {
+      name: "Search anime titles",
+    });
     expect(submit).toBeDisabled();
     expect(screen.getByText("0 of 3 minimum, 5 maximum")).toBeInTheDocument();
 
     await pickTitle("Anime 1");
     expect(screen.getByText("1 of 3 minimum, 5 maximum")).toBeInTheDocument();
-    expect(screen.getByRole("list", { name: "Picked anime" }).querySelector("img"))
-      .toHaveAttribute("src", anime[0].coverImage);
+    expect(
+      screen.getByRole("list", { name: "Picked anime" }).querySelector("img")
+    ).toHaveAttribute("src", anime[0].coverImage);
     await pickTitle("Anime 1");
     expect(screen.getByText("1 of 3 minimum, 5 maximum")).toBeInTheDocument();
     await pickTitle("Anime 2");
@@ -253,7 +294,9 @@ describe("title recommendation entry", () => {
 
     expect(screen.getByText("5 of 3 minimum, 5 maximum")).toBeInTheDocument();
     expect(search).toBeDisabled();
-    expect(screen.getByText("Maximum of 5 titles selected.")).toBeInTheDocument();
+    expect(
+      screen.getByText("Maximum of 5 titles selected.")
+    ).toBeInTheDocument();
     expect(screen.queryByText(/different franchises/i)).not.toBeInTheDocument();
     expect(api.anime).toHaveBeenCalled();
     for (const [params] of vi.mocked(api.anime).mock.calls) {
@@ -262,8 +305,15 @@ describe("title recommendation entry", () => {
 
     fireEvent.click(submit);
     await act(async () => Promise.resolve());
-    expect(screen.getByRole("heading", { name: "Recommendations based on your picks" })).toBeInTheDocument();
-    expect(api.startRecommendations).toHaveBeenCalledWith([1, 2, 3, 4, 5], true);
+    expect(
+      screen.getByRole("heading", {
+        name: "Recommendations based on your picks",
+      })
+    ).toBeInTheDocument();
+    expect(api.startRecommendations).toHaveBeenCalledWith(
+      [1, 2, 3, 4, 5],
+      true
+    );
     expect(readSavedStart()).toMatchObject({
       liked_ids: [1, 2, 3, 4, 5],
       results: [recommendation],
@@ -275,8 +325,8 @@ describe("title recommendation entry", () => {
     vi.mocked(api.startRecommendations).mockRejectedValueOnce(
       new ApiError(
         "liked_ids must cover at least 3 different franchises; some selected titles share a franchise.",
-        422,
-      ),
+        422
+      )
     );
     renderRoutes("/quiz?mode=titles");
     await act(async () => Promise.resolve());
@@ -284,11 +334,13 @@ describe("title recommendation entry", () => {
     await pickTitle("Anime 2");
     await pickTitle("Anime 3");
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Get recommendations" }));
+      fireEvent.click(
+        screen.getByRole("button", { name: "Get recommendations" })
+      );
       await Promise.resolve();
     });
     expect(screen.getByRole("alert")).toHaveTextContent(
-      "These titles include multiple seasons from the same series. Choose titles from at least 3 different series.",
+      "These titles include multiple seasons from the same series. Choose titles from at least 3 different series."
     );
     expect(screen.getByRole("alert")).not.toHaveTextContent("liked_ids");
     expect(readSavedStart()).toBeNull();
@@ -299,17 +351,25 @@ describe("title recommendation entry", () => {
     vi.mocked(api.startRecommendations).mockReturnValueOnce(
       new Promise((resolve) => {
         resolveRequest = resolve;
-      }),
+      })
     );
     renderRoutes("/quiz?mode=titles");
     await act(async () => Promise.resolve());
     await pickTitle("Anime 1");
     await pickTitle("Anime 2");
     await pickTitle("Anime 3");
-    fireEvent.click(screen.getByRole("button", { name: "Get recommendations" }));
-    expect(screen.getByRole("button", { name: "Getting recommendations…" })).toBeDisabled();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Get recommendations" })
+    );
+    expect(
+      screen.getByRole("button", { name: "Getting recommendations…" })
+    ).toBeDisabled();
     await act(async () => resolveRequest([recommendation]));
-    expect(screen.getByRole("heading", { name: "Recommendations based on your picks" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        name: "Recommendations based on your picks",
+      })
+    ).toBeInTheDocument();
   }, 10000);
 
   it("retries with stored IDs when mature content changes and has no start over button", async () => {
@@ -319,7 +379,11 @@ describe("title recommendation entry", () => {
       include_mature: false,
     });
     const view = renderRoutes("/results");
-    expect(screen.getByRole("heading", { name: "Recommendations based on your picks" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        name: "Recommendations based on your picks",
+      })
+    ).toBeInTheDocument();
 
     authState.mature = true;
     view.rerender(routeElement("/results"));

@@ -32,7 +32,7 @@ export function StartResultsPage() {
         setError(
           reason instanceof ApiError
             ? reason.message
-            : "Could not update recommendations. Try again.",
+            : "Could not update recommendations. Try again."
         );
       })
       .finally(() => {
@@ -49,7 +49,9 @@ export function StartResultsPage() {
     <section className="browse-page results-page">
       <h1 className="page-title">Recommendations based on your picks</h1>
       <div className="results-actions">
-        <Link className="text-button" to="/quiz">Take the quiz</Link>
+        <Link className="text-button" to="/quiz">
+          Take the quiz
+        </Link>
       </div>
       {error && (
         <div className="status-box status-error" role="alert">
@@ -69,7 +71,10 @@ export function StartResultsPage() {
           <PosterSkeleton count={4} />
         </>
       ) : saved.results.length ? (
-        <PosterGrid animeIds={saved.results.map((result) => result.id)} label="Recommendations based on your picks">
+        <PosterGrid
+          animeIds={saved.results.map((result) => result.id)}
+          label="Recommendations based on your picks"
+        >
           {saved.results.map((result) => (
             <RecommendationCard key={result.id} recommendation={result} />
           ))}

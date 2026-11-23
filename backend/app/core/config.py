@@ -61,6 +61,10 @@ class Settings(BaseSettings):
     NL_TIMEOUT_SECONDS: float = 10.0
     NL_DAILY_LIMIT: int = 20
 
+    # Adult-flagged tags only make a title mature when their AniList rank meets
+    # this relevance percentage. isAdult, Hentai, and Ecchi remain hard rules.
+    MATURE_TAG_MIN_RANK: int = 60
+
     # Recommendation Engine
     REC_GENRE_DIM_WEIGHT: float = 3.0
     REC_TAG_DIM_WEIGHT: float = 2.0

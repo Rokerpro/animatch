@@ -287,7 +287,7 @@ async def post_recs_start(payload: RecStartRequest) -> list[RecResult]:
     if any(seed is None for seed in seeds):
         raise HTTPException(404, "One or more liked_ids were not found.")
     if (
-        any(seed.is_adult for seed in seeds if seed is not None)
+        any(seed.is_mature for seed in seeds if seed is not None)
         and not payload.include_mature
     ):
         raise HTTPException(404, "Anime not found or is restricted content.")

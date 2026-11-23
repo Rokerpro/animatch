@@ -10,39 +10,181 @@ import { ErrorState, PosterSkeleton } from "../components/RequestStates";
 import { ScoreBadge } from "../components/ScoreBadge";
 import { ListControl, ListRatingControl } from "../components/ListControls";
 export function AnimeDetailPage() {
-  const id = Number(useParams().id); const { mature, user } = useAuth(); const detail = useAnimeDetail(id, mature); const similar = useSimilar(id, mature); const listStatusQuery = useListStatuses([id], mature, Boolean(user));
-  if (detail.isLoading) return <main className="detail-page"><PosterSkeleton count={3} /></main>;
-  if (detail.error instanceof ApiError && detail.error.status === 404) return <main className="detail-page"><p role="status">Not found, or hidden by your content settings</p></main>;
-  if (detail.isError || !detail.data) return <main className="detail-page"><ErrorState message="Could not load this anime." /></main>;
-  const anime = detail.data; const tags = [...(anime.tagDetails ?? [])].filter((tag) => !tag.isSpoiler).sort((a, b) => (b.rank ?? 0) - (a.rank ?? 0));
-  const listEntry = listStatusQuery.data?.items.find((entry) => entry.animeId === anime.id);
-  const listStatus = listEntry?.status ?? null; const listRating = listEntry?.rating ?? null;
-  return <article className="detail-page">
-    <div className="detail-banner" style={anime.bannerImage ? { backgroundImage: `url(${JSON.stringify(anime.bannerImage)})` } : undefined} aria-hidden="true" />
-    <div className="detail-layout">
-      <aside aria-label="Anime controls" className="detail-sidebar">
-        <div className="detail-cover"><PosterImage src={anime.coverImage} alt={anime.title} /></div>
-        <div className="detail-action-stack">
-          <div className="detail-anilist-score"><span>AniList score</span><ScoreBadge score={anime.score ?? null} /></div>
-          <ListControl anime={anime} status={listStatus} rating={listRating} statusLoading={Boolean(user) && listStatusQuery.isLoading} variant="detail" />
-        </div>
-        <section aria-label="List actions" className="detail-list-actions">
-          <ListRatingControl anime={anime} status={listStatus} rating={listRating} statusLoading={Boolean(user) && listStatusQuery.isLoading} />
-        </section>
-      </aside>
-      <div className="detail-main">
-        <header className="detail-heading"><p className="eyebrow">{[anime.format, anime.status].filter(Boolean).join(" · ")}</p><h1>{anime.title}</h1>{anime.titleEnglish && anime.titleEnglish !== anime.title && <p>{anime.titleEnglish}</p>}<p className="anime-meta">{[anime.year, anime.episodes ? `${anime.episodes} episodes` : null].filter(Boolean).join(" · ")}</p></header>
-        <div className="detail-content"><section><h2>Synopsis</h2><p>{anime.synopsis || "No synopsis available."}</p></section>
-      <section><h2>Details</h2><dl className="detail-list">{[["Popularity", `${(anime.popularity ?? 0).toLocaleString()} users`], ["Studio", anime.studio], ["Season", [anime.season, anime.seasonYear].filter(Boolean).join(" ")], ["Source", anime.source], ["Episodes", anime.episodes], ["Duration", anime.duration ? `${anime.duration} min` : null]].filter(([, value]) => value != null).map(([key, value]) => <div key={String(key)}><dt>{key}</dt><dd>{value}</dd></div>)}</dl></section>
-      {!!anime.genres?.length && <section><h2>Genres</h2><div className="tag-list">{anime.genres.map((genre) => <span className="tag-pill" key={genre}>{genre}</span>)}</div></section>}
-      {!!tags.length && <TagList tags={tags.map((tag) => tag.name)} />}
-      <section><h2>Similar anime</h2>{similar.isLoading ? <PosterSkeleton count={4} /> : similar.isError ? <ErrorState message="Could not load recommendations." /> : !similar.data?.length ? <p>No similar anime found.</p> : <PosterGrid animeIds={similar.data.map((rec) => rec.id)} label="Similar anime">{similar.data.map((rec) => <RecommendationCard key={rec.id} recommendation={rec} />)}</PosterGrid>}</section>
+  const id = Number(useParams().id);
+  const { mature, user } = useAuth();
+  const detail = useAnimeDetail(id, mature);
+  const similar = useSimilar(id, mature);
+  const listStatusQuery = useListStatuses([id], mature, Boolean(user));
+  if (detail.isLoading)
+    return (
+      <main className="detail-page">
+        <PosterSkeleton count={3} />
+      </main>
+    );
+  if (detail.error instanceof ApiError && detail.error.status === 404)
+    return (
+      <main className="detail-page">
+        <p role="status">Not found, or hidden by your content settings</p>
+      </main>
+    );
+  if (detail.isError || !detail.data)
+    return (
+      <main className="detail-page">
+        <ErrorState message="Could not load this anime." />
+      </main>
+    );
+  const anime = detail.data;
+  const tags = [...(anime.tagDetails ?? [])]
+    .filter((tag) => !tag.isSpoiler)
+    .sort((a, b) => (b.rank ?? 0) - (a.rank ?? 0));
+  const listEntry = listStatusQuery.data?.items.find(
+    (entry) => entry.animeId === anime.id
+  );
+  const listStatus = listEntry?.status ?? null;
+  const listRating = listEntry?.rating ?? null;
+  return (
+    <article className="detail-page">
+      <div
+        className="detail-banner"
+        style={
+          anime.bannerImage
+            ? { backgroundImage: `url(${JSON.stringify(anime.bannerImage)})` }
+            : undefined
+        }
+        aria-hidden="true"
+      />
+      <div className="detail-layout">
+        <aside aria-label="Anime controls" className="detail-sidebar">
+          <div className="detail-cover">
+            <PosterImage src={anime.coverImage} alt={anime.title} />
+          </div>
+          <div className="detail-action-stack">
+            <div className="detail-anilist-score">
+              <span>AniList score</span>
+              <ScoreBadge score={anime.score ?? null} />
+            </div>
+            <ListControl
+              anime={anime}
+              status={listStatus}
+              rating={listRating}
+              statusLoading={Boolean(user) && listStatusQuery.isLoading}
+              variant="detail"
+            />
+          </div>
+          <section aria-label="List actions" className="detail-list-actions">
+            <ListRatingControl
+              anime={anime}
+              status={listStatus}
+              rating={listRating}
+              statusLoading={Boolean(user) && listStatusQuery.isLoading}
+            />
+          </section>
+        </aside>
+        <div className="detail-main">
+          <header className="detail-heading">
+            <p className="eyebrow">
+              {[anime.format, anime.status].filter(Boolean).join(" · ")}
+            </p>
+            <h1>{anime.title}</h1>
+            {anime.titleEnglish && anime.titleEnglish !== anime.title && (
+              <p>{anime.titleEnglish}</p>
+            )}
+            <p className="anime-meta">
+              {[
+                anime.year,
+                anime.episodes ? `${anime.episodes} episodes` : null,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
+            </p>
+          </header>
+          <div className="detail-content">
+            <section>
+              <h2>Synopsis</h2>
+              <p>{anime.synopsis || "No synopsis available."}</p>
+            </section>
+            <section>
+              <h2>Details</h2>
+              <dl className="detail-list">
+                {[
+                  [
+                    "Popularity",
+                    `${(anime.popularity ?? 0).toLocaleString()} users`,
+                  ],
+                  ["Studio", anime.studio],
+                  [
+                    "Season",
+                    [anime.season, anime.seasonYear].filter(Boolean).join(" "),
+                  ],
+                  ["Source", anime.source],
+                  ["Episodes", anime.episodes],
+                  ["Duration", anime.duration ? `${anime.duration} min` : null],
+                ]
+                  .filter(([, value]) => value != null)
+                  .map(([key, value]) => (
+                    <div key={String(key)}>
+                      <dt>{key}</dt>
+                      <dd>{value}</dd>
+                    </div>
+                  ))}
+              </dl>
+            </section>
+            {!!anime.genres?.length && (
+              <section>
+                <h2>Genres</h2>
+                <div className="tag-list">
+                  {anime.genres.map((genre) => (
+                    <span className="tag-pill" key={genre}>
+                      {genre}
+                    </span>
+                  ))}
+                </div>
+              </section>
+            )}
+            {!!tags.length && <TagList tags={tags.map((tag) => tag.name)} />}
+            <section>
+              <h2>Similar anime</h2>
+              {similar.isLoading ? (
+                <PosterSkeleton count={4} />
+              ) : similar.isError ? (
+                <ErrorState message="Could not load recommendations." />
+              ) : !similar.data?.length ? (
+                <p>No similar anime found.</p>
+              ) : (
+                <PosterGrid
+                  animeIds={similar.data.map((rec) => rec.id)}
+                  label="Similar anime"
+                >
+                  {similar.data.map((rec) => (
+                    <RecommendationCard key={rec.id} recommendation={rec} />
+                  ))}
+                </PosterGrid>
+              )}
+            </section>
+          </div>
         </div>
       </div>
-    </div>
-  </article>;
+    </article>
+  );
 }
 function TagList({ tags }: { tags: string[] }) {
-  const [showAll, setShowAll] = useState(false); const shown = showAll ? tags : tags.slice(0, 8);
-  return <section><h2>Tags</h2><div className="tag-list">{shown.map((tag) => <span className="tag-pill" key={tag}>{tag}</span>)}</div>{tags.length > 8 && <button className="tag-toggle" onClick={() => setShowAll(!showAll)}>{showAll ? "Show fewer" : "Show more"}</button>}</section>;
+  const [showAll, setShowAll] = useState(false);
+  const shown = showAll ? tags : tags.slice(0, 8);
+  return (
+    <section>
+      <h2>Tags</h2>
+      <div className="tag-list">
+        {shown.map((tag) => (
+          <span className="tag-pill" key={tag}>
+            {tag}
+          </span>
+        ))}
+      </div>
+      {tags.length > 8 && (
+        <button className="tag-toggle" onClick={() => setShowAll(!showAll)}>
+          {showAll ? "Show fewer" : "Show more"}
+        </button>
+      )}
+    </section>
+  );
 }

@@ -40,8 +40,16 @@ export function ErrorState({
   onRetry?: () => void;
 }) {
   return (
-    <section className="request-state" aria-labelledby="error-state-title" role="alert">
-      <CircleAlert aria-hidden="true" className="request-state-icon" size={20} />
+    <section
+      className="request-state"
+      aria-labelledby="error-state-title"
+      role="alert"
+    >
+      <CircleAlert
+        aria-hidden="true"
+        className="request-state-icon"
+        size={20}
+      />
       <h2 id="error-state-title">{title}</h2>
       <p className="request-state-body">{message}</p>
       {onRetry && (

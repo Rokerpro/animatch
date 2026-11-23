@@ -14,7 +14,7 @@ Adds the list_entries table for user watchlists:
   - unique constraint on (user_id, anime_id)
 """
 
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 import sqlalchemy as sa
 
@@ -22,9 +22,9 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "bc72dda16832"
-down_revision: Union[str, Sequence[str], None] = "d7f13a8c4b20"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | Sequence[str] | None = "d7f13a8c4b20"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
@@ -34,9 +34,13 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
         sa.Column("user_id", sa.Integer(), nullable=False),
         sa.Column("anime_id", sa.Integer(), nullable=False),
-        sa.Column("status", sa.String(length=20), nullable=False, server_default="planning"),
+        sa.Column(
+            "status", sa.String(length=20), nullable=False, server_default="planning"
+        ),
         sa.Column("rating", sa.Integer(), nullable=True),
-        sa.Column("source", sa.String(length=20), nullable=False, server_default="manual"),
+        sa.Column(
+            "source", sa.String(length=20), nullable=False, server_default="manual"
+        ),
         sa.Column(
             "added_at",
             sa.DateTime(timezone=True),

@@ -7,7 +7,12 @@ type MultiSelectFilterProps = {
   onChange: (values: string[]) => void;
 };
 
-export function MultiSelectFilter({ label, options, selected, onChange }: MultiSelectFilterProps) {
+export function MultiSelectFilter({
+  label,
+  options,
+  selected,
+  onChange,
+}: MultiSelectFilterProps) {
   const root = useRef<HTMLDetailsElement>(null);
 
   function handleKeyDown(event: KeyboardEvent<HTMLDetailsElement>) {
@@ -20,7 +25,8 @@ export function MultiSelectFilter({ label, options, selected, onChange }: MultiS
   return (
     <details className="multi-filter" onKeyDown={handleKeyDown} ref={root}>
       <summary aria-label={`${label} filters`}>
-        {label}{selected.length > 0 ? ` · ${selected.length}` : ""}
+        {label}
+        {selected.length > 0 ? ` · ${selected.length}` : ""}
       </summary>
       <div aria-label={label} className="multi-filter-options" role="group">
         {options.map((option) => (
@@ -28,9 +34,11 @@ export function MultiSelectFilter({ label, options, selected, onChange }: MultiS
             <input
               checked={selected.includes(option)}
               onChange={(event) => {
-                onChange(event.target.checked
-                  ? [...selected, option]
-                  : selected.filter((value) => value !== option));
+                onChange(
+                  event.target.checked
+                    ? [...selected, option]
+                    : selected.filter((value) => value !== option)
+                );
               }}
               type="checkbox"
               value={option}

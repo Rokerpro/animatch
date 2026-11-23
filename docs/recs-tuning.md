@@ -1,5 +1,14 @@
 # Recommendation Engine Tuning Backlog
 
+## Mature-content visibility
+
+AniList `isAdult` and Hentai/Ecchi genres are unconditional mature rules. An
+adult-flagged tag makes a title mature only when that title's tag rank is at
+least `MATURE_TAG_MIN_RANK` (default `60`, an integer percentage). Changing this
+setting changes what is visible everywhere under the mature-content toggle.
+Adult-flagged tag names remain hidden from tag vocabulary listings when mature
+content is off.
+
 This document captures identified tuning opportunities, feature enhancements, and benchmarking improvements for the AniMatch recommendation engine following the Phase 4 ranking overhaul.
 
 ---

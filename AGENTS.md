@@ -26,5 +26,11 @@
   - TypeScript: Strict mode, clean components, Tailwind CSS tokens.
 - **Testing**: Write tests for new features and bug fixes across backend (pytest) and frontend (Vitest / React Testing Library).
 
+## Design Workflow (Penpot / OpenPencil redesign)
+These rules apply only when designing or redesigning pages in Penpot / OpenPencil. They do not apply to backend, tooling, formatting, testing, or other non-design work.
+- Keep the base theme unchanged (surfaces, accent, text colors, Inter, radii); the redesign changes layout and composition only.
+- Design **one page at a time**. After finishing a page, stop and ask the user to verify it before starting the next page. Do not batch several pages in one step.
+- Move on only after the user confirms the current page.
+
 ## Git & Commit Conventions
 -Don't leave behind any evidence that an ai did it
