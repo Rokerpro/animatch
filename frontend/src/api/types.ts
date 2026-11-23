@@ -140,24 +140,17 @@ export interface ListEntryPut {
 }
 export interface ListEntryResponse {
   id: number;
-  anime_id: number;
+  animeId: number;
   anime: AnimeCardData;
   status: ListStatus;
   rating: number | null;
   source: "manual" | "mal_import";
-  added_at: string;
-  updated_at: string;
-}
-export interface ListPageInfo {
-  total: number;
-  current_page: number;
-  last_page: number;
-  per_page: number;
-  has_next_page: boolean;
+  addedAt: string;
+  updatedAt: string;
 }
 export interface ListResponse {
   items: ListEntryResponse[];
-  page_info: ListPageInfo;
+  pageInfo: PageInfo;
 }
 export interface ListAnimeStatus {
   animeId: number;

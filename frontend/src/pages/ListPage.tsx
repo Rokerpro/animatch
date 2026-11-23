@@ -122,7 +122,7 @@ export function ListPage() {
           <h1 className="page-title">My list</h1>
         </div>
         <div className="list-heading-actions">
-          <span className="list-total">{list.data.page_info.total} titles</span>
+          <span className="list-total">{list.data.pageInfo.total} titles</span>
           <Link className="text-button" to="/import">
             Import from MyAnimeList
           </Link>
@@ -200,7 +200,7 @@ export function ListPage() {
         {list.data.items.length ? (
           <>
             <p className="result-count">
-              Showing {list.data.items.length} of {list.data.page_info.total}{" "}
+              Showing {list.data.items.length} of {list.data.pageInfo.total}{" "}
               titles
             </p>
             <div className="my-list-grid">
@@ -209,7 +209,7 @@ export function ListPage() {
                   <div className="my-list-card-poster">
                     <Link
                       aria-label={entry.anime.title}
-                      to={`/anime/${entry.anime_id}`}
+                      to={`/anime/${entry.animeId}`}
                     >
                       <PosterImage
                         alt={entry.anime.title}
@@ -226,7 +226,7 @@ export function ListPage() {
                   <div className="my-list-card-content">
                     <Link
                       className="my-list-card-title"
-                      to={`/anime/${entry.anime_id}`}
+                      to={`/anime/${entry.animeId}`}
                     >
                       {entry.anime.title}
                     </Link>
@@ -246,9 +246,7 @@ export function ListPage() {
               page={page}
               lastPage={Math.max(
                 1,
-                Math.ceil(
-                  list.data.page_info.total / list.data.page_info.per_page
-                )
+                Math.ceil(list.data.pageInfo.total / list.data.pageInfo.perPage)
               )}
             />
           </>

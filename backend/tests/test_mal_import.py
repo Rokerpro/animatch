@@ -22,7 +22,7 @@ async def test_plain_and_gzip_xml_imports(client, seeded_catalog, register_user)
     assert summary["unmatched_count"] == 0
 
     items = (await client.get("/api/list")).json()["items"]
-    by_id = {item["anime_id"]: item for item in items}
+    by_id = {item["animeId"]: item for item in items}
     assert by_id[16498]["status"] == "completed"
     assert by_id[16498]["rating"] == 9
     assert by_id[16498]["source"] == "mal_import"
@@ -37,7 +37,7 @@ async def test_plain_and_gzip_xml_imports(client, seeded_catalog, register_user)
     assert response.status_code == 200, response.text
     assert response.json()["to_import"] == 2
     rows = (await client.get("/api/list")).json()["items"]
-    by_id = {row["anime_id"]: row for row in rows}
+    by_id = {row["animeId"]: row for row in rows}
     assert by_id[16498]["status"] == "completed" and by_id[16498]["rating"] == 9
     assert by_id[5114]["status"] == "planning" and by_id[5114]["rating"] is None
 
@@ -72,7 +72,7 @@ async def test_dry_run_and_existing_entries_are_not_changed(
     committed = await client.post("/api/list/import", content=XML, headers=headers)
     assert committed.status_code == 200
     rows = {
-        row["anime_id"]: row for row in (await client.get("/api/list")).json()["items"]
+        row["animeId"]: row for row in (await client.get("/api/list")).json()["items"]
     }
     assert rows[16498]["status"] == "dropped" and rows[16498]["rating"] == 2
     assert rows[5114]["status"] == "planning"
@@ -113,9 +113,9 @@ async def test_imports_mature_titles_even_when_hidden_by_default(
     assert response.status_code == 200
     assert response.json()["to_import"] == 2
     visible = (await client.get("/api/list")).json()["items"]
-    assert {item["anime_id"] for item in visible} == {5114}
+    assert {item["animeId"] for item in visible} == {5114}
     all_items = (await client.get("/api/list?includeMature=true")).json()["items"]
-    assert {item["anime_id"] for item in all_items} == {16498, 5114}
+    assert {item["animeId"] for item in all_items} == {16498, 5114}
 
 
 @pytest.mark.asyncio
@@ -135,7 +135,7 @@ async def test_status_forms_and_out_of_range_scores(
     )
     assert response.status_code == 200, response.text
     rows = {
-        row["anime_id"]: row
+        row["animeId"]: row
         for row in (await client.get("/api/list?includeMature=true")).json()["items"]
     }
     assert rows[154587]["status"] == "watching" and rows[154587]["rating"] is None

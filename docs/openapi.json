@@ -49,6 +49,54 @@
         }
       }
     },
+    "/api/health/live": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Liveness",
+        "description": "Process is up. Never touches the database, so orchestrators avoid restart loops.",
+        "operationId": "liveness_api_health_live_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Liveness Api Health Live Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/health/ready": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Readiness",
+        "description": "Ready to take traffic: database reachable and recommendation index loaded.",
+        "operationId": "readiness_api_health_ready_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadinessResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/anime": {
       "get": {
         "tags": [
@@ -644,6 +692,230 @@
         }
       }
     },
+    "/api/auth/forgot-password": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Forgot Password",
+        "description": "Email a password reset link. The response never reveals if the account exists.",
+        "operationId": "forgot_password_api_auth_forgot_password_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForgotPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Forgot Password Api Auth Forgot Password Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/reset-password": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Reset Password",
+        "description": "Set a new password using a valid reset token.",
+        "operationId": "reset_password_api_auth_reset_password_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Reset Password Api Auth Reset Password Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/verify-email": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Verify Email",
+        "description": "Confirm an email address using a verification token.",
+        "operationId": "verify_email_api_auth_verify_email_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyEmailRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Verify Email Api Auth Verify Email Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/resend-verification": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Resend Verification",
+        "description": "Send a fresh verification email to the signed-in user.",
+        "operationId": "resend_verification_api_auth_resend_verification_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Csrf-Token"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Resend Verification Api Auth Resend Verification Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/auth/logout": {
       "post": {
         "tags": [
@@ -1102,6 +1374,70 @@
         }
       }
     },
+    "/api/auth/me/export": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Export Me",
+        "description": "Download the signed-in user's own data as a JSON file.",
+        "operationId": "export_me_api_auth_me_export_get",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/auth/google/login": {
       "get": {
         "tags": [
@@ -1378,6 +1714,187 @@
         }
       }
     },
+    "/api/list/stats": {
+      "get": {
+        "tags": [
+          "list"
+        ],
+        "summary": "Get List Stats",
+        "description": "Summary counts, rating distribution, and top genres for the user's list.",
+        "operationId": "get_list_stats_api_list_stats_get",
+        "parameters": [
+          {
+            "name": "includeMature",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Includemature"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListStatsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/list/export": {
+      "get": {
+        "tags": [
+          "list"
+        ],
+        "summary": "Export List",
+        "description": "Download the user's list. `format=json` (default) or `format=xml` for a MyAnimeList-compatible file that this site's importer also accepts.",
+        "operationId": "export_list_api_list_export_get",
+        "parameters": [
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(json|xml)$",
+              "default": "json",
+              "title": "Format"
+            }
+          },
+          {
+            "name": "includeMature",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Includemature"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "JSON or MAL XML download.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/list/statuses": {
       "get": {
         "tags": [
@@ -1393,10 +1910,10 @@
             "required": true,
             "schema": {
               "type": "string",
-              "description": "Comma-separated anime IDs (1–50). Empty or non-integer values are rejected.",
+              "description": "Comma-separated anime IDs (1\u201350). Empty or non-integer values are rejected.",
               "title": "Ids"
             },
-            "description": "Comma-separated anime IDs (1–50). Empty or non-integer values are rejected."
+            "description": "Comma-separated anime IDs (1\u201350). Empty or non-integer values are rejected."
           },
           {
             "name": "includeMature",
@@ -2254,6 +2771,22 @@
         "operationId": "post_quiz_recommendations_api_recs_quiz_post",
         "parameters": [
           {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Csrf-Token"
+            }
+          },
+          {
             "name": "authorization",
             "in": "header",
             "required": false,
@@ -2496,6 +3029,252 @@
                     "$ref": "#/components/schemas/RecResult"
                   },
                   "title": "Response Get My Recommendations Api Recs Me Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/recs/feedback": {
+      "get": {
+        "tags": [
+          "recommendations"
+        ],
+        "summary": "Get Rec Feedback",
+        "description": "List the titles the user asked not to see recommended.",
+        "operationId": "get_rec_feedback_api_recs_feedback_get",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecFeedbackResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/recs/feedback/{anime_id}": {
+      "put": {
+        "tags": [
+          "recommendations"
+        ],
+        "summary": "Put Rec Feedback",
+        "description": "Mark a title \"not interested\" so it stops being recommended. Idempotent.",
+        "operationId": "put_rec_feedback_api_recs_feedback__anime_id__put",
+        "parameters": [
+          {
+            "name": "anime_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Anime Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Csrf-Token"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecFeedbackResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "recommendations"
+        ],
+        "summary": "Delete Rec Feedback",
+        "description": "Undo \"not interested\" for a title. Idempotent.",
+        "operationId": "delete_rec_feedback_api_recs_feedback__anime_id__delete",
+        "parameters": [
+          {
+            "name": "anime_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Anime Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Csrf-Token"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecFeedbackResponse"
                 }
               }
             }
@@ -3069,6 +3848,39 @@
         ],
         "title": "FiltersResponse"
       },
+      "ForgotPasswordRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email"
+        ],
+        "title": "ForgotPasswordRequest",
+        "description": "Schema for requesting a password reset email."
+      },
+      "GenreCount": {
+        "properties": {
+          "genre": {
+            "type": "string",
+            "title": "Genre"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "genre",
+          "count"
+        ],
+        "title": "GenreCount"
+      },
       "GoogleLinkRequest": {
         "properties": {
           "id_token": {
@@ -3202,9 +4014,9 @@
             "type": "integer",
             "title": "Id"
           },
-          "anime_id": {
+          "animeId": {
             "type": "integer",
-            "title": "Anime Id"
+            "title": "Animeid"
           },
           "anime": {
             "$ref": "#/components/schemas/AnimeCard"
@@ -3231,63 +4043,30 @@
             ],
             "title": "Source"
           },
-          "added_at": {
+          "addedAt": {
             "type": "string",
             "format": "date-time",
-            "title": "Added At"
+            "title": "Addedat"
           },
-          "updated_at": {
+          "updatedAt": {
             "type": "string",
             "format": "date-time",
-            "title": "Updated At"
+            "title": "Updatedat"
           }
         },
         "type": "object",
         "required": [
           "id",
-          "anime_id",
+          "animeId",
           "anime",
           "status",
           "rating",
           "source",
-          "added_at",
-          "updated_at"
+          "addedAt",
+          "updatedAt"
         ],
         "title": "ListEntryResponse",
-        "description": "Persisted entry shape; entry keys remain snake_case by contract."
-      },
-      "ListPageInfo": {
-        "properties": {
-          "total": {
-            "type": "integer",
-            "title": "Total"
-          },
-          "current_page": {
-            "type": "integer",
-            "title": "Current Page"
-          },
-          "last_page": {
-            "type": "integer",
-            "title": "Last Page"
-          },
-          "per_page": {
-            "type": "integer",
-            "title": "Per Page"
-          },
-          "has_next_page": {
-            "type": "boolean",
-            "title": "Has Next Page"
-          }
-        },
-        "type": "object",
-        "required": [
-          "total",
-          "current_page",
-          "last_page",
-          "per_page",
-          "has_next_page"
-        ],
-        "title": "ListPageInfo"
+        "description": "Persisted entry shape, serialized with camelCase keys like the rest of the API."
       },
       "ListResponse": {
         "properties": {
@@ -3298,14 +4077,14 @@
             "type": "array",
             "title": "Items"
           },
-          "page_info": {
-            "$ref": "#/components/schemas/ListPageInfo"
+          "pageInfo": {
+            "$ref": "#/components/schemas/PageInfo"
           }
         },
         "type": "object",
         "required": [
           "items",
-          "page_info"
+          "pageInfo"
         ],
         "title": "ListResponse"
       },
@@ -3317,6 +4096,61 @@
           "title"
         ],
         "title": "ListSort"
+      },
+      "ListStatsResponse": {
+        "properties": {
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "byStatus": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Bystatus"
+          },
+          "ratedCount": {
+            "type": "integer",
+            "title": "Ratedcount"
+          },
+          "meanRating": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meanrating"
+          },
+          "ratingDistribution": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Ratingdistribution"
+          },
+          "topGenres": {
+            "items": {
+              "$ref": "#/components/schemas/GenreCount"
+            },
+            "type": "array",
+            "title": "Topgenres"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total",
+          "byStatus",
+          "ratedCount",
+          "meanRating",
+          "ratingDistribution",
+          "topGenres"
+        ],
+        "title": "ListStatsResponse",
+        "description": "Summary of a user's list. Counts exclude mature titles unless requested."
       },
       "ListStatus": {
         "type": "string",
@@ -3411,6 +4245,16 @@
             "maxLength": 300,
             "minLength": 1,
             "title": "Text"
+          },
+          "previous": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PreviousNaturalLanguageState"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "additionalProperties": false,
@@ -3442,6 +4286,16 @@
               }
             ],
             "title": "Message"
+          },
+          "state": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PreviousNaturalLanguageState"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",
@@ -3565,6 +4419,30 @@
         ],
         "title": "PageInfo"
       },
+      "PreviousNaturalLanguageState": {
+        "properties": {
+          "quiz_answers": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "maxProperties": 20,
+            "title": "Quiz Answers"
+          },
+          "seed_titles": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 5,
+            "title": "Seed Titles"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "PreviousNaturalLanguageState",
+        "description": "Inputs derived from an earlier request, echoed back for a follow-up."
+      },
       "QuizAnswerRequest": {
         "properties": {
           "answers": {
@@ -3616,6 +4494,46 @@
         ],
         "title": "QuizResponse",
         "description": "Response for the quiz endpoint."
+      },
+      "ReadinessResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "database": {
+            "type": "string",
+            "title": "Database"
+          },
+          "index": {
+            "type": "string",
+            "title": "Index"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "database",
+          "index"
+        ],
+        "title": "ReadinessResponse"
+      },
+      "RecFeedbackResponse": {
+        "properties": {
+          "anime_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Anime Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "anime_ids"
+        ],
+        "title": "RecFeedbackResponse",
+        "description": "Titles the signed-in user asked not to be recommended."
       },
       "RecResult": {
         "properties": {
@@ -3902,6 +4820,29 @@
         "type": "object",
         "title": "RecStartRequest"
       },
+      "ResetPasswordRequest": {
+        "properties": {
+          "token": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 20,
+            "title": "Token"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 10,
+            "title": "Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "token",
+          "password"
+        ],
+        "title": "ResetPasswordRequest",
+        "description": "Schema for completing a password reset."
+      },
       "TagDetail": {
         "properties": {
           "name": {
@@ -4124,6 +5065,18 @@
             "type": "string",
             "format": "date-time",
             "title": "Created At"
+          },
+          "email_verified_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email Verified At"
           }
         },
         "type": "object",
@@ -4255,6 +5208,22 @@
           "type"
         ],
         "title": "ValidationErrorItem"
+      },
+      "VerifyEmailRequest": {
+        "properties": {
+          "token": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 20,
+            "title": "Token"
+          }
+        },
+        "type": "object",
+        "required": [
+          "token"
+        ],
+        "title": "VerifyEmailRequest",
+        "description": "Schema for confirming an email address."
       }
     }
   }

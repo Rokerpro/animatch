@@ -15,13 +15,13 @@ const user = {
   show_mature: true,
   created_at: "today",
 };
-function response(total = 0, last_page = 1, withItem = false) {
+function response(total = 0, lastPage = 1, withItem = false) {
   return {
     items: withItem
       ? [
           {
             id: 5,
-            anime_id: 7,
+            animeId: 7,
             anime: {
               id: 7,
               title: "Example",
@@ -30,17 +30,17 @@ function response(total = 0, last_page = 1, withItem = false) {
             status: "planning" as const,
             rating: null,
             source: "manual" as const,
-            added_at: "today",
-            updated_at: "today",
+            addedAt: "today",
+            updatedAt: "today",
           },
         ]
       : [],
-    page_info: {
+    pageInfo: {
       total,
-      current_page: 1,
-      last_page,
-      per_page: 24,
-      has_next_page: last_page > 1,
+      currentPage: 1,
+      lastPage,
+      perPage: 24,
+      hasNextPage: lastPage > 1,
     },
   };
 }

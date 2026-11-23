@@ -70,13 +70,13 @@ export function useListMutation() {
         (old) => {
           if (!old) return old;
           const exists = old.items.some(
-            (entry) => entry.anime_id === change.anime.id
+            (entry) => entry.animeId === change.anime.id
           );
           if (change.kind === "put" && exists) {
             return {
               ...old,
               items: old.items.map((entry) =>
-                entry.anime_id === change.anime.id
+                entry.animeId === change.anime.id
                   ? { ...entry, status: change.status, rating: change.rating }
                   : entry
               ),
@@ -84,21 +84,21 @@ export function useListMutation() {
           }
           if (change.kind === "delete" && exists) {
             const items = old.items.filter(
-              (entry) => entry.anime_id !== change.anime.id
+              (entry) => entry.animeId !== change.anime.id
             );
-            const total = Math.max(0, old.page_info.total - 1);
+            const total = Math.max(0, old.pageInfo.total - 1);
             const lastPage = Math.max(
               1,
-              Math.ceil(total / old.page_info.per_page)
+              Math.ceil(total / old.pageInfo.perPage)
             );
             return {
               ...old,
               items,
-              page_info: {
-                ...old.page_info,
+              pageInfo: {
+                ...old.pageInfo,
                 total,
-                last_page: lastPage,
-                has_next_page: old.page_info.current_page < lastPage,
+                lastPage: lastPage,
+                hasNextPage: old.pageInfo.currentPage < lastPage,
               },
             };
           }
