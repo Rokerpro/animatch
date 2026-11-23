@@ -65,12 +65,45 @@ def _system_instruction() -> str:
         "question and answer ids given below. Never return ids for seed titles; "
         "return plain catalog title strings only. Include only clear preferences and "
         "up to five titles the user says they like. Do not infer mature-content "
-        "preferences. Quiz vocabulary (question id to allowed answer ids): "
+        "preferences. If the message includes a previous state, treat the new "
+        "request as a refinement: keep the earlier preferences and titles unless "
+        "the new request changes or contradicts them, and return the complete "
+        "updated state. Quiz vocabulary (question id to allowed answer ids): "
         f"{question_ids}"
     )
 
 
-async def translate_request(text: str) -> dict[str, Any]:
+def sanitize_previous_state(previous: dict[str, Any] | None) -> dict[str, Any]:
+    """Keep only quiz answers in the known vocabulary and bounded title strings."""
+    ids = _question_and_answer_ids()
+    previous = previous or {}
+    answers = {
+        question_id: answer_id
+        for question_id, answer_id in (previous.get("quiz_answers") or {}).items()
+        if answer_id in ids.get(question_id, [])
+    }
+    titles = [
+        title.strip()[:200]
+        for title in (previous.get("seed_titles") or [])[:5]
+        if isinstance(title, str) and title.strip()
+    ]
+    return {"quiz_answers": answers, "seed_titles": titles}
+
+
+def _user_message(text: str, previous: dict[str, Any] | None) -> str:
+    state = sanitize_previous_state(previous)
+    if not state["quiz_answers"] and not state["seed_titles"]:
+        return text
+    return (
+        "Previous state (data): "
+        f"{json.dumps(state, ensure_ascii=False)}\n"
+        f"Follow-up request (data): {text}"
+    )
+
+
+async def translate_request(
+    text: str, previous: dict[str, Any] | None = None
+) -> dict[str, Any]:
     """Ask Gemini for constrained inputs; discard provider-specific failures."""
     ids = _question_and_answer_ids()
     model = settings.GEMINI_MODEL.strip()
@@ -80,7 +113,9 @@ async def translate_request(text: str) -> dict[str, Any]:
     )
     body = {
         "systemInstruction": {"parts": [{"text": _system_instruction()}]},
-        "contents": [{"role": "user", "parts": [{"text": text}]}],
+        "contents": [
+            {"role": "user", "parts": [{"text": _user_message(text, previous)}]}
+        ],
         "generationConfig": {
             "responseMimeType": "application/json",
             "responseSchema": _response_schema(),

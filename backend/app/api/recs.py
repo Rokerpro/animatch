@@ -14,16 +14,19 @@ from datetime import UTC, datetime
 from typing import Annotated, Any
 
 import numpy as np
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, status
 from fastapi.responses import JSONResponse
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_optional_user, verify_csrf
 from app.core.config import settings
+from app.core.throttle import throttle
+from app.core.ttl_cache import TTLCache
 from app.db.session import get_db
 from app.models.list_entry import ListEntry
 from app.models.natural_language_usage import NaturalLanguageUsage
+from app.models.rec_feedback import RecFeedback
 from app.models.user import User
 from app.recs.engine import (
     MatureSeedError,
@@ -40,14 +43,16 @@ from app.recs.schemas import (
     NaturalLanguageUnderstood,
     NewRecommendationsRequest,
     NewRecommendationsResponse,
+    PreviousNaturalLanguageState,
     QuizAnswerRequest,
     QuizResponse,
+    RecFeedbackResponse,
     RecResult,
     RecStartRequest,
     UnderstoodQuizAnswer,
     UnderstoodSeedTitle,
 )
-from app.recs.vectors import get_index
+from app.recs.vectors import get_index, get_index_version
 from app.schemas.errors import ApiErrorResponse
 from app.services.natural_language import (
     GeminiUnavailable,
@@ -57,7 +62,15 @@ from app.services.natural_language import (
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(tags=["recommendations"])
+# Similar-title results without a taste profile depend only on the request and the
+# index, so they are cached. The index version is part of the key, so a rebuilt
+# index never serves stale results.
+_similar_cache: TTLCache[list[RecResult]] = TTLCache(max_entries=512, ttl_seconds=600)
+
+router = APIRouter(
+    tags=["recommendations"],
+    dependencies=[Depends(throttle("recs", "RATE_LIMIT_RECS_PER_MINUTE"))],
+)
 
 
 def _error_response(status_code: int, detail: str, code: str) -> JSONResponse:
@@ -86,6 +99,14 @@ async def _take_natural_language_quota(db: AsyncSession, user_id: int) -> bool:
         db.add(row)
     await db.commit()
     return True
+
+
+async def load_hidden_ids(db: AsyncSession, user_id: int) -> set[int]:
+    """Return titles the user marked "not interested"."""
+    rows = await db.execute(
+        select(RecFeedback.anime_id).where(RecFeedback.user_id == user_id)
+    )
+    return set(rows.scalars().all())
 
 
 @router.post(
@@ -124,7 +145,10 @@ async def post_recommendation_request(
             "natural_language_daily_limit",
         )
     try:
-        translated = await translate_request(payload.text)
+        translated = await translate_request(
+            payload.text,
+            payload.previous.model_dump() if payload.previous else None,
+        )
     except GeminiUnavailable:
         return _error_response(
             503,
@@ -189,7 +213,13 @@ async def post_recommendation_request(
         include_mature=effective_mature,
         index=index,
     )
-    return NaturalLanguageResponse(results=results, understood=understood)
+    return NaturalLanguageResponse(
+        results=results,
+        understood=understood,
+        state=PreviousNaturalLanguageState(
+            quiz_answers=answers, seed_titles=translated["seed_titles"]
+        ),
+    )
 
 
 @router.post(
@@ -222,10 +252,17 @@ async def post_new_recommendations(
     )
     entries = rows.scalars().all()
     listed_ids = {entry.anime_id for entry in entries}
+    hidden_ids = await load_hidden_ids(db, current_user.id)
     user_items: list[dict[str, Any]] = [
         {"anime_id": entry.anime_id, "status": entry.status, "rating": entry.rating}
         for entry in entries
     ]
+    # "Not interested" counts like a dropped title: excluded and pushed away from.
+    user_items.extend(
+        {"anime_id": anime_id, "status": "dropped"}
+        for anime_id in hidden_ids
+        if anime_id not in listed_ids
+    )
     profile = current_user.taste_profile or {}
     liked_ids = list(profile.get("liked_ids", []))
     user_items.extend(
@@ -259,7 +296,7 @@ async def post_new_recommendations(
         n=min(n, settings.REC_MAX_N),
         include_mature=include_mature or current_user.show_mature,
         index=index,
-        exclude_ids=listed_ids | set(liked_ids),
+        exclude_ids=listed_ids | hidden_ids | set(liked_ids),
         exclude_franchise_ids=listed_franchises,
         strict_quality_floor=True,
         novelty_weights=novelty_weights if has_profile_signal else None,
@@ -326,14 +363,20 @@ async def get_quiz() -> list[dict]:
 @router.post("/recs/quiz", response_model=QuizResponse)
 async def post_quiz_recommendations(
     payload: QuizAnswerRequest,
+    request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[User | None, Depends(get_optional_user)] = None,
+    x_csrf_token: Annotated[str | None, Header(alias="X-CSRF-Token")] = None,
 ) -> QuizResponse:
     """Computes recommendations from quiz answers.
 
     If the caller is authenticated, the resulting quiz vector is saved
     to the user's taste_profile as quiz_prior_vec.
     """
+    if current_user:
+        # Signed-in calls persist the taste profile, so they need CSRF protection.
+        verify_csrf(request, x_csrf_token)
+
     index = get_index()
     if index.is_empty():
         return QuizResponse(results=[], quizVecStored=False)
@@ -404,6 +447,13 @@ async def get_similar_anime(
         if "quiz_prior_vec" in tp:
             quiz_prior = np.array(tp["quiz_prior_vec"], dtype=np.float32)
 
+    cache_key = None
+    if not user_items and quiz_prior is None:
+        cache_key = (get_index_version(), anime_id, n, effective_mature)
+        cached = _similar_cache.get(cache_key)
+        if cached is not None:
+            return cached
+
     try:
         results = recommend_similar(
             anime_id=anime_id,
@@ -419,6 +469,8 @@ async def get_similar_anime(
             detail="Anime not found or is restricted content.",
         ) from err
 
+    if cache_key is not None:
+        _similar_cache.set(cache_key, results)
     return results
 
 
@@ -472,10 +524,16 @@ async def get_my_recommendations(
         liked_ids = tp.get("liked_ids", [])
 
     listed_ids = {item["anime_id"] for item in user_items}
+    hidden_ids = await load_hidden_ids(db, current_user.id)
+    user_items.extend(
+        {"anime_id": anime_id, "status": "dropped"}
+        for anime_id in hidden_ids
+        if anime_id not in listed_ids
+    )
     user_items.extend(
         {"anime_id": anime_id, "status": "completed", "rating": 10}
         for anime_id in liked_ids
-        if anime_id not in listed_ids
+        if anime_id not in listed_ids and anime_id not in hidden_ids
     )
     liked_franchises = {
         record.franchise_id
@@ -516,3 +574,53 @@ async def get_my_recommendations(
         quiz_prior_vec=quiz_prior,
         index=index,
     )
+
+
+@router.get("/recs/feedback", response_model=RecFeedbackResponse)
+async def get_rec_feedback(
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> RecFeedbackResponse:
+    """List the titles the user asked not to see recommended."""
+    ids = await load_hidden_ids(db, current_user.id)
+    return RecFeedbackResponse(anime_ids=sorted(ids))
+
+
+@router.put("/recs/feedback/{anime_id}", response_model=RecFeedbackResponse)
+async def put_rec_feedback(
+    anime_id: int,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _: Annotated[None, Depends(verify_csrf)],
+) -> RecFeedbackResponse:
+    """Mark a title "not interested" so it stops being recommended. Idempotent."""
+    record = get_index().get(anime_id)
+    if record is None or (record.is_mature and not current_user.show_mature):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Anime not found."
+        )
+    hidden = await load_hidden_ids(db, current_user.id)
+    if anime_id not in hidden:
+        db.add(RecFeedback(user_id=current_user.id, anime_id=anime_id))
+        await db.commit()
+        hidden.add(anime_id)
+    return RecFeedbackResponse(anime_ids=sorted(hidden))
+
+
+@router.delete("/recs/feedback/{anime_id}", response_model=RecFeedbackResponse)
+async def delete_rec_feedback(
+    anime_id: int,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _: Annotated[None, Depends(verify_csrf)],
+) -> RecFeedbackResponse:
+    """Undo "not interested" for a title. Idempotent."""
+    await db.execute(
+        delete(RecFeedback).where(
+            RecFeedback.user_id == current_user.id,
+            RecFeedback.anime_id == anime_id,
+        )
+    )
+    await db.commit()
+    ids = await load_hidden_ids(db, current_user.id)
+    return RecFeedbackResponse(anime_ids=sorted(ids))

@@ -11,9 +11,12 @@ from app.api.auth import router as auth_router
 from app.api.health import router as health_router
 from app.api.list_entries import router as list_entries_router
 from app.api.recs import router as recs_router
-from app.core.config import settings, setup_logging
+from app.core.api_version import ApiVersionMiddleware
+from app.core.config import settings, setup_error_reporting, setup_logging
+from app.core.request_id import RequestIdMiddleware
 from app.db.session import AsyncSessionLocal
 from app.recs.engine import rebuild_index_from_db
+from app.recs.refresh import catalog_fingerprint, index_refresher
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +25,7 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Handles startup and shutdown events."""
     setup_logging()
+    setup_error_reporting()
     placeholder = (
         "change-this-in-production-to-a-secure-random-secret-key-at-least-32-chars"
     )
@@ -36,13 +40,16 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     logger.info(f"Starting {settings.APP_NAME} in {settings.ENVIRONMENT} mode")
 
     # Initialise in-memory vector index if database exists
+    fingerprint = None
     try:
         async with AsyncSessionLocal() as session:
             await rebuild_index_from_db(session)
+            fingerprint = await catalog_fingerprint(session)
     except Exception as exc:
         logger.warning("Could not initialize vector index on startup: %s", exc)
 
-    yield
+    async with index_refresher(fingerprint):
+        yield
     logger.info(f"Shutting down {settings.APP_NAME}")
 
 
@@ -72,6 +79,11 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    app.add_middleware(ApiVersionMiddleware)
+
+    # Outermost, so every log line and response carries the request ID
+    app.add_middleware(RequestIdMiddleware)
 
     # Mount API routes
     app.include_router(health_router, prefix="/api")

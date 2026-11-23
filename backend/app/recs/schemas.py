@@ -83,8 +83,23 @@ class NewRecommendationsResponse(BaseModel):
     mode: Literal["novelty", "quiz_fallback"]
 
 
+class PreviousNaturalLanguageState(BaseModel):
+    """Inputs derived from an earlier request, echoed back for a follow-up."""
+
+    quiz_answers: dict[str, str] = Field(default_factory=dict, max_length=20)
+    seed_titles: list[str] = Field(default_factory=list, max_length=5)
+
+    model_config = ConfigDict(extra="forbid")
+
+    @field_validator("seed_titles")
+    @classmethod
+    def limit_title_length(cls, value: list[str]) -> list[str]:
+        return [title.strip()[:200] for title in value if title.strip()]
+
+
 class NaturalLanguageRequest(BaseModel):
     text: str = Field(min_length=1, max_length=settings.NL_MAX_CHARS)
+    previous: PreviousNaturalLanguageState | None = None
 
     model_config = ConfigDict(extra="forbid")
 
@@ -116,6 +131,8 @@ class NaturalLanguageResponse(BaseModel):
     results: list[RecResult]
     understood: NaturalLanguageUnderstood
     message: str | None = None
+    # Echo this as `previous` in the next request to refine these results.
+    state: PreviousNaturalLanguageState | None = None
 
 
 class FeaturesResponse(BaseModel):
@@ -127,3 +144,9 @@ class RecStartRequest(BaseModel):
     liked_ids: list[int] | None = Field(default=None, max_length=5)
     include_mature: bool = False
     limit: int = Field(default=20, ge=1, le=40)
+
+
+class RecFeedbackResponse(BaseModel):
+    """Titles the signed-in user asked not to be recommended."""
+
+    anime_ids: list[int]

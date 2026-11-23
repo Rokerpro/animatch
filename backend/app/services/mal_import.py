@@ -151,3 +151,35 @@ def parse_mal_xml(body: bytes) -> tuple[int, list[MALAnime]]:
     if total_entries == 0:
         raise _bad_request("XML export contains no <anime> entries.")
     return total_entries, list(entries.values())
+
+
+MAL_EXPORT_STATUS = {
+    "watching": "Watching",
+    "completed": "Completed",
+    "on_hold": "On-Hold",
+    "dropped": "Dropped",
+    "planning": "Plan to Watch",
+}
+
+
+def build_mal_xml(entries: list[tuple[int, str, str, int | None]]) -> str:
+    """Render (mal_id, title, status, rating) rows as a MAL-compatible XML export.
+
+    The output is accepted by `parse_mal_xml`, so a user can re-import it.
+    """
+    from xml.sax.saxutils import escape
+
+    lines = ['<?xml version="1.0" encoding="UTF-8"?>', "<myanimelist>"]
+    for mal_id, title, entry_status, rating in entries:
+        lines.extend(
+            [
+                "  <anime>",
+                f"    <series_animedb_id>{mal_id}</series_animedb_id>",
+                f"    <series_title>{escape(title)}</series_title>",
+                f"    <my_score>{rating or 0}</my_score>",
+                f"    <my_status>{MAL_EXPORT_STATUS.get(entry_status, 'Plan to Watch')}</my_status>",
+                "  </anime>",
+            ]
+        )
+    lines.append("</myanimelist>")
+    return "\n".join(lines) + "\n"

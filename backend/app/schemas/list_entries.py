@@ -103,3 +103,19 @@ class ListAnimeStatus(BaseModel):
 
 class ListStatusesResponse(BaseModel):
     items: list[ListAnimeStatus]
+
+
+class GenreCount(BaseModel):
+    genre: str
+    count: int
+
+
+class ListStatsResponse(BaseModel):
+    """Summary of a user's list. Counts exclude mature titles unless requested."""
+
+    total: int
+    by_status: dict[str, int]
+    rated_count: int
+    mean_rating: float | None
+    rating_distribution: dict[str, int]
+    top_genres: list[GenreCount]

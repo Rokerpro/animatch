@@ -75,6 +75,7 @@ class UserResponse(BaseModel):
     show_mature: bool
     taste_profile: dict[str, Any] | None = None
     created_at: datetime
+    email_verified_at: datetime | None = None
 
 
 class AuthProvidersResponse(BaseModel):
@@ -129,3 +130,27 @@ class TasteProfileResponse(BaseModel):
 
     quiz_answers: dict[str, str] | None = None
     liked_ids: list[int] = Field(default_factory=list)
+
+
+class ForgotPasswordRequest(BaseModel):
+    """Schema for requesting a password reset email."""
+
+    email: EmailStr
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def normalize_email(cls, v: str) -> str:
+        return v.lower().strip() if isinstance(v, str) else v
+
+
+class ResetPasswordRequest(BaseModel):
+    """Schema for completing a password reset."""
+
+    token: str = Field(..., min_length=20, max_length=200)
+    password: str = Field(..., min_length=10, max_length=128)
+
+
+class VerifyEmailRequest(BaseModel):
+    """Schema for confirming an email address."""
+
+    token: str = Field(..., min_length=20, max_length=200)

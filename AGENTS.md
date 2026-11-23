@@ -28,7 +28,8 @@
 
 ## Design Workflow (Penpot / OpenPencil redesign)
 These rules apply only when designing or redesigning pages in Penpot / OpenPencil. They do not apply to backend, tooling, formatting, testing, or other non-design work.
-- Keep the base theme unchanged (surfaces, accent, text colors, Inter, radii); the redesign changes layout and composition only.
+- The redesign uses a new theme. Colors: Graphite `#101114` (background), Surface `#191B21` (raised surfaces, flat, no gradients), Line `#2B2E37` (borders), Paper `#F2F1F6` (text and match reasons), Muted `#A3A4B0` (secondary text), Lavender `#A99BFF` (the only accent). Type: Dela Gothic One (display), Zen Kaku Gothic New (body, including native Japanese titles). Type scale: 16 / 21 / 28 / 38 / 50 / 67 / 88. Use real AniList cover art, tinted with each title's `coverImage.color`.
+- Avoid template chrome: no all-caps eyebrow labels, no middle-dot meta strings, no arrows appended to button text, no numbered markers unless the content is a real sequence.
 - Design **one page at a time**. After finishing a page, stop and ask the user to verify it before starting the next page. Do not batch several pages in one step.
 - Move on only after the user confirms the current page.
 

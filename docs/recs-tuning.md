@@ -100,3 +100,11 @@ otherwise it returns mode `novelty`.
 * `REC_NEW_NOVELTY_WEIGHT` controls the additive novelty bonus. Its conservative
   default is `0.08`; increase it only after confirming quiz relevance remains
   the main ranking signal and the quality-floor behavior remains intact.
+
+## "Not interested" feedback
+
+`PUT /api/recs/feedback/{id}` (and `DELETE`, `GET /api/recs/feedback`) store titles
+a user does not want recommended in `rec_feedback`. `/recs/me` and `/recs/new`
+exclude them and treat them like a dropped title in the taste vector
+(`DROPPED_WEIGHT`), so similar titles are also pushed down. They are included in
+the account export. `/recs/similar` and `/recs/ask` are not filtered yet.

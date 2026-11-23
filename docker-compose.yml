@@ -13,6 +13,7 @@ services:
       - DATABASE_URL=sqlite+aiosqlite:///./animatch.db
       - CORS_ORIGINS=["http://localhost:5173"]
       - LOG_LEVEL=INFO
+      - TRUSTED_PROXIES=172.16.0.0/12
     volumes:
       - ./backend/app:/app/app
       - ./backend/animatch.db:/app/animatch.db

@@ -301,3 +301,57 @@ async def test_mature_seed_is_reported_as_unmatched_when_hidden(
     assert response.status_code == 200
     assert response.json()["understood"]["matched_seed_titles"] == []
     assert response.json()["understood"]["unmatched_seed_titles"] == ["Death Note"]
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_follow_up_sends_sanitized_previous_state_and_returns_state(
+    client, register_user, seeded_catalog, monkeypatch
+):
+    from app.api import recs
+
+    monkeypatch.setattr(settings, "GEMINI_API_KEY", "test-secret")
+    monkeypatch.setattr(recs, "recommend_from_start", lambda **kwargs: [])
+    monkeypatch.setattr(recs, "get_index", lambda: object())
+    route = respx.post(GEMINI_URL).mock(
+        return_value=httpx.Response(200, json=VALID_TRANSLATION)
+    )
+    headers = await _headers(client, register_user, "ask-follow@example.com")
+
+    response = await client.post(
+        "/api/recs/ask",
+        json={
+            "text": "shorter please",
+            "previous": {
+                "quiz_answers": {"mood": "tense", "mood2": "bogus", "pacing": "nope"},
+                "seed_titles": ["Death Note", "  "],
+            },
+        },
+        headers=headers,
+    )
+    assert response.status_code == 200, response.text
+    sent = json.loads(route.calls[0].request.content)
+    message = sent["contents"][0]["parts"][0]["text"]
+    assert "Previous state (data):" in message
+    assert '"mood": "tense"' in message
+    assert "bogus" not in message and "nope" not in message
+    assert message.endswith("Follow-up request (data): shorter please")
+    assert "refinement" in sent["systemInstruction"]["parts"][0]["text"]
+    assert response.json()["state"] == {
+        "quiz_answers": {"mood": "tense"},
+        "seed_titles": ["Death Note"],
+    }
+
+
+@pytest.mark.asyncio
+async def test_follow_up_state_is_bounded(client, register_user, monkeypatch):
+    monkeypatch.setattr(settings, "GEMINI_API_KEY", "test-secret")
+    headers = await _headers(client, register_user, "ask-bounds@example.com")
+    too_many = {"text": "more", "previous": {"seed_titles": ["a"] * 6}}
+    assert (
+        await client.post("/api/recs/ask", json=too_many, headers=headers)
+    ).status_code == 422
+    unknown = {"text": "more", "previous": {"extra": 1}}
+    assert (
+        await client.post("/api/recs/ask", json=unknown, headers=headers)
+    ).status_code == 422

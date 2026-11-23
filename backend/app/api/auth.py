@@ -1,13 +1,23 @@
 """Authentication and user management endpoints."""
 
+from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    HTTPException,
+    Request,
+    Response,
+    status,
+)
 from fastapi.responses import JSONResponse, RedirectResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_optional_user, verify_csrf
+from app.core.client_ip import resolve_client_ip
 from app.core.config import settings
 from app.core.rate_limit import auth_rate_limiter
 from app.core.security import (
@@ -18,34 +28,65 @@ from app.core.security import (
     verify_password,
 )
 from app.db.session import get_db
+from app.models.list_entry import ListEntry
+from app.models.rec_feedback import RecFeedback
 from app.models.user import User
 from app.schemas.user import (
     AuthProvidersResponse,
     CsrfTokenResponse,
+    ForgotPasswordRequest,
     GoogleLinkRequest,
+    ResetPasswordRequest,
     TasteProfileRequest,
     TasteProfileResponse,
     UserLoginRequest,
     UserRegisterRequest,
     UserResponse,
     UserUpdateRequest,
+    VerifyEmailRequest,
 )
+from app.services.email import send_email_safely
+from app.services.email_tokens import consume_token, issue_token
 from app.services.oauth import GoogleOAuthService, is_google_oauth_configured
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 def get_client_ip(request: Request) -> str:
-    """Extracts client IP address safely considering reverse proxies."""
-    forwarded = request.headers.get("X-Forwarded-For")
-    if forwarded:
-        return forwarded.split(",")[0].strip()
-    return request.client.host if request.client else "127.0.0.1"
+    """Return the client IP, honoring X-Forwarded-For only from trusted proxies."""
+    return resolve_client_ip(
+        request.client.host if request.client else None,
+        request.headers.get("X-Forwarded-For"),
+    )
 
 
-def set_auth_cookies(response: Response, user_id: int, user_email: str) -> str:
+async def queue_verification_email(
+    db: AsyncSession, user: User, background: BackgroundTasks
+) -> None:
+    """Issue an email verification token and queue the message."""
+    token = await issue_token(
+        db,
+        user,
+        "email_verify",
+        timedelta(hours=settings.EMAIL_VERIFY_TTL_HOURS),
+    )
+    link = f"{settings.FRONTEND_URL}/verify-email?token={token}"
+    background.add_task(
+        send_email_safely,
+        user.email,
+        "Confirm your AniMatch email",
+        f"Confirm your email address:\n\n{link}\n\n"
+        f"This link expires in {settings.EMAIL_VERIFY_TTL_HOURS} hours.",
+    )
+
+
+def set_auth_cookies(
+    response: Response, user_id: int, user_email: str, session_version: int = 0
+) -> str:
     """Sets secure httpOnly session cookie and readable CSRF token cookie."""
-    access_token = create_access_token({"sub": str(user_id), "email": user_email})
+    access_token = create_access_token(
+        {"sub": str(user_id), "email": user_email, "sv": session_version}
+    )
     csrf_token = generate_csrf_token()
     is_prod = settings.ENVIRONMENT == "production"
 
@@ -121,6 +162,7 @@ async def register(
     payload: UserRegisterRequest,
     request: Request,
     response: Response,
+    background: BackgroundTasks,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> UserResponse:
     """Registers a new user with email and password."""
@@ -161,7 +203,8 @@ async def register(
     await db.refresh(user)
 
     auth_rate_limiter.record_success(ip=client_ip, email=payload.email)
-    set_auth_cookies(response, user.id, user.email)
+    await queue_verification_email(db, user, background)
+    set_auth_cookies(response, user.id, user.email, user.session_version)
 
     return UserResponse.model_validate(user)
 
@@ -190,9 +233,117 @@ async def login(
         )
 
     auth_rate_limiter.record_success(ip=client_ip, email=payload.email)
-    set_auth_cookies(response, user.id, user.email)
+    set_auth_cookies(response, user.id, user.email, user.session_version)
 
     return UserResponse.model_validate(user)
+
+
+@router.post("/forgot-password")
+async def forgot_password(
+    payload: ForgotPasswordRequest,
+    request: Request,
+    background: BackgroundTasks,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> dict[str, str]:
+    """Email a password reset link. The response never reveals if the account exists."""
+    client_ip = get_client_ip(request)
+    auth_rate_limiter.check_rate_limit(ip=client_ip, email=payload.email)
+    # Every request counts toward the limit so the endpoint cannot be used to spam.
+    auth_rate_limiter.record_failure(ip=client_ip, email=payload.email)
+
+    result = await db.execute(select(User).where(User.email == payload.email))
+    user = result.scalar_one_or_none()
+    if user:
+        token = await issue_token(
+            db,
+            user,
+            "password_reset",
+            timedelta(minutes=settings.PASSWORD_RESET_TTL_MINUTES),
+        )
+        link = f"{settings.FRONTEND_URL}/reset-password?token={token}"
+        background.add_task(
+            send_email_safely,
+            user.email,
+            "Reset your AniMatch password",
+            f"Use this link to choose a new password:\n\n{link}\n\n"
+            f"It expires in {settings.PASSWORD_RESET_TTL_MINUTES} minutes. "
+            "If you did not ask for this, you can ignore this email.",
+        )
+    return {"message": "If an account exists for that email, a reset link was sent."}
+
+
+@router.post("/reset-password")
+async def reset_password(
+    payload: ResetPasswordRequest,
+    request: Request,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> dict[str, str]:
+    """Set a new password using a valid reset token."""
+    client_ip = get_client_ip(request)
+    auth_rate_limiter.check_rate_limit(ip=client_ip)
+
+    try:
+        validate_password_strength(payload.password)
+    except ValueError as err:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(err)
+        ) from err
+
+    user = await consume_token(db, payload.token, "password_reset")
+    if user is None:
+        auth_rate_limiter.record_failure(ip=client_ip)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This reset link is invalid or has expired.",
+        )
+    user.password_hash = hash_password(payload.password)
+    # Invalidate every session issued before the reset.
+    user.session_version += 1
+    if user.email_verified_at is None:
+        user.email_verified_at = datetime.now(UTC)
+    await db.commit()
+    return {"message": "Password updated. You can now sign in."}
+
+
+@router.post("/verify-email")
+async def verify_email(
+    payload: VerifyEmailRequest,
+    request: Request,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> dict[str, str]:
+    """Confirm an email address using a verification token."""
+    client_ip = get_client_ip(request)
+    auth_rate_limiter.check_rate_limit(ip=client_ip)
+
+    user = await consume_token(db, payload.token, "email_verify")
+    if user is None:
+        auth_rate_limiter.record_failure(ip=client_ip)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This verification link is invalid or has expired.",
+        )
+    if user.email_verified_at is None:
+        user.email_verified_at = datetime.now(UTC)
+    await db.commit()
+    return {"message": "Email verified."}
+
+
+@router.post("/resend-verification")
+async def resend_verification(
+    request: Request,
+    background: BackgroundTasks,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+    _: Annotated[None, Depends(verify_csrf)],
+) -> dict[str, str]:
+    """Send a fresh verification email to the signed-in user."""
+    if current_user.email_verified_at is not None:
+        return {"message": "Email already verified."}
+    client_ip = get_client_ip(request)
+    auth_rate_limiter.check_rate_limit(ip=client_ip, email=current_user.email)
+    auth_rate_limiter.record_failure(ip=client_ip, email=current_user.email)
+    await queue_verification_email(db, current_user, background)
+    return {"message": "Verification email sent."}
 
 
 @router.post("/logout")
@@ -295,6 +446,61 @@ async def get_taste_profile(
             liked_ids=current_user.taste_profile.get("liked_ids", []),
         )
     return TasteProfileResponse()
+
+
+@router.get("/me/export")
+async def export_me(
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> JSONResponse:
+    """Download the signed-in user's own data as a JSON file."""
+    result = await db.execute(
+        select(ListEntry)
+        .where(ListEntry.user_id == current_user.id)
+        .order_by(ListEntry.added_at, ListEntry.id)
+    )
+    entries = [
+        {
+            "anime_id": entry.anime_id,
+            "title": (
+                entry.anime.title_english
+                or entry.anime.title_romaji
+                or entry.anime.title_native
+            ),
+            "status": entry.status,
+            "rating": entry.rating,
+            "source": entry.source,
+            "added_at": entry.added_at.isoformat(),
+            "updated_at": entry.updated_at.isoformat(),
+        }
+        for entry in result.scalars().all()
+    ]
+    hidden = await db.execute(
+        select(RecFeedback.anime_id)
+        .where(RecFeedback.user_id == current_user.id)
+        .order_by(RecFeedback.anime_id)
+    )
+    data = {
+        "exported_at": datetime.now(UTC).isoformat(),
+        "account": {
+            "email": current_user.email,
+            "display_name": current_user.display_name,
+            "show_mature": current_user.show_mature,
+            "email_verified": current_user.email_verified_at is not None,
+            "google_linked": current_user.google_sub is not None,
+            "created_at": current_user.created_at.isoformat(),
+        },
+        "taste_profile": current_user.taste_profile,
+        "list": entries,
+        "not_interested_anime_ids": list(hidden.scalars().all()),
+    }
+    return JSONResponse(
+        data,
+        headers={
+            "Content-Disposition": 'attachment; filename="animatch-export.json"',
+            "Cache-Control": "no-store",
+        },
+    )
 
 
 @router.delete("/me")
@@ -407,6 +613,8 @@ async def google_callback(
                 detail="This Google account is already linked to another user profile.",
             )
         logged_in_user.google_sub = sub
+        if logged_in_user.email_verified_at is None and logged_in_user.email == email:
+            logged_in_user.email_verified_at = datetime.now(UTC)
         await db.commit()
         await db.refresh(logged_in_user)
         user = logged_in_user
@@ -431,6 +639,8 @@ async def google_callback(
                     )
                 # If no password (OAuth-only account), link safely
                 existing_user.google_sub = sub
+                if existing_user.email_verified_at is None:
+                    existing_user.email_verified_at = datetime.now(UTC)
                 await db.commit()
                 await db.refresh(existing_user)
                 user = existing_user
@@ -443,6 +653,7 @@ async def google_callback(
                     display_name=name,
                     show_mature=False,
                     taste_profile=None,
+                    email_verified_at=datetime.now(UTC),
                 )
                 db.add(user)
                 await db.commit()
@@ -454,12 +665,12 @@ async def google_callback(
         res = JSONResponse(
             content=UserResponse.model_validate(user).model_dump(mode="json")
         )
-        set_auth_cookies(res, user.id, user.email)
+        set_auth_cookies(res, user.id, user.email, user.session_version)
         return res
 
     # Otherwise redirect to frontend fixed URL from config (not request input)
     redirect_res = RedirectResponse(
         url=f"{settings.FRONTEND_URL}/", status_code=status.HTTP_302_FOUND
     )
-    set_auth_cookies(redirect_res, user.id, user.email)
+    set_auth_cookies(redirect_res, user.id, user.email, user.session_version)
     return redirect_res

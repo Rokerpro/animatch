@@ -8,6 +8,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
     LOG_LEVEL: str = "INFO"
+    # Optional error reporting; leave empty to disable.
+    SENTRY_DSN: str = ""
+    SENTRY_TRACES_SAMPLE_RATE: float = 0.0
     APP_VERSION: str = "0.1.0"
     APP_NAME: str = "AniMatch API"
 
@@ -33,6 +36,32 @@ class Settings(BaseSettings):
                 pass
         return v if isinstance(v, list) else []
 
+    # Reverse proxies (IPs or CIDRs) whose X-Forwarded-For header is trusted for
+    # per-IP rate limiting. Empty means the header is ignored entirely.
+    TRUSTED_PROXIES: list[str] | str = []
+
+    @field_validator("TRUSTED_PROXIES", mode="before")
+    @classmethod
+    def assemble_trusted_proxies(cls, v: str | list[str]) -> list[str]:
+        if isinstance(v, str):
+            stripped = v.strip()
+            if stripped.startswith("["):
+                import json
+
+                try:
+                    parsed = json.loads(stripped)
+                    return [str(i).strip() for i in parsed if str(i).strip()]
+                except Exception:
+                    return []
+            return [i.strip() for i in stripped.split(",") if i.strip()]
+        return v if isinstance(v, list) else []
+
+    # Optional shared store for rate limiting across workers (redis://host:6379/0).
+    REDIS_URL: str = ""
+    # Requests per minute per client IP; 0 disables the limit.
+    RATE_LIMIT_RECS_PER_MINUTE: int = 60
+    RATE_LIMIT_CATALOG_PER_MINUTE: int = 240
+
     # Database
     DATABASE_URL: str = "sqlite+aiosqlite:///./animatch.db"
 
@@ -54,6 +83,18 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_SECRET: str = ""
     GOOGLE_REDIRECT_URI: str = "http://localhost:8000/api/auth/google/callback"
 
+    # Transactional email. "log" writes messages to the application log (development);
+    # "smtp" sends through the configured server.
+    EMAIL_BACKEND: str = "log"
+    EMAIL_FROM: str = "AniMatch <no-reply@localhost>"
+    SMTP_HOST: str = ""
+    SMTP_PORT: int = 587
+    SMTP_USERNAME: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_STARTTLS: bool = True
+    PASSWORD_RESET_TTL_MINUTES: int = 60
+    EMAIL_VERIFY_TTL_HOURS: int = 48
+
     # Gemini LLM
     GEMINI_API_KEY: str = ""
     GEMINI_MODEL: str = "gemini-2.5-flash"
@@ -64,6 +105,9 @@ class Settings(BaseSettings):
     # Adult-flagged tags only make a title mature when their AniList rank meets
     # this relevance percentage. isAdult, Hentai, and Ecchi remain hard rules.
     MATURE_TAG_MIN_RANK: int = 60
+
+    # Minutes between checks for a re-synced catalog; 0 disables the refresher.
+    INDEX_REFRESH_MINUTES: int = 0
 
     # Recommendation Engine
     REC_GENRE_DIM_WEIGHT: float = 3.0
@@ -153,12 +197,32 @@ def setup_logging() -> None:
     """Configures structured logging for the application."""
     log_level = getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO)
     log_format = (
-        "%(asctime)s | %(levelname)-8s | %(name)s:%(funcName)s:%(lineno)d - %(message)s"
+        "%(asctime)s | %(levelname)-8s | %(request_id)s | "
+        "%(name)s:%(funcName)s:%(lineno)d - %(message)s"
     )
 
+    from app.core.request_id import RequestIdFilter
+
+    handler = logging.StreamHandler(sys.stdout)
+    handler.addFilter(RequestIdFilter())
     logging.basicConfig(
         level=log_level,
         format=log_format,
-        handlers=[logging.StreamHandler(sys.stdout)],
+        handlers=[handler],
         force=True,
+    )
+
+
+def setup_error_reporting() -> None:
+    """Initialise Sentry when SENTRY_DSN is set. Sends no personal data by default."""
+    if not settings.SENTRY_DSN:
+        return
+    import sentry_sdk
+
+    sentry_sdk.init(
+        dsn=settings.SENTRY_DSN,
+        environment=settings.ENVIRONMENT,
+        release=settings.APP_VERSION,
+        traces_sample_rate=settings.SENTRY_TRACES_SAMPLE_RATE,
+        send_default_pii=False,
     )
