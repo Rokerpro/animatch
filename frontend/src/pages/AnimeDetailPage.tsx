@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
+import { formatLabel, statusLabel } from "../components/formatMeta";
 import { ApiError } from "../api/client";
 import { useAnimeDetail, useListStatuses, useSimilar } from "../api/hooks";
 import { useAuth } from "../auth/useAuth";
@@ -17,21 +18,21 @@ export function AnimeDetailPage() {
   const listStatusQuery = useListStatuses([id], mature, Boolean(user));
   if (detail.isLoading)
     return (
-      <main className="detail-page">
+      <section className="detail-page detail-state">
         <PosterSkeleton count={3} />
-      </main>
+      </section>
     );
   if (detail.error instanceof ApiError && detail.error.status === 404)
     return (
-      <main className="detail-page">
+      <section className="detail-page detail-state">
         <p role="status">Not found, or hidden by your content settings</p>
-      </main>
+      </section>
     );
   if (detail.isError || !detail.data)
     return (
-      <main className="detail-page">
+      <section className="detail-page detail-state">
         <ErrorState message="Could not load this anime." />
-      </main>
+      </section>
     );
   const anime = detail.data;
   const tags = [...(anime.tagDetails ?? [])]
@@ -42,26 +43,57 @@ export function AnimeDetailPage() {
   );
   const listStatus = listEntry?.status ?? null;
   const listRating = listEntry?.rating ?? null;
+  const subtitle = [anime.titleRomaji, anime.titleEnglish].find(
+    (value) => value && value !== anime.title
+  );
+  const statusText = statusLabel(anime.status);
+  const kind = [formatLabel(anime.format), statusText].filter(Boolean);
+  const details: [string, string | number | null | undefined][] = [
+    [
+      "Popularity",
+      anime.popularity ? `${anime.popularity.toLocaleString()} users` : null,
+    ],
+    ["Studio", anime.studio],
+    [
+      "Season",
+      [titleCase(anime.season), anime.seasonYear].filter(Boolean).join(" "),
+    ],
+    ["Source", titleCase(anime.source)],
+    ["Episodes", anime.episodes],
+    ["Duration", anime.duration ? `${anime.duration} min` : null],
+  ];
   return (
     <article className="detail-page">
       <div
-        className="detail-banner"
+        aria-hidden="true"
+        className={`detail-banner${anime.bannerImage ? " has-image" : ""}`}
         style={
           anime.bannerImage
             ? { backgroundImage: `url(${JSON.stringify(anime.bannerImage)})` }
-            : undefined
+            : anime.coverColor
+              ? { backgroundColor: anime.coverColor }
+              : undefined
         }
-        aria-hidden="true"
       />
       <div className="detail-layout">
         <aside aria-label="Anime controls" className="detail-sidebar">
           <div className="detail-cover">
-            <PosterImage src={anime.coverImage} alt={anime.title} />
+            <PosterImage
+              src={anime.coverImage}
+              alt={anime.title}
+              color={anime.coverColor}
+            />
           </div>
           <div className="detail-action-stack">
             <div className="detail-anilist-score">
               <span>AniList score</span>
-              <ScoreBadge score={anime.score ?? null} />
+              <ScoreBadge
+                className="detail-score"
+                score={anime.score ?? null}
+              />
+              {anime.score == null && (
+                <span className="detail-score">None</span>
+              )}
             </div>
             <ListControl
               anime={anime}
@@ -82,78 +114,82 @@ export function AnimeDetailPage() {
         </aside>
         <div className="detail-main">
           <header className="detail-heading">
-            <p className="eyebrow">
-              {[anime.format, anime.status].filter(Boolean).join(" · ")}
-            </p>
-            <h1>{anime.title}</h1>
-            {anime.titleEnglish && anime.titleEnglish !== anime.title && (
-              <p>{anime.titleEnglish}</p>
+            {kind.length > 0 && (
+              <p className="detail-kind">{kind.join(", ")}</p>
             )}
+            <h1 className="detail-title">
+              {anime.title}
+              {anime.titleNative && anime.titleNative !== anime.title && (
+                <>
+                  {" "}
+                  <span className="accent detail-native" lang="ja">
+                    {anime.titleNative}
+                  </span>
+                </>
+              )}
+            </h1>
+            {subtitle && <p className="detail-subtitle">{subtitle}</p>}
             <p className="anime-meta">
               {[
                 anime.year,
                 anime.episodes ? `${anime.episodes} episodes` : null,
               ]
                 .filter(Boolean)
-                .join(" · ")}
+                .join(", ")}
             </p>
           </header>
           <div className="detail-content">
-            <section>
-              <h2>Synopsis</h2>
-              <p>{anime.synopsis || "No synopsis available."}</p>
-            </section>
-            <section>
-              <h2>Details</h2>
-              <dl className="detail-list">
-                {[
-                  [
-                    "Popularity",
-                    `${(anime.popularity ?? 0).toLocaleString()} users`,
-                  ],
-                  ["Studio", anime.studio],
-                  [
-                    "Season",
-                    [anime.season, anime.seasonYear].filter(Boolean).join(" "),
-                  ],
-                  ["Source", anime.source],
-                  ["Episodes", anime.episodes],
-                  ["Duration", anime.duration ? `${anime.duration} min` : null],
-                ]
-                  .filter(([, value]) => value != null)
-                  .map(([key, value]) => (
-                    <div key={String(key)}>
-                      <dt>{key}</dt>
-                      <dd>{value}</dd>
-                    </div>
-                  ))}
-              </dl>
-            </section>
+            <div className="detail-overview">
+              <section className="detail-synopsis">
+                <h2 className="subheading">Synopsis</h2>
+                <p>{anime.synopsis || "No synopsis available."}</p>
+              </section>
+              <section className="detail-facts panel">
+                <h2 className="subheading">Details</h2>
+                <dl className="detail-list">
+                  {details
+                    .filter(([, value]) => value != null && value !== "")
+                    .map(([key, value]) => (
+                      <div key={key}>
+                        <dt>{key}</dt>
+                        <dd>{value}</dd>
+                      </div>
+                    ))}
+                </dl>
+              </section>
+            </div>
             {!!anime.genres?.length && (
               <section>
-                <h2>Genres</h2>
+                <h2 className="subheading">Genres</h2>
                 <div className="tag-list">
                   {anime.genres.map((genre) => (
-                    <span className="tag-pill" key={genre}>
+                    <Link
+                      className="tag-pill"
+                      key={genre}
+                      to={`/browse?genres=${encodeURIComponent(genre)}`}
+                    >
                       {genre}
-                    </span>
+                    </Link>
                   ))}
                 </div>
               </section>
             )}
             {!!tags.length && <TagList tags={tags.map((tag) => tag.name)} />}
-            <section>
-              <h2>Similar anime</h2>
+            <section className="detail-similar">
+              <h2 className="section-title">
+                Similar <span className="accent">Anime</span>
+              </h2>
               {similar.isLoading ? (
-                <PosterSkeleton count={4} />
+                <PosterSkeleton count={4} wide />
               ) : similar.isError ? (
                 <ErrorState message="Could not load recommendations." />
               ) : !similar.data?.length ? (
-                <p>No similar anime found.</p>
+                <p className="muted">No similar anime found.</p>
               ) : (
                 <PosterGrid
                   animeIds={similar.data.map((rec) => rec.id)}
                   label="Similar anime"
+                  wide
                 >
                   {similar.data.map((rec) => (
                     <RecommendationCard key={rec.id} recommendation={rec} />
@@ -167,24 +203,39 @@ export function AnimeDetailPage() {
     </article>
   );
 }
+
+function titleCase(value?: string | null): string | null {
+  if (!value) return null;
+  const words = value.toLowerCase().replace(/_/g, " ");
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
 function TagList({ tags }: { tags: string[] }) {
   const [showAll, setShowAll] = useState(false);
   const shown = showAll ? tags : tags.slice(0, 8);
   return (
     <section>
-      <h2>Tags</h2>
+      <h2 className="subheading">Tags</h2>
       <div className="tag-list">
         {shown.map((tag) => (
-          <span className="tag-pill" key={tag}>
+          <Link
+            className="tag-pill"
+            key={tag}
+            to={`/browse?tags=${encodeURIComponent(tag)}`}
+          >
             {tag}
-          </span>
+          </Link>
         ))}
+        {tags.length > 8 && (
+          <button
+            className="clear-filters"
+            onClick={() => setShowAll(!showAll)}
+            type="button"
+          >
+            {showAll ? "Show fewer" : "Show more"}
+          </button>
+        )}
       </div>
-      {tags.length > 8 && (
-        <button className="tag-toggle" onClick={() => setShowAll(!showAll)}>
-          {showAll ? "Show fewer" : "Show more"}
-        </button>
-      )}
     </section>
   );
 }
