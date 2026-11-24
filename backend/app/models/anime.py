@@ -130,6 +130,7 @@ class Anime(Base):
     synonyms: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     cover_image_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    cover_color: Mapped[str | None] = mapped_column(String(16), nullable=True)
     banner_image_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     format: Mapped[str | None] = mapped_column(String(50), nullable=True, index=True)
     episodes: Mapped[int | None] = mapped_column(Integer, nullable=True)

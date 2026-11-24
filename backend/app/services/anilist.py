@@ -46,6 +46,7 @@ query GetMediaPage(
       coverImage {
         extraLarge
         large
+        color
       }
       bannerImage
       format
@@ -308,6 +309,7 @@ class AniListClient:
                 "synonyms": item.get("synonyms") or [],
                 "description": description,
                 "cover_image_url": cover_url,
+                "cover_color": cover_dict.get("color"),
                 "banner_image_url": item.get("bannerImage"),
                 "format": item.get("format"),
                 "episodes": item.get("episodes"),

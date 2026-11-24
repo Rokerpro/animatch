@@ -138,6 +138,7 @@ async def seeded_catalog(
             "synonyms": item.get("synonyms") or [],
             "description": strip_html_tags(item.get("description")),
             "cover_image_url": cover_dict.get("extraLarge") or cover_dict.get("large"),
+            "cover_color": cover_dict.get("color"),
             "banner_image_url": item.get("bannerImage"),
             "format": item.get("format"),
             "episodes": item.get("episodes"),

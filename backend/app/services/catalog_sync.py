@@ -185,6 +185,7 @@ class CatalogSyncService:
                 anime_obj.synonyms = m.get("synonyms") or []
                 anime_obj.description = m.get("description")
                 anime_obj.cover_image_url = m.get("cover_image_url")
+                anime_obj.cover_color = m.get("cover_color")
                 anime_obj.banner_image_url = m.get("banner_image_url")
                 anime_obj.format = m.get("format")
                 anime_obj.episodes = m.get("episodes")
@@ -208,6 +209,7 @@ class CatalogSyncService:
                     synonyms=m.get("synonyms") or [],
                     description=m.get("description"),
                     cover_image_url=m.get("cover_image_url"),
+                    cover_color=m.get("cover_color"),
                     banner_image_url=m.get("banner_image_url"),
                     format=m.get("format"),
                     episodes=m.get("episodes"),

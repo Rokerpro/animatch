@@ -27,6 +27,7 @@ class AnimeCard(BaseSchema):
     title_english: str | None = None
     title_native: str | None = None
     cover_image: str | None = None
+    cover_color: str | None = None
     banner_image: str | None = None
     format: str | None = None
     status: str | None = None

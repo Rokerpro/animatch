@@ -21,7 +21,8 @@
           "description": "<p>During their decade-long quest, <b>the party</b> defeated the Demon King.<br><br>Elf mage <i>Frieren</i> begins her new journey.</p>",
           "coverImage": {
             "large": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx154587.jpg",
-            "extraLarge": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx154587.jpg"
+            "extraLarge": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx154587.jpg",
+            "color": "#e4a15d"
           },
           "bannerImage": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/154587.jpg",
           "format": "TV",

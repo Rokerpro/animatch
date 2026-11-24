@@ -71,6 +71,7 @@ class AnimeRecord:
     popularity: int
     episodes: int | None
     cover_image: str | None = None
+    cover_color: str | None = None
     duration: int | None = None
     season_year: int | None = None
     status: str | None = (
@@ -233,6 +234,7 @@ class VectorIndex:
                         or "Unknown"
                     ),
                     cover_image=item.get("cover_image_url"),
+                    cover_color=item.get("cover_color"),
                     franchise_id=item.get("franchise_id"),
                     average_score=item.get("average_score"),
                     popularity=item.get("popularity") or 0,
