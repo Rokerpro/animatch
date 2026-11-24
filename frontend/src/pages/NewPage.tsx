@@ -9,6 +9,7 @@ import type { QuizQuestion } from "../api/types";
 import { useAuth } from "../auth/useAuth";
 import { PosterGrid } from "../components/PosterGrid";
 import { RecommendationCard } from "../components/RecommendationCard";
+import "../styles/new.css";
 
 // Keep in sync with backend/app/recs/quiz.py:NEW_QUIZ_QUESTION_IDS.
 const NEW_QUIZ_QUESTION_IDS = ["mood", "length", "era"] as const;
