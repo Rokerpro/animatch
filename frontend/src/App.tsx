@@ -13,6 +13,7 @@ import { ListPage } from "./pages/ListPage";
 import { MALImportPage } from "./pages/MALImportPage";
 import { NewPage } from "./pages/NewPage";
 import { AskPage } from "./pages/AskPage";
+import { NotFoundPage } from "./pages/NotFoundPage";
 
 function AniListFooter() {
   return (
@@ -69,10 +70,7 @@ export function App() {
             <Route path="/import" element={<MALImportPage />} />
             <Route path="/new" element={<NewPage />} />
             <Route path="/ask" element={<AskPage />} />
-            <Route
-              path="*"
-              element={<p className="browse-page">Page not found</p>}
-            />
+            <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </PageShell>
       </AuthProvider>
