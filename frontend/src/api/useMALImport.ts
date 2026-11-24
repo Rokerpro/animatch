@@ -13,6 +13,7 @@ export function useMALImport() {
           : Promise.all([
               queryClient.invalidateQueries({ queryKey: ["list-statuses"] }),
               queryClient.invalidateQueries({ queryKey: ["list"] }),
+              queryClient.invalidateQueries({ queryKey: ["list-stats"] }),
               queryClient.invalidateQueries({
                 queryKey: ["my-recommendations"],
               }),
