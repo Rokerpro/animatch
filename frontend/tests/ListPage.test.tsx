@@ -65,6 +65,18 @@ function renderPage(initial = "/list") {
 beforeEach(() => {
   vi.clearAllMocks();
   vi.spyOn(api, "list").mockResolvedValue(response());
+  vi.spyOn(api, "listStats").mockResolvedValue({
+    total: 49,
+    byStatus: {
+      planning: 20,
+      watching: 4,
+      completed: 22,
+      dropped: 1,
+      on_hold: 2,
+    },
+    ratedCount: 10,
+    meanRating: 7.5,
+  });
   vi.mocked(useAuth).mockReturnValue({
     user,
     mature: true,
@@ -116,6 +128,8 @@ describe("My list page", () => {
     vi.spyOn(api, "list").mockResolvedValue(response(49, 3, true));
     renderPage("/list?page=2");
     expect(await screen.findByText("49 titles")).toBeInTheDocument();
+    expect(await screen.findByText("22")).toHaveClass("list-tab-count");
+    expect(screen.getByText("Showing 1 of 49 titles")).toBeInTheDocument();
     expect(api.list).toHaveBeenCalledWith({
       status: undefined,
       sort: "updated",

@@ -7,7 +7,7 @@ import {
   useSearchParams,
 } from "react-router-dom";
 import { ApiError } from "../api/client";
-import { useList } from "../api/hooks";
+import { useList, useListStats } from "../api/hooks";
 import type { ListSort, ListStatus } from "../api/types";
 import { useAuth } from "../auth/useAuth";
 import { safeNextPath } from "../auth/nextPath";
@@ -16,6 +16,8 @@ import { listStatusLabels, listStatuses } from "../components/listStatus";
 import { Pagination } from "../components/Pagination";
 import { PosterImage } from "../components/PosterImage";
 import { ErrorState, PosterSkeleton } from "../components/RequestStates";
+import { PageTitle } from "../components/PageTitle";
+import "../styles/list.css";
 
 const tabs: { value: ListStatus | "all"; label: string }[] = [
   { value: "all", label: "All" },
@@ -49,6 +51,7 @@ export function ListPage() {
     },
     Boolean(user) && !authLoading
   );
+  const stats = useListStats(mature, Boolean(user) && !authLoading);
   const nextPath = safeNextPath(
     `${location.pathname}${location.search}`,
     "/list"
@@ -92,17 +95,18 @@ export function ListPage() {
         <p>Redirecting to sign in…</p>
       </section>
     );
+  const title = <PageTitle lead="My" accent="List" />;
   if (list.isLoading && !list.data)
     return (
-      <section className="browse-page">
-        <h1 className="page-title">My list</h1>
-        <PosterSkeleton count={8} />
+      <section className="browse-page my-list-page">
+        <header className="page-header">{title}</header>
+        <PosterSkeleton count={12} />
       </section>
     );
   if (list.isError || !list.data)
     return (
-      <section className="browse-page">
-        <h1 className="page-title">My list</h1>
+      <section className="browse-page my-list-page">
+        <header className="page-header">{title}</header>
         <ErrorState
           message={
             list.error instanceof Error
@@ -114,50 +118,58 @@ export function ListPage() {
       </section>
     );
 
+  const overallTotal = stats.data?.total ?? list.data.pageInfo.total;
+  const tabCount = (value: ListStatus | "all") =>
+    stats.data
+      ? value === "all"
+        ? stats.data.total
+        : (stats.data.byStatus[value] ?? 0)
+      : null;
+
   return (
     <section className="browse-page my-list-page">
-      <div className="list-page-heading">
-        <div>
-          <p className="eyebrow">Your anime</p>
-          <h1 className="page-title">My list</h1>
-        </div>
-        <div className="list-heading-actions">
-          <span className="list-total">{list.data.pageInfo.total} titles</span>
-          <Link className="text-button" to="/import">
+      <header className="page-header">
+        {title}
+        <div className="page-header-aside list-heading-actions">
+          <span className="list-total">
+            {overallTotal} {overallTotal === 1 ? "title" : "titles"}
+          </span>
+          <Link className="text-link" to="/import">
             Import from MyAnimeList
           </Link>
         </div>
-      </div>
+      </header>
       <div className="list-controls-row">
-        <div className="list-tabs-shell">
-          <div
-            aria-label="Filter list by status"
-            className="list-status-tabs"
-            onKeyDown={(event) => {
-              const current = tabs.findIndex(
-                (tab) => tab.value === selectedStatus
-              );
-              if (event.key === "ArrowRight") {
-                event.preventDefault();
-                selectTab((current + 1) % tabs.length);
-              }
-              if (event.key === "ArrowLeft") {
-                event.preventDefault();
-                selectTab((current - 1 + tabs.length) % tabs.length);
-              }
-              if (event.key === "Home") {
-                event.preventDefault();
-                selectTab(0);
-              }
-              if (event.key === "End") {
-                event.preventDefault();
-                selectTab(tabs.length - 1);
-              }
-            }}
-            role="tablist"
-            tabIndex={0}
-          >
-            {tabs.map((tab, index) => (
+        <div
+          aria-label="Filter list by status"
+          className="list-status-tabs"
+          onKeyDown={(event) => {
+            const current = tabs.findIndex(
+              (tab) => tab.value === selectedStatus
+            );
+            if (event.key === "ArrowRight") {
+              event.preventDefault();
+              selectTab((current + 1) % tabs.length);
+            }
+            if (event.key === "ArrowLeft") {
+              event.preventDefault();
+              selectTab((current - 1 + tabs.length) % tabs.length);
+            }
+            if (event.key === "Home") {
+              event.preventDefault();
+              selectTab(0);
+            }
+            if (event.key === "End") {
+              event.preventDefault();
+              selectTab(tabs.length - 1);
+            }
+          }}
+          role="tablist"
+          tabIndex={0}
+        >
+          {tabs.map((tab, index) => {
+            const count = tabCount(tab.value);
+            return (
               <button
                 aria-selected={selectedStatus === tab.value}
                 className="list-status-tab"
@@ -174,9 +186,14 @@ export function ListPage() {
                 type="button"
               >
                 {tab.label}
+                {count !== null && (
+                  <span aria-hidden="true" className="list-tab-count">
+                    {count}
+                  </span>
+                )}
               </button>
-            ))}
-          </div>
+            );
+          })}
         </div>
         <label className="list-sort-control">
           <span>Sort by</span>
@@ -199,29 +216,32 @@ export function ListPage() {
       >
         {list.data.items.length ? (
           <>
-            <p className="result-count">
+            <p className="list-showing">
               Showing {list.data.items.length} of {list.data.pageInfo.total}{" "}
               titles
             </p>
             <div className="my-list-grid">
               {list.data.items.map((entry) => (
-                <article className="my-list-card" key={entry.id}>
-                  <div className="my-list-card-poster">
+                <article className="anime-card my-list-card" key={entry.id}>
+                  <div className="anime-poster">
                     <Link
                       aria-label={entry.anime.title}
                       to={`/anime/${entry.animeId}`}
                     >
                       <PosterImage
                         alt={entry.anime.title}
+                        color={entry.anime.coverColor}
                         src={entry.anime.coverImage}
                       />
                     </Link>
-                    <ListControl
-                      anime={entry.anime}
-                      status={entry.status}
-                      rating={entry.rating}
-                      variant="card"
-                    />
+                    <div className="anime-save-control">
+                      <ListControl
+                        anime={entry.anime}
+                        status={entry.status}
+                        rating={entry.rating}
+                        variant="card"
+                      />
+                    </div>
                   </div>
                   <div className="my-list-card-content">
                     <Link
