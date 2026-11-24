@@ -119,12 +119,9 @@ export function ListControl({
           type="button"
         >
           {listed ? (
-            <BookmarkCheck aria-hidden="true" fill="currentColor" size={17} />
+            <BookmarkCheck aria-hidden="true" size={18} strokeWidth={1.8} />
           ) : (
-            <Bookmark aria-hidden="true" size={17} />
-          )}
-          {variant === "card" && listed && (
-            <span>{listStatusLabels[status]}</span>
+            <Bookmark aria-hidden="true" size={18} strokeWidth={1.8} />
           )}
           {variant === "detail" && (
             <span>{listed ? listStatusLabels[status] : "Add to My list"}</span>

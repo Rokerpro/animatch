@@ -22,8 +22,8 @@
 
   --font-display: "Dela Gothic One", ui-sans-serif, system-ui, sans-serif;
   --font-body:
-    "Zen Kaku Gothic New", ui-sans-serif, system-ui, -apple-system,
-    "Segoe UI", sans-serif;
+    "Zen Kaku Gothic New", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    sans-serif;
 
   --text-16: 16px;
   --text-21: 21px;
@@ -36,8 +36,8 @@
   --page-width: 1280px;
   --gutter: 80px;
   --radius-card: 6px;
-  --shadow-lift: 0 16px 32px -4px rgba(0, 0, 0, 0.55),
-    0 4px 10px rgba(0, 0, 0, 0.35);
+  --shadow-lift:
+    0 16px 32px -4px rgba(0, 0, 0, 0.55), 0 4px 10px rgba(0, 0, 0, 0.35);
   --ring: 0 0 0 3px var(--lavender-soft);
   --ease: 180ms ease;
 

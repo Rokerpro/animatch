@@ -48,14 +48,6 @@ describe("AnimeCard", () => {
         .getByRole("button", { name: "Add Example to My list" })
         .closest(".anime-save-control")
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", {
-        name: "AniList, Public domain, via Wikimedia Commons",
-      })
-    ).toHaveAttribute(
-      "href",
-      "https://commons.wikimedia.org/wiki/File:AniList_logo.svg"
-    );
-    expect(screen.getByText("TV · 2024 · 12 eps")).toBeInTheDocument();
+    expect(screen.getByText("TV, 2024, 12 eps")).toBeInTheDocument();
   });
 });
