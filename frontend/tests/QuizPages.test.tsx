@@ -145,11 +145,18 @@ describe("Phase 5 quiz flow", () => {
     });
     vi.mocked(api.startRecommendations).mockResolvedValue([rec]);
   });
-  it("places the home CTA above the steps and sends new visitors to the quiz", async () => {
+  it("shows the title search hero and sends new visitors to the quiz", async () => {
     const view = renderRoutes("/", <QuizPage />);
-    expect(screen.getByRole("link", { name: "Find my anime" })).toBeTruthy();
+    expect(
+      screen.getByRole("heading", { name: "Name one anime you love." })
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("combobox", { name: "Anime you love" })
+    ).toBeTruthy();
     expect(view.container.querySelector(".recommendation-card")).toBeNull();
-    fireEvent.click(screen.getByRole("link", { name: "Find my anime" }));
+    fireEvent.click(
+      screen.getByRole("link", { name: "Take the quiz instead." })
+    );
     expect(
       await screen.findByRole("heading", { name: "What mood?" })
     ).toBeTruthy();
@@ -247,7 +254,7 @@ describe("Phase 5 quiz flow", () => {
     expect(readQuizDraft()?.answers).toEqual({ mood: "epic" });
     fireEvent.click(screen.getByRole("button", { name: "History back" }));
     expect(
-      await screen.findByRole("link", { name: "Find my anime" })
+      await screen.findByRole("heading", { name: "Name one anime you love." })
     ).toBeTruthy();
   });
   it("submits selected answers and advances; Back returns to prior answer", async () => {
@@ -353,7 +360,9 @@ describe("Phase 5 quiz flow", () => {
     });
     renderRoutes("/results", <p>Elsewhere</p>);
     fireEvent.click(screen.getByRole("link", { name: "AniMatch home" }));
-    expect(screen.getByRole("link", { name: "Find my anime" })).toBeTruthy();
+    expect(
+      screen.getByRole("heading", { name: "Name one anime you love." })
+    ).toBeTruthy();
   });
   it("shows the similar-anime search in the results header and opens similar results for the selected anime", async () => {
     saveQuiz({

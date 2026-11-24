@@ -1,11 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import {
-  Link,
-  Navigate,
-  useLocation,
-  useNavigate,
-  useSearchParams,
-} from "react-router-dom";
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { ApiError, api, getErrorMessage } from "../api/client";
 import type { QuizQuestion } from "../api/types";
 import type { AnimeCardData } from "../api/types";
@@ -16,14 +10,7 @@ import { TitleAutocomplete } from "../components/TitleAutocomplete";
 import { useAuth } from "../auth/useAuth";
 import { useQuizQuestions } from "../api/hooks";
 import { PageTitle } from "../components/PageTitle";
-import {
-  Check,
-  CircleAlert,
-  Clapperboard,
-  ListChecks,
-  Sparkles,
-  X,
-} from "lucide-react";
+import { CircleAlert, X } from "lucide-react";
 import {
   clearQuizDraft,
   clearSavedQuiz,
@@ -64,61 +51,7 @@ function startRequestErrorMessage(error: unknown): string {
   return getErrorMessage(error, "Could not get recommendations. Try again.");
 }
 
-export function LandingPage() {
-  const location = useLocation();
-  const saved = readSavedQuiz() || readSavedStart();
-  if (saved && !location.state?.showHome)
-    return <Navigate to="/results" replace />;
-  return (
-    <section className="landing-page">
-      <div className="hero-badge">
-        <Sparkles aria-hidden="true" size={14} /> Anime recommendations
-      </div>
-      <h1 className="hero-title">
-        <span>Ani</span>
-        <span className="wordmark-accent">Match</span>
-      </h1>
-      <p>
-        Tell AniMatch what you enjoy in anime. It finds titles that fit your
-        taste and explains why each one is a match.
-      </p>
-      <div className="hero-actions">
-        <Link className="primary-action" to="/quiz">
-          Find my anime
-        </Link>
-      </div>
-      <div className="how-it-works" aria-label="How it works">
-        <article className="how-step">
-          <span className="how-step-icon">
-            <ListChecks aria-hidden="true" size={17} />
-          </span>
-          <div>
-            <h2>Tell us what you like</h2>
-            <p>Take a quick quiz or name titles you enjoy</p>
-          </div>
-        </article>
-        <article className="how-step">
-          <span className="how-step-icon">
-            <Clapperboard aria-hidden="true" size={17} />
-          </span>
-          <div>
-            <h2>Get matches</h2>
-            <p>Anime that fit your answers</p>
-          </div>
-        </article>
-        <article className="how-step">
-          <span className="how-step-icon">
-            <Check aria-hidden="true" size={17} />
-          </span>
-          <div>
-            <h2>See why</h2>
-            <p>Every match explains itself</p>
-          </div>
-        </article>
-      </div>
-    </section>
-  );
-}
+export { LandingPage } from "./LandingPage";
 
 export function QuizPage() {
   const [questions, setQuestions] = useState<QuizQuestion[] | null>(null);

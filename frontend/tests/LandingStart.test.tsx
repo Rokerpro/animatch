@@ -7,7 +7,7 @@ import {
 import type { ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useParams } from "react-router-dom";
 import { ApiError, api } from "../src/api/client";
 import type { AnimeCardData, Recommendation } from "../src/api/types";
 import { TitleAutocomplete } from "../src/components/TitleAutocomplete";
@@ -27,6 +27,7 @@ vi.mock("../src/api/client", async (importOriginal) => {
     api: {
       ...actual.api,
       anime: vi.fn(),
+      detail: vi.fn(),
       quiz: vi.fn(),
       startRecommendations: vi.fn(),
     },
@@ -70,6 +71,11 @@ function animeResponse(items: AnimeCardData[]) {
   };
 }
 
+function SimilarRoute() {
+  const { id } = useParams();
+  return <p>Similar to {id}</p>;
+}
+
 function routeElement(path = "/") {
   return (
     <MemoryRouter initialEntries={[path]}>
@@ -78,6 +84,7 @@ function routeElement(path = "/") {
         <Route path="/results" element={<ResultsPage />} />
         <Route path="/quiz" element={<QuizPage />} />
         <Route path="/anime/:id" element={<p>Anime detail</p>} />
+        <Route path="/similar/:id" element={<SimilarRoute />} />
       </Routes>
     </MemoryRouter>
   );
@@ -124,6 +131,16 @@ beforeEach(() => {
   clearSavedQuiz();
   clearSavedStart();
   vi.mocked(api.anime).mockReset().mockResolvedValue(animeResponse(anime));
+  vi.mocked(api.detail)
+    .mockReset()
+    .mockImplementation((id: number) =>
+      Promise.resolve({
+        id,
+        title: `Anime ${id}`,
+        coverImage: `https://images.test/cover-${id}.jpg`,
+        coverColor: "#335577",
+      })
+    );
   vi.mocked(api.quiz)
     .mockReset()
     .mockResolvedValue([
@@ -260,6 +277,73 @@ describe("home page", () => {
     expect(
       screen.queryByRole("combobox", { name: "Search anime similar to" })
     ).toBeNull();
+  });
+
+  it("shows the showcase pair, curated pairs and the other ways to start", async () => {
+    renderRoutes("/");
+    await act(async () => Promise.resolve());
+    expect(
+      screen.getByRole("heading", { name: "Name one anime you love." })
+    ).toBeInTheDocument();
+    expect(screen.getByText("You loved")).toBeInTheDocument();
+    expect(screen.getByText("Try next")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Mushi-shi" })).toHaveAttribute(
+      "href",
+      "/anime/457"
+    );
+    expect(
+      screen.getByRole("link", { name: "Cowboy Bebop to Samurai Champloo" })
+    ).toHaveAttribute("href", "/similar/1");
+    expect(
+      screen.getByRole("heading", { name: "More Pairs to Try" })
+    ).toBeInTheDocument();
+    expect(screen.getAllByRole("listitem")).toHaveLength(4);
+    expect(
+      screen.getByRole("link", { name: "Import from MyAnimeList" })
+    ).toHaveAttribute("href", "/import");
+    expect(screen.getByRole("link", { name: "Take the quiz" })).toHaveAttribute(
+      "href",
+      "/quiz"
+    );
+    expect(api.detail).toHaveBeenCalledWith(4081, false);
+  });
+
+  it("finds matches for the typed title and opens its similar page", async () => {
+    vi.mocked(api.anime).mockResolvedValue(animeResponse([anime[2]]));
+    renderRoutes("/");
+    fireEvent.change(screen.getByRole("combobox", { name: "Anime you love" }), {
+      target: { value: "Anime 3" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Find matches" }));
+    await act(async () => Promise.resolve());
+    expect(api.anime).toHaveBeenCalledWith({
+      q: "Anime 3",
+      page: 1,
+      pageSize: 1,
+      includeMature: false,
+    });
+    expect(screen.getByText("Similar to 3")).toBeInTheDocument();
+  });
+
+  it("asks for a title when Find matches is pressed with an empty search", () => {
+    renderRoutes("/");
+    fireEvent.click(screen.getByRole("button", { name: "Find matches" }));
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Type the name of an anime first."
+    );
+  });
+
+  it("tells the visitor when no anime matches the typed title", async () => {
+    vi.mocked(api.anime).mockResolvedValue(animeResponse([]));
+    renderRoutes("/");
+    fireEvent.change(screen.getByRole("combobox", { name: "Anime you love" }), {
+      target: { value: "Nothing" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Find matches" }));
+    await act(async () => Promise.resolve());
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "No anime found for “Nothing”."
+    );
   });
 });
 
