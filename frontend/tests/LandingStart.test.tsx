@@ -292,7 +292,7 @@ describe("home page", () => {
       "/anime/457"
     );
     expect(
-      screen.getByRole("link", { name: "Cowboy Bebop to Samurai Champloo" })
+      screen.getByRole("link", { name: "Cowboy Bebop to Carole & Tuesday" })
     ).toHaveAttribute("href", "/similar/1");
     expect(
       screen.getByRole("heading", { name: "More Pairs to Try" })

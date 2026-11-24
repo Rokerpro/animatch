@@ -41,9 +41,14 @@ const HERO_PAIR: CuratedPair = {
 const MORE_PAIRS: CuratedPair[] = [
   {
     loved: { id: 1, title: "Cowboy Bebop", native: "", tint: "#f0674a" },
-    next: { id: 205, title: "Samurai Champloo", native: "", tint: "#e9a04f" },
+    next: {
+      id: 101281,
+      title: "Carole & Tuesday",
+      native: "",
+      tint: "#e9a04f",
+    },
     reason:
-      "Same director, music that drives every episode, and drifters who keep their past to themselves.",
+      "Same director, music at the heart of every episode, and outsiders finding their own way.",
   },
   {
     loved: { id: 154587, title: "Frieren", native: "", tint: "#8fd47a" },
