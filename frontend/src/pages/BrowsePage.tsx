@@ -11,6 +11,7 @@ import {
 } from "../components/RequestStates";
 import { useAuth } from "../auth/useAuth";
 import { ApiError } from "../api/client";
+import { PageTitle } from "../components/PageTitle";
 export function BrowsePage() {
   const [params] = useSearchParams();
   const { mature } = useAuth();
@@ -34,9 +35,18 @@ export function BrowsePage() {
   const filters = useFilters(mature);
   return (
     <section className="browse-page">
-      <h1 className="page-title">
-        {query.q ? `Results for “${query.q}”` : "Browse anime"}
-      </h1>
+      <header className="page-header">
+        {query.q ? (
+          <PageTitle lead="Results for" accent={`“${query.q}”`} />
+        ) : (
+          <PageTitle lead="Browse" accent="Anime" />
+        )}
+        {results.data && results.data.items.length > 0 && (
+          <p className="page-header-aside result-total">
+            {results.data.pageInfo.total.toLocaleString()} anime
+          </p>
+        )}
+      </header>
       <FilterBar options={filters.data} />
       {results.isLoading ? (
         <PosterSkeleton />
@@ -53,9 +63,6 @@ export function BrowsePage() {
         <EmptyState title="No anime match these filters." />
       ) : (
         <>
-          <p className="result-count">
-            {results.data.pageInfo.total.toLocaleString()} anime
-          </p>
           <PosterGrid animeIds={results.data.items.map((anime) => anime.id)}>
             {results.data.items.map((anime) => (
               <AnimeCard anime={anime} key={anime.id} />

@@ -1426,3 +1426,221 @@ button.filter-chip:hover {
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
+
+/* ------------------------------------------------------------------ */
+/* Browse and filters                                                  */
+/* ------------------------------------------------------------------ */
+
+.result-total {
+  margin: 0;
+  padding-bottom: 6px;
+}
+
+.filter-section {
+  margin-bottom: 40px;
+}
+
+.filter-primary-controls {
+  display: grid;
+  align-items: end;
+  gap: 24px;
+  grid-template-columns: minmax(220px, 440px) 180px 140px 180px auto;
+}
+
+.filter-field {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.filter-label {
+  color: var(--muted);
+}
+
+.more-filters-toggle,
+.multi-filter summary {
+  display: inline-flex;
+  height: 48px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 12px 0 18px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--paper);
+  cursor: pointer;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: border-color var(--ease);
+}
+
+.more-filters-toggle {
+  justify-self: start;
+}
+
+.more-filters-toggle:not(:has(.filter-count)) {
+  padding-right: 18px;
+}
+
+.more-filters-toggle:hover,
+.more-filters-toggle[aria-expanded="true"],
+.multi-filter summary:hover,
+.multi-filter[open] summary {
+  border-color: var(--muted);
+}
+
+.more-filters {
+  display: grid;
+  align-items: end;
+  gap: 20px 24px;
+  margin-top: 24px;
+  padding: 24px;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+}
+
+.multi-filter {
+  position: relative;
+}
+
+.multi-filter summary {
+  width: 100%;
+  background: var(--surface);
+  font-weight: 500;
+  list-style: none;
+}
+
+.multi-filter summary::-webkit-details-marker {
+  display: none;
+}
+
+.multi-filter-options {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 8px);
+  left: 0;
+  display: grid;
+  overflow: auto;
+  width: max(100%, 280px);
+  max-height: 320px;
+  gap: 2px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: var(--shadow-lift);
+}
+
+.multi-filter-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.multi-filter-option:hover {
+  background: var(--surface-2);
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  accent-color: var(--lavender);
+}
+
+.active-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+  margin-top: 24px;
+}
+
+.active-filters .filter-chip svg {
+  color: var(--muted);
+}
+
+.clear-filters {
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--lavender);
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.clear-filters:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.mobile-filter-toggle {
+  display: none;
+}
+
+.filter-drawer {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  overflow: auto;
+  max-height: 85vh;
+  padding: 24px 16px 32px;
+  border-top: 1px solid var(--line);
+  border-radius: 16px 16px 0 0;
+  background: var(--graphite);
+  transition: transform 220ms ease;
+}
+
+.filter-drawer[data-entering] {
+  transform: translateY(24px);
+}
+
+.filter-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.filter-drawer-header h2 {
+  font-size: var(--text-21);
+  font-weight: 700;
+}
+
+.filter-drawer .filter-controls {
+  display: block;
+}
+
+.filter-drawer .filter-primary-controls {
+  grid-template-columns: 1fr;
+}
+
+.filter-drawer .more-filters {
+  grid-template-columns: 1fr;
+}
+
+@media (max-width: 1100px) {
+  .filter-primary-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .filter-search {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 640px) {
+  .filter-section > .filter-controls {
+    display: none;
+  }
+
+  .mobile-filter-toggle {
+    display: inline-flex;
+  }
+}

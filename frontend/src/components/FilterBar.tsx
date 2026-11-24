@@ -3,6 +3,17 @@ import type { FiltersResponse } from "../api/types";
 import { MultiSelectFilter } from "./MultiSelectFilter";
 import { useFilterParams } from "../hooks/useFilterParams";
 import { SearchInput } from "./SearchInput";
+import { SlidersHorizontal, X } from "lucide-react";
+import { formatLabel } from "./formatMeta";
+
+const FORMATS = ["TV", "MOVIE", "OVA", "ONA", "SPECIAL", "MUSIC"];
+const STATUSES: [string, string][] = [
+  ["FINISHED", "Finished"],
+  ["RELEASING", "Airing"],
+  ["NOT_YET_RELEASED", "Not yet aired"],
+  ["CANCELLED", "Cancelled"],
+  ["HIATUS", "Hiatus"],
+];
 
 export function FilterBar({ options }: { options?: FiltersResponse }) {
   const [more, setMore] = useState(false);
@@ -40,7 +51,14 @@ export function FilterBar({ options }: { options?: FiltersResponse }) {
       value,
       removeValue: value,
     })),
-    ...(state.format ? [{ key: "format" as const, value: state.format }] : []),
+    ...(state.format
+      ? [
+          {
+            key: "format" as const,
+            value: formatLabel(state.format) ?? state.format,
+          },
+        ]
+      : []),
     ...(state.yearMin || state.yearMax
       ? [
           {
@@ -55,33 +73,54 @@ export function FilterBar({ options }: { options?: FiltersResponse }) {
       removeValue: value,
     })),
     ...(state.minScore
-      ? [{ key: "minScore" as const, value: `Score ≥ ${state.minScore}` }]
+      ? [{ key: "minScore" as const, value: `Score ${state.minScore}+` }]
       : []),
     ...(state.maxEpisodes
-      ? [{ key: "maxEpisodes" as const, value: `≤ ${state.maxEpisodes} eps` }]
+      ? [
+          {
+            key: "maxEpisodes" as const,
+            value: `Up to ${state.maxEpisodes} eps`,
+          },
+        ]
       : []),
-    ...(state.status ? [{ key: "status" as const, value: state.status }] : []),
+    ...(state.status
+      ? [
+          {
+            key: "status" as const,
+            value:
+              STATUSES.find(([value]) => value === state.status)?.[1] ??
+              state.status,
+          },
+        ]
+      : []),
   ];
 
   const controls = (
     <>
       <div className="filter-primary-controls">
-        <SearchInput />
-        <label>
-          Format
+        <div className="filter-field filter-search">
+          <span className="filter-label" aria-hidden="true">
+            Search
+          </span>
+          <SearchInput />
+        </div>
+        <label className="filter-field">
+          <span className="filter-label">Format</span>
           <select
             aria-label="Format"
             value={state.format}
             onChange={(e) => setFilter("format", e.target.value)}
           >
             <option value="">Any format</option>
-            {["TV", "MOVIE", "OVA", "ONA", "SPECIAL", "MUSIC"].map((v) => (
-              <option key={v}>{v}</option>
+            {FORMATS.map((v) => (
+              <option key={v} value={v}>
+                {formatLabel(v)}
+              </option>
             ))}
           </select>
         </label>
-        <label>
-          Min score
+        <label className="filter-field">
+          <span className="filter-label">Min score</span>
           <input
             aria-label="Minimum score"
             type="number"
@@ -92,8 +131,8 @@ export function FilterBar({ options }: { options?: FiltersResponse }) {
             placeholder="Any"
           />
         </label>
-        <label>
-          Sort
+        <label className="filter-field">
+          <span className="filter-label">Sort</span>
           <select
             aria-label="Sort"
             value={state.sort}
@@ -112,12 +151,14 @@ export function FilterBar({ options }: { options?: FiltersResponse }) {
           onClick={() => setMore(!more)}
           type="button"
         >
-          More filters{" "}
-          <span className="filter-count">{activeMoreFilterCount}</span>
+          More filters
+          {activeMoreFilterCount > 0 && (
+            <span className="filter-count"> {activeMoreFilterCount}</span>
+          )}
         </button>
       </div>
       {more && (
-        <div className="more-filters" id="more-filter-options">
+        <div className="more-filters panel" id="more-filter-options">
           <MultiSelectFilter
             label="Genre"
             options={options?.genres ?? []}
@@ -130,8 +171,8 @@ export function FilterBar({ options }: { options?: FiltersResponse }) {
             selected={state.tags}
             onChange={(values) => setFilter("tags", values)}
           />
-          <label>
-            Year from
+          <label className="filter-field">
+            <span className="filter-label">Year from</span>
             <input
               aria-label="Year from"
               type="number"
@@ -140,8 +181,8 @@ export function FilterBar({ options }: { options?: FiltersResponse }) {
               placeholder="Any"
             />
           </label>
-          <label>
-            Year to
+          <label className="filter-field">
+            <span className="filter-label">Year to</span>
             <input
               aria-label="Year to"
               type="number"
@@ -150,8 +191,8 @@ export function FilterBar({ options }: { options?: FiltersResponse }) {
               placeholder="Any"
             />
           </label>
-          <label>
-            Maximum episodes
+          <label className="filter-field">
+            <span className="filter-label">Maximum episodes</span>
             <input
               aria-label="Maximum episodes"
               type="number"
@@ -160,22 +201,18 @@ export function FilterBar({ options }: { options?: FiltersResponse }) {
               onChange={(e) => setFilter("maxEpisodes", e.target.value)}
             />
           </label>
-          <label>
-            Status
+          <label className="filter-field">
+            <span className="filter-label">Status</span>
             <select
               aria-label="Status"
               value={state.status}
               onChange={(e) => setFilter("status", e.target.value)}
             >
               <option value="">Any</option>
-              {[
-                "FINISHED",
-                "RELEASING",
-                "NOT_YET_RELEASED",
-                "CANCELLED",
-                "HIATUS",
-              ].map((v) => (
-                <option key={v}>{v}</option>
+              {STATUSES.map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
               ))}
             </select>
           </label>
@@ -187,10 +224,11 @@ export function FilterBar({ options }: { options?: FiltersResponse }) {
   return (
     <section aria-label="Anime filters" className="filter-section">
       <button
-        className="mobile-filter-toggle"
+        className="secondary-action mobile-filter-toggle"
         onClick={() => setDrawer(true)}
         type="button"
       >
+        <SlidersHorizontal aria-hidden="true" size={18} />
         Filters
       </button>
       <div className="filter-controls">{controls}</div>
@@ -215,11 +253,15 @@ export function FilterBar({ options }: { options?: FiltersResponse }) {
               }}
               type="button"
             >
-              {value} <span aria-hidden="true">×</span>
+              {value} <X aria-hidden="true" size={18} strokeWidth={1.8} />
               <span className="sr-only">Remove {value} filter</span>
             </button>
           ))}
-          <button onClick={clearFilters} type="button">
+          <button
+            className="clear-filters"
+            onClick={clearFilters}
+            type="button"
+          >
             Clear all
           </button>
         </div>
@@ -238,9 +280,17 @@ export function FilterBar({ options }: { options?: FiltersResponse }) {
             onClick={(e) => e.stopPropagation()}
             data-entering={entering ? "" : undefined}
           >
-            <button onClick={() => setDrawer(false)} type="button">
-              Close filters
-            </button>
+            <div className="filter-drawer-header">
+              <h2>Filters</h2>
+              <button
+                aria-label="Close filters"
+                className="icon-button"
+                onClick={() => setDrawer(false)}
+                type="button"
+              >
+                <X aria-hidden="true" size={18} />
+              </button>
+            </div>
             <div className="filter-controls">{controls}</div>
           </section>
         </div>
