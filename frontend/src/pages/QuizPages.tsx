@@ -14,6 +14,8 @@ import { PosterGrid } from "../components/PosterGrid";
 import { PosterSkeleton } from "../components/RequestStates";
 import { TitleAutocomplete } from "../components/TitleAutocomplete";
 import { useAuth } from "../auth/useAuth";
+import { useQuizQuestions } from "../api/hooks";
+import { PageTitle } from "../components/PageTitle";
 import {
   Check,
   CircleAlert,
@@ -556,12 +558,42 @@ export function ResultsPage() {
   return <QuizResultsPage />;
 }
 
+function QuizAnswerChips({ answers }: { answers: Record<string, string> }) {
+  const questions = useQuizQuestions();
+  const labels: string[] = [];
+  for (const question of questions.data ?? []) {
+    const value = answers[question.id];
+    if (!value) continue;
+    const picked = value
+      .split(",")
+      .map((id) => question.answers.find((answer) => answer.id === id)?.label)
+      .filter((label): label is string => Boolean(label));
+    if (picked.length) labels.push(picked.join(", "));
+  }
+  return (
+    <div className="answer-chips">
+      {labels.length > 0 && (
+        <ul aria-label="Your answers" className="answer-chip-list">
+          {labels.map((label) => (
+            <li className="chip" key={label}>
+              {label}
+            </li>
+          ))}
+        </ul>
+      )}
+      <Link className="text-button answer-retake" to="/quiz">
+        Retake the quiz
+      </Link>
+    </div>
+  );
+}
+
 function QuizResultsPage() {
   const [saved, setSaved] = useState(readSavedQuiz);
   const coverRefreshAttempted = useRef(false);
   const [error, setError] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const { mature } = useAuth();
+  const { mature, user } = useAuth();
   useEffect(() => {
     if (!saved?.answers || !saved.results) return;
     const hasMissingCovers = saved.results.some((result) => !result.coverImage);
@@ -600,8 +632,10 @@ function QuizResultsPage() {
   if (!saved) return <Navigate to="/quiz" replace />;
   if (error)
     return (
-      <section className="browse-page">
-        <h1 className="page-title">Recommendations</h1>
+      <section className="browse-page results-page">
+        <header className="page-header">
+          <PageTitle lead="Recommendations" />
+        </header>
         <div className="status-box status-error" role="alert">
           <CircleAlert aria-hidden="true" />
           <p>Could not update recommendations for this content setting.</p>
@@ -618,16 +652,19 @@ function QuizResultsPage() {
     );
   return (
     <section className="browse-page results-page">
-      <h1 className="page-title">Recommendations based on your answers</h1>
+      <header className="page-header">
+        <PageTitle lead="Recommendations Based on" accent="Your Answers" />
+      </header>
+      <QuizAnswerChips answers={saved.answers} />
       {refreshing ? (
         <>
           <p aria-live="polite">Updating recommendations…</p>
-          <PosterSkeleton count={4} />
+          <PosterSkeleton count={5} wide />
         </>
       ) : (
         <>
-          {saved.results.length < 10 && (
-            <p className="result-count">
+          {saved.results.length > 0 && saved.results.length < 10 && (
+            <p className="result-count muted">
               Fewer recommendations were available for these answers.
             </p>
           )}
@@ -640,6 +677,7 @@ function QuizResultsPage() {
             <PosterGrid
               animeIds={saved.results.map((result) => result.id)}
               label="Quiz recommendations"
+              wide
             >
               {saved.results.map((result) => (
                 <RecommendationCard key={result.id} recommendation={result} />
@@ -648,10 +686,19 @@ function QuizResultsPage() {
           )}
         </>
       )}
-      <p className="results-account">
-        Create an account to keep these.{" "}
-        <Link to="/register?next=/results">Create an account</Link>
-      </p>
+      {!user && (
+        <div className="results-account panel">
+          <div>
+            <p className="subheading">Create an account to keep these.</p>
+            <p className="muted">
+              Your answers and picks stay with you on any device.
+            </p>
+          </div>
+          <Link className="primary-action" to="/register?next=/results">
+            Create an account
+          </Link>
+        </div>
+      )}
     </section>
   );
 }

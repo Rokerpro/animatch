@@ -181,7 +181,7 @@ describe("auth and detail states", () => {
       </MemoryRouter>
     );
     expect(
-      screen.getByRole("heading", { name: "Anime similar to Seed Anime" })
+      screen.getByRole("heading", { name: "Anime Similar to Seed Anime" })
     ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Seed Anime" })).toHaveAttribute(
       "href",

@@ -22,6 +22,8 @@ vi.mock("../src/auth/useAuth", () => ({ useAuth: vi.fn() }));
 vi.mock("../src/api/hooks", () => ({
   queryKeys: { me: ["me"] },
   useProviders: () => ({ data: { google: false } }),
+  useListStats: () => ({ data: undefined }),
+  useQuizQuestions: () => ({ data: undefined }),
   useMe: () => ({
     data: {
       id: 7,

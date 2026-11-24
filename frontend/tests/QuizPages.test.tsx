@@ -334,7 +334,9 @@ describe("Phase 5 quiz flow", () => {
     });
     renderRoutes("/", <p>Elsewhere</p>);
     expect(
-      await screen.findByText("Recommendations based on your answers")
+      await screen.findByRole("heading", {
+        name: "Recommendations Based on Your Answers",
+      })
     ).toBeTruthy();
     clearSavedQuiz();
     renderRoutes("/results", <p>Quiz route</p>);

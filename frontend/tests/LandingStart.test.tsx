@@ -307,7 +307,7 @@ describe("title recommendation entry", () => {
     await act(async () => Promise.resolve());
     expect(
       screen.getByRole("heading", {
-        name: "Recommendations based on your picks",
+        name: "Recommendations Based on Your Picks",
       })
     ).toBeInTheDocument();
     expect(api.startRecommendations).toHaveBeenCalledWith(
@@ -367,7 +367,7 @@ describe("title recommendation entry", () => {
     await act(async () => resolveRequest([recommendation]));
     expect(
       screen.getByRole("heading", {
-        name: "Recommendations based on your picks",
+        name: "Recommendations Based on Your Picks",
       })
     ).toBeInTheDocument();
   }, 10000);
@@ -381,7 +381,7 @@ describe("title recommendation entry", () => {
     const view = renderRoutes("/results");
     expect(
       screen.getByRole("heading", {
-        name: "Recommendations based on your picks",
+        name: "Recommendations Based on Your Picks",
       })
     ).toBeInTheDocument();
 

@@ -205,7 +205,9 @@ export const api = {
     return request<ListResponse>(`/api/list?${query.toString()}`);
   },
   listStats: (includeMature: boolean) =>
-    request<ListStatsResponse>(`/api/list/stats?includeMature=${includeMature}`),
+    request<ListStatsResponse>(
+      `/api/list/stats?includeMature=${includeMature}`
+    ),
   listStatuses: (ids: number[], includeMature: boolean) =>
     request<ListStatusesResponse>(
       `/api/list/statuses?ids=${ids.join(",")}&includeMature=${includeMature}`

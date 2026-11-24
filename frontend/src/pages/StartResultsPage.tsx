@@ -4,6 +4,7 @@ import { ApiError, api } from "../api/client";
 import { RecommendationCard } from "../components/RecommendationCard";
 import { PosterGrid } from "../components/PosterGrid";
 import { PosterSkeleton } from "../components/RequestStates";
+import { PageTitle } from "../components/PageTitle";
 import { useAuth } from "../auth/useAuth";
 import { readSavedStart, saveStart } from "../startStorage";
 
@@ -47,9 +48,14 @@ export function StartResultsPage() {
 
   return (
     <section className="browse-page results-page">
-      <h1 className="page-title">Recommendations based on your picks</h1>
-      <div className="results-actions">
-        <Link className="text-button" to="/quiz">
+      <header className="page-header">
+        <PageTitle lead="Recommendations Based on" accent="Your Picks" />
+      </header>
+      <div className="answer-chips">
+        <Link className="text-button answer-retake" to="/quiz?mode=titles">
+          Pick different titles
+        </Link>
+        <Link className="text-button answer-retake" to="/quiz">
           Take the quiz
         </Link>
       </div>
@@ -68,12 +74,13 @@ export function StartResultsPage() {
       {refreshing ? (
         <>
           <p aria-live="polite">Updating recommendations…</p>
-          <PosterSkeleton count={4} />
+          <PosterSkeleton count={5} wide />
         </>
       ) : saved.results.length ? (
         <PosterGrid
           animeIds={saved.results.map((result) => result.id)}
           label="Recommendations based on your picks"
+          wide
         >
           {saved.results.map((result) => (
             <RecommendationCard key={result.id} recommendation={result} />
