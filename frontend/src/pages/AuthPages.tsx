@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import "../styles/account.css";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
@@ -243,10 +243,13 @@ const SETTINGS_SECTIONS = [
   { id: "delete-account", label: "Delete account" },
 ];
 export function SettingsPage() {
-  const { user, mature, setMature, signOut, refresh } = useAuth();
+  const { user, authLoading, mature, setMature, signOut, refresh } = useAuth();
   const nav = useNavigate();
   const { showToast } = useToast();
   const [displayName, setDisplayName] = useState(user?.display_name ?? "");
+  const loadedName = user?.display_name ?? "";
+  // The user may still be loading on first render; fill the field once known.
+  useEffect(() => setDisplayName(loadedName), [loadedName]);
   const [nameError, setNameError] = useState("");
   const [savingName, setSavingName] = useState(false);
   const [confirmation, setConfirmation] = useState("");
@@ -297,7 +300,8 @@ export function SettingsPage() {
     nav("/", { replace: true, state: { showHome: true } });
     showToast("You’re signed out", "success");
   }
-  if (!user) return <Navigate to="/login" replace />;
+  if (authLoading) return <section className="browse-page page-top" />;
+  if (!user) return <Navigate to="/login?next=%2Fsettings" replace />;
   const initial = (user.display_name || user.email).trim().charAt(0);
   return (
     <section className="settings-page">
