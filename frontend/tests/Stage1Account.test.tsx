@@ -101,7 +101,7 @@ describe("stage 1 account flows", () => {
     fireEvent.change(screen.getByLabelText("Password"), {
       target: { value: "longpassword" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Register" }));
+    fireEvent.click(screen.getByRole("button", { name: "Create account" }));
     await waitFor(() =>
       expect(save).toHaveBeenCalledWith({
         quiz_answers: { mood: "cozy" },
@@ -166,7 +166,7 @@ describe("stage 1 account flows", () => {
     fireEvent.change(screen.getByLabelText("Password"), {
       target: { value: "longpassword" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Register" }));
+    fireEvent.click(screen.getByRole("button", { name: "Create account" }));
     expect(await screen.findByText("Results")).toBeInTheDocument();
     expect(await screen.findByText("Profile unavailable")).toBeInTheDocument();
     expect(readSavedQuiz()?.profileSavedFor).not.toBe(user.id);

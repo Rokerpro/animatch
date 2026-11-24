@@ -330,7 +330,7 @@ describe("auth and detail states", () => {
       })
     );
     expect(
-      screen.queryByRole("link", { name: "Continue with Google" })
+      screen.queryByRole("link", { name: "Sign in with Google" })
     ).not.toBeInTheDocument();
   });
 });
