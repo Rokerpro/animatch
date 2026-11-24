@@ -163,7 +163,8 @@ describe("Phase 5 quiz flow", () => {
       screen.getByRole("separator", {
         name: "Or choose another way to get recommendations",
       })
-    ).toHaveTextContent("or");
+    ).toBeInTheDocument();
+    expect(screen.getByText("Rather start from shows you like?")).toBeTruthy();
     expect(
       screen.getByRole("button", { name: "Name anime you like instead" })
     ).toBeTruthy();
@@ -189,7 +190,7 @@ describe("Phase 5 quiz flow", () => {
       "/quiz?mode=titles"
     );
     const pickerHeading = screen.getByRole("heading", {
-      name: "Name anime you like",
+      name: "Name Anime You Like",
     });
     expect(screen.queryByRole("heading", { name: "Quiz" })).toBeNull();
     expect(document.activeElement).toBe(pickerHeading);
@@ -237,7 +238,7 @@ describe("Phase 5 quiz flow", () => {
       </MemoryRouter>
     );
     expect(
-      await screen.findByRole("heading", { name: "Name anime you like" })
+      await screen.findByRole("heading", { name: "Name Anime You Like" })
     ).toBeTruthy();
     expect(screen.getByText("Picked Anime")).toBeTruthy();
     expect(screen.getByTestId("current-location")).toHaveTextContent(

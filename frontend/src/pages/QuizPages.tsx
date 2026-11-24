@@ -40,6 +40,9 @@ import {
   saveStart,
 } from "../startStorage";
 import { useOptionalToast } from "../components/useToast";
+import { PosterImage } from "../components/PosterImage";
+import { formatLabel } from "../components/formatMeta";
+import "../styles/quiz.css";
 import { StartResultsPage } from "./StartResultsPage";
 import { AuthPrompt } from "../components/AuthPrompt";
 
@@ -275,10 +278,15 @@ export function QuizPage() {
     setPickedTitles((current) => current.filter((anime) => anime.id !== id));
     setStartError("");
   }
+  const quizHeader = (
+    <header className="page-header">
+      <PageTitle lead="Anime" accent="Quiz" />
+    </header>
+  );
   if (error)
     return (
-      <section className="quiz-page">
-        <h1>Quiz</h1>
+      <section className="browse-page quiz-page">
+        {quizHeader}
         <div className="status-box status-error" role="alert">
           <CircleAlert aria-hidden="true" />
           <p>{quizLoadMessage}</p>
@@ -290,16 +298,16 @@ export function QuizPage() {
     );
   if (!questions)
     return (
-      <section className="quiz-page">
-        <h1>Quiz</h1>
-        <p>Loading questions…</p>
+      <section className="browse-page quiz-page">
+        {quizHeader}
+        <p className="muted">Loading questions…</p>
       </section>
     );
   if (!questions.length)
     return (
-      <section className="quiz-page">
-        <h1>Quiz</h1>
-        <p>No quiz questions are available.</p>
+      <section className="browse-page quiz-page">
+        {quizHeader}
+        <p className="muted">No quiz questions are available.</p>
       </section>
     );
   const question = questions[Math.min(step, questions.length - 1)];
@@ -328,37 +336,76 @@ export function QuizPage() {
     if (step < questions!.length - 1) setStep(step + 1);
     else void submit(updated);
   }
+  function goNext() {
+    if (multiple) {
+      continueMany();
+      return;
+    }
+    if (!answers[question.id]) return;
+    if (step < questions!.length - 1) setStep(step + 1);
+    else void submit();
+  }
+  function goBack() {
+    const previousStep = step - 1;
+    const previousQuestion = questions![previousStep];
+    const previousIsMultiple = [
+      "multi",
+      "multiple",
+      "multi-select",
+      "multiselect",
+    ].includes(previousQuestion?.type?.toLowerCase() ?? "");
+    setSelectedMany(
+      previousIsMultiple && previousQuestion
+        ? (answers[previousQuestion.id]?.split(",").filter(Boolean) ?? [])
+        : []
+    );
+    setStep(previousStep);
+  }
+  const lastStep = step >= questions.length - 1;
+  const canGoNext = multiple
+    ? selectedMany.length > 0
+    : Boolean(answers[question.id]);
   return (
-    <section className="quiz-page">
-      {!titleMode && <h1>Quiz</h1>}
+    <section className="browse-page quiz-page">
       <p aria-live="polite" className="sr-only">
         {announcement}
       </p>
       {titleMode ? (
-        <div className="quiz-card title-picker-view">
-          <h1
-            className="title-picker-heading"
-            ref={viewHeadingRef}
-            tabIndex={-1}
-          >
-            Name anime you like
-          </h1>
-          <p className="title-picker-intro">
-            Choose 3 to 5 titles you enjoy and we’ll find similar matches.
-          </p>
+        <div className="title-picker-view">
+          <div className="title-picker-main">
+            <PageTitle
+              className="title-picker-heading"
+              focusable
+              lead="Name Anime"
+              accent="You Like"
+              ref={viewHeadingRef}
+            />
+            <p className="title-picker-intro">
+              Choose 3 to 5 titles you enjoy and we’ll find similar matches.
+            </p>
+            <div className="title-picker-search">
+              <TitleAutocomplete
+                disabled={pickedTitles.length >= 5 || startSubmitting}
+                includeMature={mature}
+                onSelect={addTitle}
+                selected={pickedTitles}
+              />
+            </div>
+            <button
+              className="text-button take-quiz-instead"
+              onClick={() => switchView(false)}
+              type="button"
+            >
+              Take the quiz instead
+            </button>
+          </div>
           <form
             className="title-picker-form"
             onSubmit={getTitleRecommendations}
           >
-            <TitleAutocomplete
-              disabled={pickedTitles.length >= 5 || startSubmitting}
-              includeMature={mature}
-              onSelect={addTitle}
-              selected={pickedTitles}
-            />
             <div className="picked-title-header">
-              <span>Picked titles</span>
-              <span aria-live="polite">
+              <h2 className="subheading">Picked titles</h2>
+              <span aria-live="polite" className="muted">
                 {pickedTitles.length} of 3 minimum, 5 maximum
               </span>
             </div>
@@ -366,22 +413,28 @@ export function QuizPage() {
               <ul aria-label="Picked anime" className="picked-title-queue">
                 {pickedTitles.map((anime) => (
                   <li className="picked-title-row" key={anime.id}>
-                    {anime.coverImage ? (
-                      <img alt="" src={anime.coverImage} />
-                    ) : (
-                      <span
-                        aria-hidden="true"
-                        className="picked-title-cover-placeholder"
-                      />
-                    )}
-                    <span className="picked-title-name">{anime.title}</span>
+                    <PosterImage
+                      alt=""
+                      className="picked-title-cover"
+                      color={anime.coverColor}
+                      src={anime.coverImage}
+                    />
+                    <span className="picked-title-copy">
+                      <span className="picked-title-name">{anime.title}</span>
+                      <span className="picked-title-meta">
+                        {[formatLabel(anime.format), anime.year]
+                          .filter(Boolean)
+                          .join(", ")}
+                      </span>
+                    </span>
                     <button
                       aria-label={`Remove ${anime.title}`}
+                      className="picked-title-remove"
                       disabled={startSubmitting}
                       onClick={() => removeTitle(anime.id)}
                       type="button"
                     >
-                      <X aria-hidden="true" size={14} />
+                      <X aria-hidden="true" size={18} />
                     </button>
                   </li>
                 ))}
@@ -392,12 +445,12 @@ export function QuizPage() {
               </p>
             )}
             {startError && (
-              <p className="start-submit-error" role="alert">
+              <p className="form-error start-submit-error" role="alert">
                 {startError}
               </p>
             )}
             <button
-              className="primary-action get-recommendations-button"
+              className="primary-action button-large get-recommendations-button"
               disabled={pickedTitles.length < 3 || startSubmitting}
               type="submit"
             >
@@ -406,140 +459,139 @@ export function QuizPage() {
                 : "Get recommendations"}
             </button>
           </form>
-          <button
-            className="text-button take-quiz-instead"
-            onClick={() => switchView(false)}
-            type="button"
-          >
-            Take the quiz instead
-          </button>
         </div>
       ) : (
-        <div className="quiz-card">
-          <p className="quiz-progress">
-            Question {step + 1} of {questions.length}
-          </p>
-          <div
-            className="quiz-progress-track"
-            role="progressbar"
-            aria-valuenow={step + 1}
-            aria-valuemin={1}
-            aria-valuemax={questions.length}
-          >
-            <span
-              style={{ width: `${((step + 1) / questions.length) * 100}%` }}
-            />
-          </div>
-          <h2
-            className="quiz-question-heading"
-            ref={viewHeadingRef}
-            tabIndex={-1}
-          >
-            {question.label}
-          </h2>
-          <fieldset className="quiz-options">
-            <legend className="sr-only">{question.label}</legend>
-            {question.answers.map((answer) => (
-              <label className="quiz-option" key={answer.id}>
-                <input
-                  type={multiple ? "checkbox" : "radio"}
-                  name={question.id}
-                  checked={
-                    multiple
-                      ? selectedMany.includes(answer.id)
-                      : answers[question.id] === answer.id
-                  }
-                  onChange={() => choose(answer.id)}
+        <>
+          {quizHeader}
+          <div className="quiz-progress-block">
+            <p className="quiz-progress">
+              Question {step + 1} of {questions.length}
+            </p>
+            <div
+              aria-label="Quiz progress"
+              aria-valuemax={questions.length}
+              aria-valuemin={1}
+              aria-valuenow={step + 1}
+              className="quiz-progress-track"
+              role="progressbar"
+            >
+              {questions.map((item, index) => (
+                <span
+                  className={index <= step ? "is-done" : undefined}
+                  key={item.id}
                 />
-                <span>{answer.label}</span>
-              </label>
-            ))}
-          </fieldset>
-          {step === 0 && (
-            <>
-              <div
-                aria-label="Or choose another way to get recommendations"
-                className="quiz-alternative"
-                role="separator"
-              >
-                <span>or</span>
-              </div>
-              <div className="quiz-alternative-actions">
-                <button
-                  className="secondary-action quiz-picker-switch"
-                  onClick={() => switchView(true)}
-                  type="button"
-                >
-                  Name anime you like instead
-                </button>
-                <button
-                  className="text-button"
-                  onClick={() =>
-                    user ? navigate("/import") : setShowImportPrompt(true)
-                  }
-                  type="button"
-                >
-                  Import a file
-                </button>
-              </div>
-            </>
-          )}
-          <div className="quiz-actions">
-            {step > 0 && (
-              <button
-                className="text-button"
-                disabled={submitting}
-                onClick={() => {
-                  const previousStep = step - 1;
-                  const previousQuestion = questions[previousStep];
-                  const previousIsMultiple = [
-                    "multi",
-                    "multiple",
-                    "multi-select",
-                    "multiselect",
-                  ].includes(previousQuestion?.type?.toLowerCase() ?? "");
-                  setSelectedMany(
-                    previousIsMultiple && previousQuestion
-                      ? (answers[previousQuestion.id]
-                          ?.split(",")
-                          .filter(Boolean) ?? [])
-                      : []
-                  );
-                  setStep(previousStep);
-                }}
-              >
-                Back
-              </button>
-            )}
-            {multiple && (
-              <button
-                className="primary-action"
-                disabled={!selectedMany.length || submitting}
-                onClick={continueMany}
-              >
-                Continue
-              </button>
-            )}
+              ))}
+            </div>
           </div>
-          {submitting && (
-            <div className="quiz-loading" aria-live="polite">
-              <p>Finding recommendations…</p>
-              <PosterSkeleton count={4} />
-            </div>
-          )}
-          {submitError && (
-            <div className="status-box status-error quiz-error" role="alert">
-              <CircleAlert aria-hidden="true" />
-              <p>
-                Recommendations could not be loaded. Your answers are still
-                here.
+          <div className="quiz-layout">
+            <div className="quiz-question-column">
+              <h2
+                className="quiz-question-heading"
+                ref={viewHeadingRef}
+                tabIndex={-1}
+              >
+                {question.label}
+              </h2>
+              <p className="quiz-question-hint">
+                {multiple
+                  ? "Pick any that fit, then continue. You can go back to any question."
+                  : "Pick one to move on. You can go back to any question."}
               </p>
-              <button className="text-button" onClick={() => void submit()}>
-                Retry
-              </button>
+              {step === 0 && (
+                <>
+                  <div
+                    aria-label="Or choose another way to get recommendations"
+                    className="quiz-alternative"
+                    role="separator"
+                  />
+                  <p className="quiz-alternative-title">
+                    Rather start from shows you like?
+                  </p>
+                  <div className="quiz-alternative-actions">
+                    <button
+                      className="secondary-action quiz-picker-switch"
+                      onClick={() => switchView(true)}
+                      type="button"
+                    >
+                      Name anime you like instead
+                    </button>
+                    <button
+                      className="text-button quiz-import-link"
+                      onClick={() =>
+                        user ? navigate("/import") : setShowImportPrompt(true)
+                      }
+                      type="button"
+                    >
+                      Import a file
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
-          )}
-        </div>
+            <div className="quiz-answer-column">
+              <fieldset className="quiz-options">
+                <legend className="sr-only">{question.label}</legend>
+                {question.answers.map((answer) => (
+                  <label className="quiz-option" key={answer.id}>
+                    <input
+                      type={multiple ? "checkbox" : "radio"}
+                      name={question.id}
+                      checked={
+                        multiple
+                          ? selectedMany.includes(answer.id)
+                          : answers[question.id] === answer.id
+                      }
+                      onChange={() => choose(answer.id)}
+                    />
+                    <span>{answer.label}</span>
+                  </label>
+                ))}
+              </fieldset>
+              <div className="quiz-actions">
+                {step > 0 && (
+                  <button
+                    className="secondary-action"
+                    disabled={submitting}
+                    onClick={goBack}
+                    type="button"
+                  >
+                    Back
+                  </button>
+                )}
+                {(multiple || canGoNext) && (
+                  <button
+                    className="primary-action"
+                    disabled={!canGoNext || submitting}
+                    onClick={goNext}
+                    type="button"
+                  >
+                    {lastStep ? "Get recommendations" : "Next"}
+                  </button>
+                )}
+              </div>
+              {submitting && (
+                <p aria-live="polite" className="quiz-loading muted">
+                  Finding recommendations…
+                </p>
+              )}
+              {submitError && (
+                <div
+                  className="status-box status-error quiz-error"
+                  role="alert"
+                >
+                  <CircleAlert aria-hidden="true" />
+                  <p>
+                    Recommendations could not be loaded. Your answers are still
+                    here.
+                  </p>
+                  <button className="text-button" onClick={() => void submit()}>
+                    Retry
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </>
       )}
       {showImportPrompt && (
         <AuthPrompt

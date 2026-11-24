@@ -269,7 +269,7 @@ describe("title recommendation entry", () => {
     renderRoutes("/quiz?mode=titles");
     await act(async () => Promise.resolve());
     expect(
-      screen.getByRole("heading", { name: "Name anime you like" })
+      screen.getByRole("heading", { name: "Name Anime You Like" })
     ).toBeInTheDocument();
     const submit = screen.getByRole("button", { name: "Get recommendations" });
     const search = screen.getByRole("combobox", {
