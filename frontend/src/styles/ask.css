@@ -1,0 +1,279 @@
+/* Describe what you want (/ask) */
+
+.ask-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 800px) minmax(0, 400px);
+  justify-content: space-between;
+  gap: 48px 80px;
+  align-items: start;
+}
+
+.ask-main {
+  display: grid;
+  gap: 36px;
+  min-width: 0;
+}
+
+.ask-form {
+  display: grid;
+  gap: 12px;
+}
+
+.ask-composer {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  transition:
+    border-color var(--ease),
+    box-shadow var(--ease);
+}
+
+.ask-composer:focus-within {
+  border-color: var(--lavender);
+  box-shadow: var(--ring);
+}
+
+.ask-composer textarea {
+  display: block;
+  width: 100%;
+  min-height: 128px;
+  padding: 22px 24px 16px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--paper);
+  font-size: var(--text-21);
+  line-height: 1.5;
+  resize: vertical;
+  box-shadow: none;
+}
+
+.ask-composer textarea:focus,
+.ask-composer textarea:focus-visible {
+  outline: none;
+  border: 0;
+  box-shadow: none;
+}
+
+.ask-composer textarea::placeholder {
+  color: var(--muted);
+  opacity: 0.7;
+}
+
+.ask-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 66px;
+  padding: 9px 11px 9px 20px;
+  border-top: 1px solid var(--line);
+}
+
+.ask-model-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.ask-counter {
+  margin: 0 0 0 auto;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.ask-counter.is-over-limit {
+  color: var(--danger);
+}
+
+.ask-privacy {
+  margin: 0;
+  color: var(--muted);
+}
+
+.ask-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 14px 18px;
+  border: 1px solid rgba(240, 113, 120, 0.45);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.ask-error p {
+  margin: 0;
+  color: var(--danger);
+}
+
+.ask-error a {
+  color: var(--lavender);
+}
+
+.ask-side-heading {
+  margin: 0 0 14px;
+  color: var(--paper);
+  font-family: var(--font-body);
+  font-size: var(--text-16);
+  font-weight: 700;
+}
+
+.ask-example-list {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  list-style: none;
+}
+
+.ask-example-list li + li {
+  border-top: 1px solid var(--line);
+}
+
+.ask-example {
+  display: flex;
+  width: 100%;
+  min-height: 56px;
+  align-items: center;
+  gap: 12px;
+  padding: 0 20px;
+  border: 0;
+  background: transparent;
+  color: var(--paper);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color var(--ease),
+    color var(--ease);
+}
+
+.ask-example svg {
+  flex: none;
+  color: var(--muted);
+}
+
+.ask-example:hover {
+  background: var(--surface);
+  color: var(--lavender);
+}
+
+.ask-example:focus-visible {
+  outline: 2px solid var(--lavender);
+  outline-offset: -2px;
+}
+
+.ask-tips dl {
+  margin: 0;
+  border-top: 1px solid var(--line);
+}
+
+.ask-tips dl > div {
+  display: grid;
+  gap: 2px;
+  padding: 17px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.ask-tips dl > div:last-child {
+  border-bottom: 0;
+}
+
+.ask-tips dt {
+  color: var(--paper);
+  font-weight: 500;
+}
+
+.ask-tips dd {
+  margin: 0;
+  color: var(--muted);
+}
+
+.ask-disabled {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 24px;
+  padding: 24px 28px;
+}
+
+.ask-disabled p {
+  margin: 0;
+}
+
+/* Results */
+
+.ask-understood {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 40px;
+}
+
+.ask-understood .subheading {
+  margin: 0;
+}
+
+.ask-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ask-chips a.chip {
+  text-decoration: none;
+  transition:
+    border-color var(--ease),
+    color var(--ease);
+}
+
+.ask-chips a.chip:hover {
+  border-color: var(--lavender);
+  color: var(--lavender);
+}
+
+.ask-unmatched {
+  margin: 0;
+}
+
+.ask-empty-results {
+  display: grid;
+  gap: 4px;
+}
+
+.ask-empty-results p {
+  margin: 0;
+}
+
+@media (max-width: 1100px) {
+  .ask-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .ask-composer textarea {
+    padding: 18px 18px 12px;
+    font-size: var(--text-16);
+  }
+
+  .ask-toolbar {
+    flex-wrap: wrap;
+    padding: 12px 16px;
+  }
+
+  .ask-toolbar .primary-action {
+    width: 100%;
+  }
+}
