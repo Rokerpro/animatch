@@ -6,6 +6,7 @@ export interface AnimeCardData {
   titleEnglish?: string | null;
   titleNative?: string | null;
   coverImage?: string | null;
+  coverColor?: string | null;
   bannerImage?: string | null;
   format?: string | null;
   status?: string | null;
