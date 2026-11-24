@@ -260,9 +260,9 @@ describe("stage 1 account flows", () => {
     expect(screen.getByRole("button", { name: "Account menu" })).toHaveFocus();
   });
 
-  it("shows only Get started and Sign in while signed out", () => {
+  it("shows only Take the quiz and Sign in while signed out", () => {
     renderApp(<Navbar />, "/");
-    expect(screen.getByRole("link", { name: "Get started" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Take the quiz" })).toHaveAttribute(
       "href",
       "/quiz"
     );

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { CircleUserRound, Search, Sparkles } from "lucide-react";
+import { CircleUserRound, Search } from "lucide-react";
 import { useAuth } from "../auth/useAuth";
 import { useOptionalToast } from "./useToast";
 import { TitleAutocomplete } from "./TitleAutocomplete";
@@ -82,13 +82,8 @@ export function Navbar() {
           state={{ showHome: true }}
           to="/"
         >
-          <span aria-hidden="true" className="wordmark-mark">
-            <Sparkles size={17} strokeWidth={1.8} />
-          </span>
-          <span className="wordmark-copy">
-            <span>Ani</span>
-            <span className="wordmark-accent">Match</span>
-          </span>
+          <span>Ani</span>
+          <span className="wordmark-accent">Match</span>
         </Link>
         {showSimilarSearch && (
           <div className="header-similar-search">
@@ -101,7 +96,7 @@ export function Navbar() {
               includeMature={mature}
               inputLabel="Search anime similar to"
               onSelect={(anime) => navigate(`/similar/${anime.id}`)}
-              placeholder="Search anime similar to…"
+              placeholder="Find anime similar to…"
               selected={[]}
             />
           </div>
@@ -126,7 +121,7 @@ export function Navbar() {
                 title="Show mature content"
                 type="button"
               >
-                {mature ? "18+ on" : "18+"}
+                {mature ? "18+ on" : "18+ off"}
               </button>
               <div className="account-menu-wrap">
                 <button
@@ -186,7 +181,9 @@ export function Navbar() {
             </>
           ) : (
             <>
-              <Link to="/quiz">Get started</Link>
+              <NavLink className="quiz-link" to="/quiz">
+                Take the quiz
+              </NavLink>
               <button
                 aria-label="Include mature anime"
                 aria-pressed={mature}
@@ -195,9 +192,10 @@ export function Navbar() {
                 title="Show mature content"
                 type="button"
               >
-                {mature ? "18+ on" : "18+"}
+                {mature ? "18+ on" : "18+ off"}
               </button>
               <NavLink
+                className="header-signin"
                 to={`/login?next=${encodeURIComponent(`${location.pathname}${location.search}`)}`}
               >
                 Sign in

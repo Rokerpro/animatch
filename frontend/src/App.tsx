@@ -17,13 +17,19 @@ import { AskPage } from "./pages/AskPage";
 function AniListFooter() {
   return (
     <footer className="app-footer">
-      <p>
-        Anime data provided by{" "}
-        <a href="https://anilist.co" rel="noreferrer">
-          AniList
-        </a>
-        .
-      </p>
+      <div className="app-footer-inner">
+        <p>
+          Anime data and cover art from{" "}
+          <a href="https://anilist.co" rel="noreferrer">
+            AniList
+          </a>
+          .
+        </p>
+        <span aria-hidden="true" className="wordmark">
+          <span>Ani</span>
+          <span className="wordmark-accent">Match</span>
+        </span>
+      </div>
     </footer>
   );
 }

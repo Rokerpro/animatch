@@ -362,7 +362,7 @@ describe("Phase 5 quiz flow", () => {
     const input = screen.getByRole("combobox", {
       name: "Search anime similar to",
     });
-    expect(input).toHaveAttribute("placeholder", "Search anime similar to…");
+    expect(input).toHaveAttribute("placeholder", "Find anime similar to…");
     fireEvent.focus(input);
     fireEvent.change(input, { target: { value: "Picked" } });
     expect(
