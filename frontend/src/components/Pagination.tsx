@@ -1,7 +1,7 @@
 import { useSearchParams } from "react-router-dom";
 
 /** Page numbers with gaps: 1 … 4 5 6 … 51 */
-export function pageItems(page: number, lastPage: number): (number | "gap")[] {
+function pageItems(page: number, lastPage: number): (number | "gap")[] {
   if (lastPage <= 7)
     return Array.from({ length: lastPage }, (_, index) => index + 1);
   const pages = new Set([1, lastPage, page - 1, page, page + 1]);
