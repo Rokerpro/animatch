@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -258,8 +264,45 @@ describe("stage 1 account flows", () => {
     expect(
       screen.getByRole("menuitem", { name: "Settings" })
     ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("menuitem", { name: "My list" })
+    ).not.toBeInTheDocument();
     fireEvent.keyDown(screen.getByRole("menu"), { key: "Escape" });
     expect(screen.getByRole("button", { name: "Account menu" })).toHaveFocus();
+  });
+
+  it("lists every page in the phone menu beside the logo", () => {
+    vi.mocked(useAuth).mockReturnValue({
+      user,
+      authLoading: false,
+      mature: false,
+      refresh: vi.fn(),
+      setMature: vi.fn(),
+      signOut: vi.fn(),
+    });
+    renderApp(<Navbar />, "/");
+    fireEvent.click(screen.getByRole("button", { name: "Pages" }));
+    const menu = screen.getByRole("menu", { name: "Pages" });
+    expect(
+      within(menu)
+        .getAllByRole("menuitem")
+        .map((item) => item.textContent)
+    ).toEqual(["Browse", "For you", "My list"]);
+    expect(
+      within(menu).getByRole("menuitem", { name: "Browse" })
+    ).toHaveFocus();
+    fireEvent.keyDown(menu, { key: "Escape" });
+    expect(screen.getByRole("button", { name: "Pages" })).toHaveFocus();
+  });
+
+  it("offers Browse and the quiz in the phone menu while signed out", () => {
+    renderApp(<Navbar />, "/");
+    fireEvent.click(screen.getByRole("button", { name: "Pages" }));
+    expect(
+      within(screen.getByRole("menu", { name: "Pages" }))
+        .getAllByRole("menuitem")
+        .map((item) => item.textContent)
+    ).toEqual(["Browse", "Take the quiz"]);
   });
 
   it("shows only Take the quiz and Sign in while signed out", () => {

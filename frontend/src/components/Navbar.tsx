@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { CircleUserRound, Search } from "lucide-react";
+import { CircleUserRound, Menu, Search } from "lucide-react";
 import { useAuth } from "../auth/useAuth";
 import { useOptionalToast } from "./useToast";
 import { TitleAutocomplete } from "./TitleAutocomplete";
@@ -12,9 +12,22 @@ export function Navbar() {
   const navigate = useNavigate();
   const { showToast } = useOptionalToast();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [pageMenuOpen, setPageMenuOpen] = useState(false);
   const [authPromptOpen, setAuthPromptOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const pageButtonRef = useRef<HTMLButtonElement>(null);
+  const pageMenuRef = useRef<HTMLDivElement>(null);
+  const pageLinks = user
+    ? [
+        { to: "/browse", label: "Browse", className: "browse-link" },
+        { to: "/for-you", label: "For you", className: "for-you-link" },
+        { to: "/list", label: "My list", className: "my-list-link" },
+      ]
+    : [
+        { to: "/browse", label: "Browse", className: "browse-link" },
+        { to: "/quiz", label: "Take the quiz", className: "quiz-link" },
+      ];
   const showSimilarSearch =
     location.pathname === "/browse" ||
     location.pathname === "/for-you" ||
@@ -23,24 +36,33 @@ export function Navbar() {
     location.pathname.startsWith("/anime/");
   useEffect(() => {
     if (menuOpen)
-      menuRef.current
-        ?.querySelector<HTMLElement>(
-          "a:not(.account-mobile-link)[role=menuitem]"
-        )
-        ?.focus();
+      menuRef.current?.querySelector<HTMLElement>("[role=menuitem]")?.focus();
   }, [menuOpen]);
+  useEffect(() => {
+    if (pageMenuOpen)
+      pageMenuRef.current
+        ?.querySelector<HTMLElement>("[role=menuitem]")
+        ?.focus();
+  }, [pageMenuOpen]);
   function closeMenu(restoreFocus = false) {
     setMenuOpen(false);
     if (restoreFocus) buttonRef.current?.focus();
   }
-  function onMenuKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+  function closePageMenu(restoreFocus = false) {
+    setPageMenuOpen(false);
+    if (restoreFocus) pageButtonRef.current?.focus();
+  }
+  function onMenuKeyDown(
+    event: React.KeyboardEvent<HTMLDivElement>,
+    close: (restoreFocus: boolean) => void
+  ) {
     const items = Array.from(
-      menuRef.current?.querySelectorAll<HTMLElement>("[role=menuitem]") ?? []
-    ).filter((item) => window.getComputedStyle(item).display !== "none");
+      event.currentTarget.querySelectorAll<HTMLElement>("[role=menuitem]")
+    );
     const current = items.indexOf(document.activeElement as HTMLElement);
     if (event.key === "Escape") {
       event.preventDefault();
-      closeMenu(true);
+      close(true);
     }
     if (
       event.key === "ArrowDown" ||
@@ -76,6 +98,41 @@ export function Navbar() {
       <div
         className={`header-content${showSimilarSearch ? " has-similar-search" : ""}`}
       >
+        <div className="page-menu-wrap">
+          <button
+            aria-label="Pages"
+            aria-controls="page-menu"
+            aria-expanded={pageMenuOpen}
+            aria-haspopup="menu"
+            className="page-menu-button"
+            onClick={() => setPageMenuOpen((open) => !open)}
+            ref={pageButtonRef}
+            type="button"
+          >
+            <Menu aria-hidden="true" size={20} />
+          </button>
+          {pageMenuOpen && (
+            <div
+              aria-label="Pages"
+              className="account-menu page-menu"
+              id="page-menu"
+              onKeyDown={(event) => onMenuKeyDown(event, closePageMenu)}
+              ref={pageMenuRef}
+              role="menu"
+            >
+              {pageLinks.map((link) => (
+                <NavLink
+                  key={link.to}
+                  onClick={() => closePageMenu()}
+                  role="menuitem"
+                  to={link.to}
+                >
+                  {link.label}
+                </NavLink>
+              ))}
+            </div>
+          )}
+        </div>
         <Link
           aria-label="AniMatch home"
           className="wordmark"
@@ -102,17 +159,13 @@ export function Navbar() {
           </div>
         )}
         <nav aria-label="Main navigation" className="header-nav">
-          <NavLink className="browse-link" to="/browse">
-            Browse
-          </NavLink>
+          {pageLinks.map((link) => (
+            <NavLink className={link.className} key={link.to} to={link.to}>
+              {link.label}
+            </NavLink>
+          ))}
           {user ? (
             <>
-              <NavLink className="for-you-link" to="/for-you">
-                For you
-              </NavLink>
-              <NavLink className="my-list-link" to="/list">
-                My list
-              </NavLink>
               <button
                 aria-label="Include mature anime"
                 aria-pressed={mature}
@@ -140,27 +193,11 @@ export function Navbar() {
                   <div
                     className="account-menu"
                     id="account-menu"
-                    onKeyDown={onMenuKeyDown}
+                    onKeyDown={(event) => onMenuKeyDown(event, closeMenu)}
                     ref={menuRef}
                     role="menu"
                     aria-label="Account"
                   >
-                    <NavLink
-                      className="account-mobile-link"
-                      onClick={() => closeMenu()}
-                      role="menuitem"
-                      to="/for-you"
-                    >
-                      For you
-                    </NavLink>
-                    <NavLink
-                      className="account-mobile-link"
-                      onClick={() => closeMenu()}
-                      role="menuitem"
-                      to="/list"
-                    >
-                      My list
-                    </NavLink>
                     <NavLink
                       onClick={() => closeMenu()}
                       role="menuitem"
@@ -181,9 +218,6 @@ export function Navbar() {
             </>
           ) : (
             <>
-              <NavLink className="quiz-link" to="/quiz">
-                Take the quiz
-              </NavLink>
               <button
                 aria-label="Include mature anime"
                 aria-pressed={mature}
