@@ -19,6 +19,7 @@ from app.db.init_db import init_db
 from app.db.session import get_db
 from app.main import create_app
 from app.models.anime import Anime
+from app.services.anilist import parse_media_item
 from app.services.catalog_sync import CatalogSyncService
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
@@ -119,52 +120,7 @@ async def seeded_catalog(
     p1_media = anilist_page1_data["data"]["Page"]["media"]
     p2_media = anilist_page2_data["data"]["Page"]["media"]
 
-    # Parse and upsert items using client's parsing logic
-    all_raw = p1_media + p2_media
-    parsed_items = []
-    for item in all_raw:
-        title_dict = item.get("title") or {}
-        cover_dict = item.get("coverImage") or {}
-        studios = (item.get("studios") or {}).get("nodes") or []
-        main_studio = studios[0].get("name") if studios else None
-        from app.core.text import strip_html_tags
-
-        parsed = {
-            "id": item["id"],
-            "id_mal": item.get("idMal"),
-            "title_romaji": title_dict.get("romaji"),
-            "title_english": title_dict.get("english"),
-            "title_native": title_dict.get("native"),
-            "synonyms": item.get("synonyms") or [],
-            "description": strip_html_tags(item.get("description")),
-            "cover_image_url": cover_dict.get("extraLarge") or cover_dict.get("large"),
-            "cover_color": cover_dict.get("color"),
-            "banner_image_url": item.get("bannerImage"),
-            "format": item.get("format"),
-            "episodes": item.get("episodes"),
-            "duration": item.get("duration"),
-            "status": item.get("status"),
-            "season": item.get("season"),
-            "season_year": item.get("seasonYear"),
-            "average_score": item.get("averageScore"),
-            "popularity": item.get("popularity") or 0,
-            "is_adult": bool(item.get("isAdult", False)),
-            "source": item.get("source"),
-            "main_studio": main_studio,
-            "updated_at_anilist": item.get("updatedAt"),
-            "genres": [g for g in item.get("genres") or [] if g],
-            "tags": [
-                {
-                    "name": t["name"],
-                    "category": t.get("category"),
-                    "is_adult": bool(t.get("isAdult", False)),
-                    "rank": int(t.get("rank") or 0),
-                }
-                for t in item.get("tags") or []
-                if t.get("name")
-            ],
-        }
-        parsed_items.append(parsed)
+    parsed_items = [parse_media_item(item) for item in p1_media + p2_media]
 
     await service.upsert_batch(db_session, parsed_items)
     franchise_members = await db_session.execute(

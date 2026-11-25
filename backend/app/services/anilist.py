@@ -16,6 +16,84 @@ _HEX_COLOR = re.compile(r"#[0-9a-fA-F]{6}")
 
 logger = logging.getLogger(__name__)
 
+
+def parse_media_item(item: dict[str, Any]) -> dict[str, Any]:
+    """Turn one AniList media object into the dict catalog sync stores."""
+    title_dict = item.get("title") or {}
+    cover_dict = item.get("coverImage") or {}
+    studios_nodes = (item.get("studios") or {}).get("nodes") or []
+    main_studio = studios_nodes[0].get("name") if studios_nodes else None
+
+    # Cover image precedence: extraLarge -> large
+    cover_url = cover_dict.get("extraLarge") or cover_dict.get("large")
+
+    # Clean description (plain text, no HTML)
+    description = strip_html_tags(item.get("description"))
+
+    # Genres & Tags
+    genres = [g for g in item.get("genres") or [] if g]
+    tags = [
+        {
+            "name": t["name"],
+            "category": t.get("category"),
+            "is_adult": bool(t.get("isAdult", False)),
+            "rank": int(t.get("rank") or 0),
+            "is_spoiler": bool(
+                t.get("isMediaSpoiler", False) or t.get("isGeneralSpoiler", False)
+            ),
+        }
+        for t in item.get("tags") or []
+        if t.get("name")
+    ]
+
+    # Relations: keep ALL edge types but only ANIME-type nodes.
+    # Downstream, catalog_sync stores every edge so the Union-Find franchise
+    # algorithm can run on the full graph (including nodes outside catalog).
+    raw_relations = (item.get("relations") or {}).get("edges") or []
+    relations: list[dict[str, Any]] = [
+        {
+            "related_id": edge["node"]["id"],
+            "rel_type": edge.get("relationType") or "OTHER",
+        }
+        for edge in raw_relations
+        if (edge.get("node") or {}).get("type") == "ANIME"
+        and (edge.get("node") or {}).get("id") is not None
+    ]
+
+    return {
+        "id": item["id"],
+        "id_mal": item.get("idMal"),
+        "title_romaji": title_dict.get("romaji"),
+        "title_english": title_dict.get("english"),
+        "title_native": title_dict.get("native"),
+        "synonyms": item.get("synonyms") or [],
+        "description": description,
+        "cover_image_url": cover_url,
+        "cover_color": (
+            color
+            if isinstance(color := cover_dict.get("color"), str)
+            and _HEX_COLOR.fullmatch(color)
+            else None
+        ),
+        "banner_image_url": item.get("bannerImage"),
+        "format": item.get("format"),
+        "episodes": item.get("episodes"),
+        "duration": item.get("duration"),
+        "status": item.get("status"),
+        "season": item.get("season"),
+        "season_year": item.get("seasonYear"),
+        "average_score": item.get("averageScore"),
+        "popularity": item.get("popularity") or 0,
+        "is_adult": bool(item.get("isAdult", False)),
+        "source": item.get("source"),
+        "main_studio": main_studio,
+        "updated_at_anilist": item.get("updatedAt"),
+        "genres": genres,
+        "tags": tags,
+        "relations": relations,
+    }
+
+
 ANILIST_GRAPHQL_URL = "https://graphql.anilist.co"
 
 MEDIA_PAGE_QUERY = """
@@ -260,82 +338,5 @@ class AniListClient:
         page_info = page_data.get("pageInfo", {})
         raw_media = page_data.get("media", [])
 
-        parsed_items: list[dict[str, Any]] = []
-        for item in raw_media:
-            title_dict = item.get("title") or {}
-            cover_dict = item.get("coverImage") or {}
-            studios_nodes = (item.get("studios") or {}).get("nodes") or []
-            main_studio = studios_nodes[0].get("name") if studios_nodes else None
-
-            # Cover image precedence: extraLarge -> large
-            cover_url = cover_dict.get("extraLarge") or cover_dict.get("large")
-
-            # Clean description (plain text, no HTML)
-            description = strip_html_tags(item.get("description"))
-
-            # Genres & Tags
-            genres = [g for g in item.get("genres") or [] if g]
-            tags = [
-                {
-                    "name": t["name"],
-                    "category": t.get("category"),
-                    "is_adult": bool(t.get("isAdult", False)),
-                    "rank": int(t.get("rank") or 0),
-                    "is_spoiler": bool(
-                        t.get("isMediaSpoiler", False)
-                        or t.get("isGeneralSpoiler", False)
-                    ),
-                }
-                for t in item.get("tags") or []
-                if t.get("name")
-            ]
-
-            # Relations: keep ALL edge types but only ANIME-type nodes.
-            # Downstream, catalog_sync stores every edge so the Union-Find franchise
-            # algorithm can run on the full graph (including nodes outside catalog).
-            raw_relations = (item.get("relations") or {}).get("edges") or []
-            relations: list[dict[str, Any]] = [
-                {
-                    "related_id": edge["node"]["id"],
-                    "rel_type": edge.get("relationType") or "OTHER",
-                }
-                for edge in raw_relations
-                if (edge.get("node") or {}).get("type") == "ANIME"
-                and (edge.get("node") or {}).get("id") is not None
-            ]
-
-            parsed_anime = {
-                "id": item["id"],
-                "id_mal": item.get("idMal"),
-                "title_romaji": title_dict.get("romaji"),
-                "title_english": title_dict.get("english"),
-                "title_native": title_dict.get("native"),
-                "synonyms": item.get("synonyms") or [],
-                "description": description,
-                "cover_image_url": cover_url,
-                "cover_color": (
-                    color
-                    if isinstance(color := cover_dict.get("color"), str)
-                    and _HEX_COLOR.fullmatch(color)
-                    else None
-                ),
-                "banner_image_url": item.get("bannerImage"),
-                "format": item.get("format"),
-                "episodes": item.get("episodes"),
-                "duration": item.get("duration"),
-                "status": item.get("status"),
-                "season": item.get("season"),
-                "season_year": item.get("seasonYear"),
-                "average_score": item.get("averageScore"),
-                "popularity": item.get("popularity") or 0,
-                "is_adult": bool(item.get("isAdult", False)),
-                "source": item.get("source"),
-                "main_studio": main_studio,
-                "updated_at_anilist": item.get("updatedAt"),
-                "genres": genres,
-                "tags": tags,
-                "relations": relations,
-            }
-            parsed_items.append(parsed_anime)
-
+        parsed_items = [parse_media_item(item) for item in raw_media]
         return parsed_items, page_info
