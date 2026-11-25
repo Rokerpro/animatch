@@ -230,12 +230,23 @@
   display: inline-flex;
   height: 72px;
   align-items: center;
+  gap: 8px;
   color: var(--paper);
   font-weight: 500;
   transition: color var(--ease);
 }
 
 .header-nav > a:hover {
+  color: var(--lavender);
+}
+
+.header-nav > a > svg {
+  color: var(--muted);
+  transition: color var(--ease);
+}
+
+.header-nav > a:hover > svg,
+.header-nav > a.active > svg {
   color: var(--lavender);
 }
 
@@ -353,6 +364,16 @@
   text-align: left;
 }
 
+.account-menu a,
+.account-menu button {
+  justify-content: flex-start;
+  gap: 10px;
+}
+
+.account-menu svg {
+  color: var(--muted);
+}
+
 .account-menu a:hover,
 .account-menu button:hover,
 .account-menu a:focus-visible,
@@ -367,18 +388,166 @@
   color: var(--lavender);
 }
 
-.page-menu-wrap {
-  position: relative;
+.page-menu-button,
+.header-nav > a.account-settings-link,
+.nav-drawer,
+.nav-drawer-scrim {
   display: none;
 }
 
-.page-menu-button {
-  border-radius: 10px;
+.nav-drawer-scrim {
+  position: fixed;
+  z-index: 50;
+  inset: 0;
+  background: rgb(16 17 20 / 72%);
+  animation: nav-drawer-fade 200ms ease;
 }
 
-.account-menu.page-menu {
-  right: auto;
+.nav-drawer {
+  position: fixed;
+  z-index: 51;
+  top: 0;
+  bottom: 0;
   left: 0;
+  width: 288px;
+  max-width: 100%;
+  flex-direction: column;
+  overflow-y: auto;
+  border-right: 1px solid var(--line);
+  background: var(--surface);
+  animation: nav-drawer-slide 220ms ease;
+}
+
+.nav-drawer-top {
+  display: flex;
+  height: 72px;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+  margin: 0 16px 0 var(--gutter);
+  border-bottom: 1px solid var(--line);
+}
+
+.nav-drawer-top .page-menu-button {
+  display: grid;
+  border-color: var(--lavender);
+}
+
+.nav-drawer-links {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 16px;
+}
+
+.nav-drawer-row {
+  display: flex;
+  height: 48px;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+  margin: 0 8px;
+  padding: 0 8px 0 20px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--paper);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 500;
+  text-align: left;
+}
+
+.nav-drawer-row > svg {
+  flex-shrink: 0;
+  color: var(--muted);
+}
+
+.nav-drawer-row > .nav-drawer-icon-sm {
+  margin: 0 2px;
+}
+
+a.nav-drawer-row:hover,
+button.nav-drawer-row:hover {
+  background: var(--surface-2);
+}
+
+.nav-drawer-row.active {
+  background: rgb(169 155 255 / 14%);
+  color: var(--lavender);
+  font-weight: 700;
+}
+
+.nav-drawer-row.active > svg {
+  color: var(--lavender);
+}
+
+.nav-drawer-row label {
+  flex: 1;
+  cursor: pointer;
+}
+
+.nav-drawer-bottom {
+  display: flex;
+  flex-direction: column;
+  margin-top: auto;
+  padding-bottom: 24px;
+}
+
+.nav-drawer-rule {
+  margin: 8px 16px;
+  border: 0;
+  border-top: 1px solid var(--line);
+}
+
+.nav-drawer-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 12px 16px 0;
+  color: var(--paper);
+}
+
+.nav-drawer-avatar {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--line);
+  color: var(--lavender);
+  font-family: var(--font-display);
+}
+
+.nav-drawer-profile-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.nav-drawer-profile-copy strong {
+  overflow: hidden;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nav-drawer-profile-copy span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+@keyframes nav-drawer-slide {
+  from {
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes nav-drawer-fade {
+  from {
+    opacity: 0;
+  }
 }
 
 @media (max-width: 960px) {
@@ -409,15 +578,27 @@
     gap: 12px;
   }
 
-  .page-menu-wrap {
-    display: block;
+  .page-menu-button,
+  .nav-drawer-scrim {
+    display: grid;
+  }
+
+  .header-nav > a.account-settings-link {
+    display: grid;
+    height: 36px;
+  }
+
+  .nav-drawer {
+    display: flex;
   }
 
   .header-nav {
     gap: 12px;
   }
 
-  .header-nav > a:not(.header-signin) {
+  .header-nav > a:not(.header-signin, .account-settings-link),
+  .header-nav .mature-toggle,
+  .header-nav .account-menu-wrap {
     display: none;
   }
 }
@@ -855,7 +1036,9 @@ button.filter-chip:hover {
   position: relative;
   aspect-ratio: 193 / 274;
   border-radius: var(--radius-card);
-  transition: box-shadow var(--ease);
+  transition:
+    box-shadow var(--ease),
+    transform var(--ease);
 }
 
 .anime-poster > a {
@@ -867,6 +1050,7 @@ button.filter-chip:hover {
 .anime-card:hover .anime-poster,
 .anime-card:focus-within .anime-poster {
   box-shadow: var(--shadow-lift);
+  transform: translateY(-4px);
 }
 
 .poster-badges {
@@ -879,10 +1063,12 @@ button.filter-chip:hover {
   pointer-events: none;
 }
 
+/* Covers the poster so the radial list menu can sit over it. */
 .anime-save-control {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  inset: 0;
+  container-type: size;
+  pointer-events: none;
 }
 
 .anime-card-copy {
@@ -945,17 +1131,25 @@ button.filter-chip:hover {
   position: relative;
 }
 
+.list-control-card {
+  position: static;
+}
+
 .list-control-card .list-control-trigger {
+  position: absolute;
+  top: 8px;
+  right: 8px;
   display: grid;
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   place-items: center;
-  border: 0;
+  border: 1px solid var(--line);
   border-radius: 999px;
-  background: var(--scrim);
+  background: var(--graphite);
   color: var(--paper);
   cursor: pointer;
   opacity: 0;
+  pointer-events: auto;
   transition:
     opacity var(--ease),
     color var(--ease);
@@ -964,14 +1158,296 @@ button.filter-chip:hover {
 .anime-card:hover .list-control-card .list-control-trigger,
 .my-list-card .list-control-card .list-control-trigger,
 .list-control-card .list-control-trigger:focus-visible,
-.list-control-card .list-control-trigger.is-listed,
-.list-control-card .list-control-trigger[aria-expanded="true"] {
+.list-control-card .list-control-trigger.is-listed {
   opacity: 1;
 }
 
 @media (hover: none) {
   .list-control-card .list-control-trigger {
     opacity: 1;
+  }
+}
+
+.anime-poster .list-control-card .list-control-trigger.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Radial list menu over a card poster. */
+.list-radial {
+  --r: min(74px, 50cqw - 26px, 46cqh - 26px);
+  --ease-pop: cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: absolute;
+  z-index: 5;
+  inset: 0;
+  pointer-events: auto;
+}
+
+.list-radial-scrim {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-card);
+  background: rgb(16 17 20 / 72%);
+  animation: list-radial-fade 180ms ease both;
+}
+
+.list-radial-ring {
+  position: absolute;
+  top: 46%;
+  left: 50%;
+  width: calc(var(--r) * 2);
+  height: calc(var(--r) * 2);
+  border: 1px dashed var(--line);
+  border-radius: 999px;
+  transform: translate(-50%, -50%);
+  animation: list-radial-ring 320ms ease 240ms both;
+  pointer-events: none;
+}
+
+.list-radial-item,
+.list-radial-close {
+  position: absolute;
+  top: 46%;
+  left: 50%;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.list-radial-item {
+  width: 44px;
+  height: 44px;
+  margin: -22px 0 0 -22px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--paper);
+  transform: rotate(var(--angle)) translateY(calc(var(--r) * -1))
+    rotate(calc(var(--angle) * -1));
+  transition:
+    background-color var(--ease),
+    border-color var(--ease),
+    color var(--ease),
+    scale 120ms ease;
+  animation: list-radial-item 300ms var(--ease-pop) both;
+  animation-delay: calc(300ms + var(--i) * 60ms);
+}
+
+.list-radial-item:hover,
+.list-radial-item:focus-visible {
+  border-color: var(--lavender);
+  outline: none;
+}
+
+.list-radial-item:focus-visible {
+  box-shadow:
+    0 0 0 2px var(--graphite),
+    0 0 0 4px var(--lavender);
+}
+
+.list-radial-item:active {
+  scale: 0.92;
+}
+
+.list-radial-item[aria-checked="true"] {
+  border-color: var(--lavender);
+  background: var(--lavender);
+  color: var(--graphite);
+}
+
+.list-radial-close {
+  width: 48px;
+  height: 48px;
+  margin: -24px 0 0 -24px;
+  border: 0;
+  background: var(--paper);
+  color: var(--graphite);
+  transition: scale 120ms ease;
+  animation: list-radial-close 320ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.list-radial-close > svg {
+  grid-area: 1 / 1;
+}
+
+/* Opening: the bookmark flies to the centre and becomes the X. */
+.list-radial-close > svg:first-child {
+  animation: list-radial-fade 150ms ease 150ms both;
+}
+
+.list-radial-label-slot {
+  position: absolute;
+  inset: 0;
+  animation: list-radial-fade 200ms ease 360ms both;
+  pointer-events: none;
+}
+
+.list-radial-home-icon {
+  color: var(--paper);
+  opacity: 0;
+  animation: list-radial-fade-away 150ms ease 100ms both;
+}
+
+.list-radial-close.is-listed .list-radial-home-icon {
+  color: var(--lavender);
+}
+
+.list-radial-close:hover {
+  scale: 1.06;
+}
+
+.list-radial-close:focus-visible {
+  outline: 2px solid var(--lavender);
+  outline-offset: 3px;
+}
+
+.list-radial-label {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  display: inline-flex;
+  height: 32px;
+  align-items: center;
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--paper);
+  transform: translateX(-50%);
+  white-space: nowrap;
+  animation: list-radial-label 180ms ease both;
+  pointer-events: none;
+}
+
+@keyframes list-radial-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes list-radial-ring {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.6);
+  }
+}
+
+@keyframes list-radial-item {
+  from {
+    opacity: 0;
+    transform: rotate(var(--angle)) translateY(0)
+      rotate(calc(var(--angle) * -1)) scale(0.4);
+  }
+}
+
+/* Starts on the bookmark, 26px in from the top-right corner, at its 36px
+   size (48px * 0.75); mirrors list-radial-close-home. */
+@keyframes list-radial-close {
+  from {
+    background-color: var(--graphite);
+    box-shadow: inset 0 0 0 1.34px var(--line);
+    transform: translate(calc(50cqw - 26px), calc(26px - 46cqh)) scale(0.75);
+  }
+}
+
+@keyframes list-radial-label {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 6px);
+  }
+}
+
+/* Exit: the buttons fold into the centre one by one, last first, then the
+   X flies back to the corner and turns into the bookmark. Keep EXIT_MS in
+   ListControls.tsx in step with these timings. */
+.list-radial.is-closing {
+  pointer-events: none;
+}
+
+.is-closing .list-radial-label {
+  animation: list-radial-label-out 140ms ease both;
+}
+
+.is-closing .list-radial-item {
+  animation: list-radial-item-out 160ms cubic-bezier(0.55, 0, 1, 0.45) both;
+  animation-delay: calc((var(--n) - 1 - var(--i)) * 60ms);
+}
+
+.is-closing .list-radial-ring {
+  animation: list-radial-ring-out 380ms ease both;
+}
+
+.is-closing .list-radial-scrim {
+  animation: list-radial-fade-out 300ms ease both;
+  animation-delay: calc(var(--n) * 60ms + 100ms);
+}
+
+.is-closing .list-radial-close {
+  animation: list-radial-close-home 300ms cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation-delay: calc(var(--n) * 60ms + 100ms);
+}
+
+.is-closing .list-radial-close > svg:first-child {
+  animation: list-radial-fade-out 150ms ease both;
+  animation-delay: calc(var(--n) * 60ms + 100ms);
+}
+
+.is-closing .list-radial-home-icon {
+  animation: list-radial-fade-in 200ms ease both;
+  animation-delay: calc(var(--n) * 60ms + 200ms);
+}
+
+@keyframes list-radial-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes list-radial-fade-away {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes list-radial-fade-in {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes list-radial-ring-out {
+  to {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.6);
+  }
+}
+
+@keyframes list-radial-item-out {
+  to {
+    opacity: 0;
+    transform: rotate(var(--angle)) translateY(0)
+      rotate(calc(var(--angle) * -1)) scale(0.4);
+  }
+}
+
+/* From the ring centre (50cqw, 46cqh) to the bookmark centre, 26px in from
+   the top-right corner; 48px * 0.75 = the 36px bookmark. */
+@keyframes list-radial-close-home {
+  to {
+    background-color: var(--graphite);
+    box-shadow: inset 0 0 0 1.34px var(--line);
+    transform: translate(calc(50cqw - 26px), calc(26px - 46cqh)) scale(0.75);
+  }
+}
+
+@keyframes list-radial-label-out {
+  to {
+    opacity: 0;
+    transform: translate(-50%, 6px);
   }
 }
 

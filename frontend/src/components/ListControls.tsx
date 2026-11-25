@@ -1,5 +1,16 @@
 import { useEffect, useRef, useState } from "react";
-import { Bookmark, BookmarkCheck, X } from "lucide-react";
+import {
+  Ban,
+  Bookmark,
+  BookmarkCheck,
+  Check,
+  Clock,
+  Pause,
+  Play,
+  Trash2,
+  X,
+  type LucideIcon,
+} from "lucide-react";
 import { useLocation } from "react-router-dom";
 import type { AnimeCardData, ListStatus } from "../api/types";
 import { useAuth } from "../auth/useAuth";
@@ -7,6 +18,20 @@ import { safeNextPath } from "../auth/nextPath";
 import { useListMutation } from "../api/useListMutation";
 import { AuthPrompt } from "./AuthPrompt";
 import { listStatusLabels, listStatuses } from "./listStatus";
+
+// Exit timing, matching the CSS: buttons leave one by one, then the X flies
+// home and becomes the bookmark. "landing" lets the real bookmark fade in
+// underneath before the menu unmounts.
+const EXIT_MS = 780;
+const LANDING_MS = 200;
+
+const statusIcons: Record<ListStatus, LucideIcon> = {
+  planning: Clock,
+  watching: Play,
+  completed: Check,
+  dropped: Ban,
+  on_hold: Pause,
+};
 
 export function ListControl({
   anime,
@@ -25,25 +50,61 @@ export function ListControl({
   const location = useLocation();
   const mutation = useListMutation();
   const [open, setOpen] = useState(false);
+  const [exit, setExit] = useState<"none" | "closing" | "landing">("none");
+  const wasOpen = useRef(false);
   const [promptOpen, setPromptOpen] = useState(false);
+  const [hovered, setHovered] = useState<string | null>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const radial = variant === "card";
   const nextPath = safeNextPath(
     `${location.pathname}${location.search}`,
     "/browse"
   );
 
   useEffect(() => {
-    if (open)
-      menuRef.current
-        ?.querySelector<HTMLElement>(
-          "[role='menuitemradio'], [role='menuitem']"
-        )
-        ?.focus();
+    if (open) {
+      wasOpen.current = true;
+      setExit("none");
+      return;
+    }
+    if (!wasOpen.current) return;
+    wasOpen.current = false;
+    const reduced = window.matchMedia?.(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+    setExit("closing");
+    const land = setTimeout(() => setExit("landing"), reduced ? 0 : EXIT_MS);
+    const done = setTimeout(
+      () => setExit("none"),
+      reduced ? 0 : EXIT_MS + LANDING_MS
+    );
+    return () => {
+      clearTimeout(land);
+      clearTimeout(done);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const menu = menuRef.current;
+    (
+      menu?.querySelector<HTMLElement>("[aria-checked='true']") ??
+      menu?.querySelector<HTMLElement>(
+        "[role='menuitemradio'], [role='menuitem']"
+      )
+    )?.focus();
+    function onPointerDown(event: PointerEvent) {
+      if (!menuRef.current?.parentElement?.contains(event.target as Node))
+        setOpen(false);
+    }
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
   }, [open]);
 
   function closeMenu(restoreFocus = false) {
     setOpen(false);
+    setHovered(null);
     if (restoreFocus) buttonRef.current?.focus();
   }
 
@@ -59,15 +120,16 @@ export function ListControl({
       closeMenu(true);
       return;
     }
-    if (["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) {
+    const forward = event.key === "ArrowDown" || event.key === "ArrowRight";
+    const back = event.key === "ArrowUp" || event.key === "ArrowLeft";
+    if (forward || back || event.key === "Home" || event.key === "End") {
       event.preventDefault();
       const index =
         event.key === "Home"
           ? 0
           : event.key === "End"
             ? items.length - 1
-            : (current + (event.key === "ArrowDown" ? 1 : -1) + items.length) %
-              items.length;
+            : (current + (forward ? 1 : -1) + items.length) % items.length;
       items[index]?.focus();
     }
   }
@@ -99,6 +161,8 @@ export function ListControl({
   }
 
   const listed = status !== null;
+  const BookmarkIcon = listed ? BookmarkCheck : Bookmark;
+  const radialLabel = hovered ?? (listed ? listStatusLabels[status] : null);
   return (
     <>
       <div className={`list-control list-control-${variant}`}>
@@ -110,7 +174,9 @@ export function ListControl({
           }
           aria-expanded={open}
           aria-haspopup="menu"
-          className={`list-control-trigger${listed ? " is-listed" : ""}`}
+          className={`list-control-trigger${listed ? " is-listed" : ""}${
+            radial && (open || exit === "closing") ? " is-hidden" : ""
+          }`}
           disabled={mutation.isPending || (statusLoading && user !== null)}
           onClick={() =>
             user ? setOpen((value) => !value) : setPromptOpen(true)
@@ -118,16 +184,12 @@ export function ListControl({
           ref={buttonRef}
           type="button"
         >
-          {listed ? (
-            <BookmarkCheck aria-hidden="true" size={18} strokeWidth={1.8} />
-          ) : (
-            <Bookmark aria-hidden="true" size={18} strokeWidth={1.8} />
-          )}
+          <BookmarkIcon aria-hidden="true" size={18} strokeWidth={1.8} />
           {variant === "detail" && (
             <span>{listed ? listStatusLabels[status] : "Add to My list"}</span>
           )}
         </button>
-        {open && (
+        {open && !radial && (
           <div
             aria-label={`List status for ${anime.title}`}
             className="list-status-menu"
@@ -158,6 +220,84 @@ export function ListControl({
                 Remove
               </button>
             )}
+          </div>
+        )}
+        {(open || exit !== "none") && radial && (
+          <div
+            className={`list-radial${open ? "" : " is-closing"}`}
+            style={{ "--n": listed ? 6 : 5 } as React.CSSProperties}
+          >
+            <div
+              aria-hidden="true"
+              className="list-radial-scrim"
+              onClick={() => closeMenu(true)}
+            />
+            <span aria-hidden="true" className="list-radial-ring" />
+            <div
+              aria-label={`List status for ${anime.title}`}
+              onKeyDown={onMenuKeyDown}
+              ref={menuRef}
+              role="menu"
+            >
+              {[...listStatuses, ...(listed ? ["remove" as const] : [])].map(
+                (item, index, items) => {
+                  const Icon = item === "remove" ? Trash2 : statusIcons[item];
+                  const label =
+                    item === "remove" ? "Remove" : listStatusLabels[item];
+                  return (
+                    <button
+                      aria-checked={
+                        item === "remove" ? undefined : status === item
+                      }
+                      aria-label={label}
+                      className="list-radial-item"
+                      key={item}
+                      onBlur={() => setHovered(null)}
+                      onClick={() =>
+                        item === "remove" ? remove() : chooseStatus(item)
+                      }
+                      onFocus={() => setHovered(label)}
+                      onMouseEnter={() => setHovered(label)}
+                      onMouseLeave={() => setHovered(null)}
+                      role={item === "remove" ? "menuitem" : "menuitemradio"}
+                      style={
+                        {
+                          "--angle": `${(360 / items.length) * index}deg`,
+                          "--i": index,
+                        } as React.CSSProperties
+                      }
+                      type="button"
+                    >
+                      <Icon aria-hidden="true" size={20} strokeWidth={1.5} />
+                    </button>
+                  );
+                }
+              )}
+            </div>
+            <button
+              aria-label="Close list menu"
+              className={`list-radial-close${listed ? " is-listed" : ""}`}
+              onClick={() => closeMenu(true)}
+              type="button"
+            >
+              <X aria-hidden="true" size={22} strokeWidth={1.5} />
+              {/* Drawn at 24/2.4 so it matches the 18px trigger icon at 0.75 scale. */}
+              <BookmarkIcon
+                aria-hidden="true"
+                className="list-radial-home-icon"
+                size={24}
+                strokeWidth={2.4}
+              />
+            </button>
+            {/* The slot delays the label on open; the keyed label animates
+                each time its text changes. */}
+            <span aria-hidden="true" className="list-radial-label-slot">
+              {radialLabel && (
+                <span className="list-radial-label" key={radialLabel}>
+                  {radialLabel}
+                </span>
+              )}
+            </span>
           </div>
         )}
       </div>

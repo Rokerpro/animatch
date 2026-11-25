@@ -401,9 +401,7 @@ export function SettingsPage() {
             <div className="settings-panel">
               <div className="settings-row">
                 <div className="settings-row-copy">
-                  <label htmlFor="settings-mature">
-                    Include mature anime (18+)
-                  </label>
+                  <label htmlFor="settings-mature">Mature (18+)</label>
                   <p className="muted" id="settings-mature-hint">
                     Adult titles stay hidden everywhere until you turn this on.
                   </p>
