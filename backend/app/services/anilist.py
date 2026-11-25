@@ -3,12 +3,16 @@
 import asyncio
 import logging
 import random
+import re
 import time
 from typing import Any
 
 import httpx
 
 from app.core.text import strip_html_tags
+
+# Cover color is written into CSS on the client, so only plain hex survives.
+_HEX_COLOR = re.compile(r"#[0-9a-fA-F]{6}")
 
 logger = logging.getLogger(__name__)
 
@@ -309,7 +313,12 @@ class AniListClient:
                 "synonyms": item.get("synonyms") or [],
                 "description": description,
                 "cover_image_url": cover_url,
-                "cover_color": cover_dict.get("color"),
+                "cover_color": (
+                    color
+                    if isinstance(color := cover_dict.get("color"), str)
+                    and _HEX_COLOR.fullmatch(color)
+                    else None
+                ),
                 "banner_image_url": item.get("bannerImage"),
                 "format": item.get("format"),
                 "episodes": item.get("episodes"),

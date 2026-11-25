@@ -276,3 +276,42 @@ async def test_sync_service_state_management(tmp_path: Path):
 
     service.clear_state()
     assert service.load_state() is None
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_cover_color_keeps_only_hex() -> None:
+    """Non-hex cover colors from AniList are dropped before they reach CSS."""
+
+    def media(media_id: int, color: Any) -> dict[str, Any]:
+        return {
+            "id": media_id,
+            "title": {"romaji": f"Anime {media_id}"},
+            "isAdult": False,
+            "genres": [],
+            "tags": [],
+            "coverImage": {"color": color},
+        }
+
+    respx.post(ANILIST_GRAPHQL_URL).mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "data": {
+                    "Page": {
+                        "pageInfo": {"hasNextPage": False, "total": 3},
+                        "media": [
+                            media(1, "#e4a15d"),
+                            media(2, "red;background:url(x)"),
+                            media(3, None),
+                        ],
+                    }
+                }
+            },
+        )
+    )
+
+    async with AniListClient(requests_per_minute=300) as client:
+        items, _ = await client.fetch_media_page(page=1)
+
+    assert [item["cover_color"] for item in items] == ["#e4a15d", None, None]
