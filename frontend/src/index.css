@@ -298,7 +298,8 @@
   position: relative;
 }
 
-.account-menu-button {
+.account-menu-button,
+.page-menu-button {
   display: grid;
   width: 36px;
   height: 36px;
@@ -312,7 +313,9 @@
 }
 
 .account-menu-button:hover,
-.account-menu-button[aria-expanded="true"] {
+.account-menu-button[aria-expanded="true"],
+.page-menu-button:hover,
+.page-menu-button[aria-expanded="true"] {
   border-color: var(--lavender);
 }
 
@@ -370,21 +373,7 @@
 }
 
 .page-menu-button {
-  display: grid;
-  width: 36px;
-  height: 36px;
-  place-items: center;
-  border: 1px solid var(--line);
   border-radius: 10px;
-  background: transparent;
-  color: var(--paper);
-  cursor: pointer;
-  transition: border-color var(--ease);
-}
-
-.page-menu-button:hover,
-.page-menu-button[aria-expanded="true"] {
-  border-color: var(--lavender);
 }
 
 .account-menu.page-menu {

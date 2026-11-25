@@ -295,6 +295,24 @@ describe("stage 1 account flows", () => {
     expect(screen.getByRole("button", { name: "Pages" })).toHaveFocus();
   });
 
+  it("keeps one header menu open and closes it on an outside tap", () => {
+    vi.mocked(useAuth).mockReturnValue({
+      user,
+      authLoading: false,
+      mature: false,
+      refresh: vi.fn(),
+      setMature: vi.fn(),
+      signOut: vi.fn(),
+    });
+    renderApp(<Navbar />, "/");
+    fireEvent.click(screen.getByRole("button", { name: "Pages" }));
+    fireEvent.click(screen.getByRole("button", { name: "Account menu" }));
+    expect(screen.getAllByRole("menu")).toHaveLength(1);
+    expect(screen.getByRole("menu", { name: "Account" })).toBeInTheDocument();
+    fireEvent.pointerDown(document.body);
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+  });
+
   it("offers Browse and the quiz in the phone menu while signed out", () => {
     renderApp(<Navbar />, "/");
     fireEvent.click(screen.getByRole("button", { name: "Pages" }));

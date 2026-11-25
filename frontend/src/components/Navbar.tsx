@@ -35,15 +35,25 @@ export function Navbar() {
     location.pathname.startsWith("/similar/") ||
     location.pathname.startsWith("/anime/");
   useEffect(() => {
-    if (menuOpen)
-      menuRef.current?.querySelector<HTMLElement>("[role=menuitem]")?.focus();
-  }, [menuOpen]);
+    (menuOpen ? menuRef : pageMenuRef).current
+      ?.querySelector<HTMLElement>("[role=menuitem]")
+      ?.focus();
+  }, [menuOpen, pageMenuOpen]);
   useEffect(() => {
-    if (pageMenuOpen)
-      pageMenuRef.current
-        ?.querySelector<HTMLElement>("[role=menuitem]")
-        ?.focus();
-  }, [pageMenuOpen]);
+    if (!menuOpen && !pageMenuOpen) return;
+    function onPointerDown(event: PointerEvent) {
+      if (
+        !(event.target as Element).closest(
+          ".page-menu-wrap, .account-menu-wrap"
+        )
+      ) {
+        setMenuOpen(false);
+        setPageMenuOpen(false);
+      }
+    }
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, [menuOpen, pageMenuOpen]);
   function closeMenu(restoreFocus = false) {
     setMenuOpen(false);
     if (restoreFocus) buttonRef.current?.focus();
@@ -105,7 +115,10 @@ export function Navbar() {
             aria-expanded={pageMenuOpen}
             aria-haspopup="menu"
             className="page-menu-button"
-            onClick={() => setPageMenuOpen((open) => !open)}
+            onClick={() => {
+              setMenuOpen(false);
+              setPageMenuOpen((open) => !open);
+            }}
             ref={pageButtonRef}
             type="button"
           >
@@ -183,7 +196,10 @@ export function Navbar() {
                   aria-expanded={menuOpen}
                   aria-haspopup="menu"
                   className="account-menu-button"
-                  onClick={() => setMenuOpen((open) => !open)}
+                  onClick={() => {
+                    setPageMenuOpen(false);
+                    setMenuOpen((open) => !open);
+                  }}
                   ref={buttonRef}
                   type="button"
                 >
