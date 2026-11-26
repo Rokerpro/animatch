@@ -60,6 +60,10 @@ class ListEntry(Base):
         default="planning",
     )
     rating: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # Episodes watched so far.
+    progress: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
     source: Mapped[str] = mapped_column(
         String(20),
         nullable=False,

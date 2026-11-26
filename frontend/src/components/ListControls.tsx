@@ -5,8 +5,10 @@ import {
   BookmarkCheck,
   Check,
   Clock,
+  Minus,
   Pause,
   Play,
+  Plus,
   Trash2,
   X,
   type LucideIcon,
@@ -372,5 +374,55 @@ export function ListRatingControl({
         <AuthPrompt nextPath={nextPath} onClose={() => setPromptOpen(false)} />
       )}
     </>
+  );
+}
+
+export function ListProgressControl({
+  anime,
+  status,
+  rating,
+  progress,
+}: {
+  anime: AnimeCardData;
+  status: ListStatus;
+  rating: number | null;
+  progress: number;
+}) {
+  const mutation = useListMutation();
+  const total = anime.episodes ?? null;
+  function step(delta: number) {
+    const next = progress + delta;
+    mutation.mutate({
+      kind: "put",
+      anime,
+      body: { progress: next },
+      status,
+      rating,
+      progress: next,
+    });
+  }
+  return (
+    <div className="list-progress-control">
+      <span>Episodes</span>
+      <button
+        aria-label={`One fewer episode watched of ${anime.title}`}
+        disabled={mutation.isPending || progress <= 0}
+        onClick={() => step(-1)}
+        type="button"
+      >
+        <Minus aria-hidden="true" size={14} />
+      </button>
+      <output aria-label={`Episodes watched of ${anime.title}`}>
+        {progress} / {total ?? "?"}
+      </output>
+      <button
+        aria-label={`One more episode watched of ${anime.title}`}
+        disabled={mutation.isPending || (total !== null && progress >= total)}
+        onClick={() => step(1)}
+        type="button"
+      >
+        <Plus aria-hidden="true" size={14} />
+      </button>
+    </div>
   );
 }

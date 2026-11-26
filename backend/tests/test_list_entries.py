@@ -461,3 +461,33 @@ async def test_account_export_contains_only_own_data(
     assert "password_hash" not in str(data)
     assert [e["anime_id"] for e in data["list"]] == [154587]
     assert data["list"][0]["rating"] == 9 and data["list"][0]["title"]
+
+
+@pytest.mark.asyncio
+async def test_progress_updates_validates_and_exports(
+    client, seeded_catalog, register_user
+):
+    csrf = await register_user("progress@example.com")
+    headers = {"X-CSRF-Token": csrf}
+    created = await client.put(
+        "/api/list/154587", json={"status": "watching"}, headers=headers
+    )
+    assert created.json()["progress"] == 0
+    updated = await client.put(
+        "/api/list/154587", json={"progress": 5}, headers=headers
+    )
+    assert updated.status_code == 200, updated.text
+    assert updated.json()["progress"] == 5
+    assert updated.json()["status"] == "watching"
+    # The fixture title has 28 episodes.
+    for bad in (29, -1, 2.5, None):
+        res = await client.put(
+            "/api/list/154587", json={"progress": bad}, headers=headers
+        )
+        assert res.status_code == 422, f"progress {bad}: {res.text}"
+    listed = (await client.get("/api/list")).json()["items"][0]
+    assert listed["progress"] == 5
+    exported = (await client.get("/api/list/export")).json()
+    assert exported[0]["progress"] == 5
+    account = (await client.get("/api/auth/me/export")).json()
+    assert account["list"][0]["progress"] == 5

@@ -469,6 +469,7 @@ async def export_me(
             ),
             "status": entry.status,
             "rating": entry.rating,
+            "progress": entry.progress,
             "source": entry.source,
             "added_at": entry.added_at.isoformat(),
             "updated_at": entry.updated_at.isoformat(),

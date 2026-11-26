@@ -17,6 +17,7 @@ type Change =
       body: ListEntryPut;
       status: ListStatus;
       rating: number | null;
+      progress?: number;
     }
   | { kind: "delete"; anime: AnimeCardData };
 
@@ -77,7 +78,12 @@ export function useListMutation() {
               ...old,
               items: old.items.map((entry) =>
                 entry.animeId === change.anime.id
-                  ? { ...entry, status: change.status, rating: change.rating }
+                  ? {
+                      ...entry,
+                      status: change.status,
+                      rating: change.rating,
+                      progress: change.progress ?? entry.progress,
+                    }
                   : entry
               ),
             };
