@@ -194,6 +194,13 @@ export const api = {
     }),
   myRecommendations: (includeMature: boolean) =>
     request<Recommendation[]>(`/api/recs/me?includeMature=${includeMature}`),
+  hideRecommendation: async (animeId: number) => {
+    const csrf = await api.csrf();
+    return request<{ anime_ids: number[] }>(`/api/recs/feedback/${animeId}`, {
+      method: "PUT",
+      headers: { "X-CSRF-Token": csrf.csrf_token },
+    });
+  },
   list: (params: ListParams) => {
     const query = new URLSearchParams({
       sort: params.sort,

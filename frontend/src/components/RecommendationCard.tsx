@@ -6,8 +6,10 @@ const REASON_PREVIEW_LENGTH = 88;
 
 export function RecommendationCard({
   recommendation,
+  onDismiss,
 }: {
   recommendation: Recommendation;
+  onDismiss?: () => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const reasonId = useId();
@@ -35,6 +37,16 @@ export function RecommendationCard({
           </button>
         )}
       </p>
+      {onDismiss && (
+        <button
+          aria-label={`Not interested in ${recommendation.title}`}
+          className="rec-dismiss"
+          onClick={onDismiss}
+          type="button"
+        >
+          Not interested
+        </button>
+      )}
     </div>
   );
 }

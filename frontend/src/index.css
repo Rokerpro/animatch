@@ -1308,6 +1308,21 @@ button.filter-chip:hover {
   color: var(--lavender);
 }
 
+.rec-dismiss {
+  align-self: flex-start;
+  margin-top: 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.rec-dismiss:hover {
+  color: var(--paper);
+}
+
 /* List control (save button + menu) */
 
 .list-control {
