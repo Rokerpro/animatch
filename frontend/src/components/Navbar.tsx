@@ -18,6 +18,8 @@ import { useAuth } from "../auth/useAuth";
 import { useOptionalToast } from "./useToast";
 import { TitleAutocomplete } from "./TitleAutocomplete";
 import { AuthPrompt } from "./AuthPrompt";
+import { HeaderTabs } from "./HeaderTabs";
+import { onMenuKeyDown } from "./menuKeys";
 
 // Custom glyphs from the Penpot design: a TV with a heart, and a choice ballot.
 function ForYouIcon({ size = 24, strokeWidth = 1.5, ...props }: LucideProps) {
@@ -162,35 +164,6 @@ export function Navbar() {
       first?.focus();
     }
   }
-  function onMenuKeyDown(
-    event: React.KeyboardEvent<HTMLDivElement>,
-    close: (restoreFocus: boolean) => void
-  ) {
-    const items = Array.from(
-      event.currentTarget.querySelectorAll<HTMLElement>("[role=menuitem]")
-    );
-    const current = items.indexOf(document.activeElement as HTMLElement);
-    if (event.key === "Escape") {
-      event.preventDefault();
-      close(true);
-    }
-    if (
-      event.key === "ArrowDown" ||
-      event.key === "ArrowUp" ||
-      event.key === "Home" ||
-      event.key === "End"
-    ) {
-      event.preventDefault();
-      const next =
-        event.key === "Home"
-          ? 0
-          : event.key === "End"
-            ? items.length - 1
-            : (current + (event.key === "ArrowDown" ? 1 : -1) + items.length) %
-              items.length;
-      items[next]?.focus();
-    }
-  }
   async function handleSignOut() {
     try {
       await signOut();
@@ -203,42 +176,137 @@ export function Navbar() {
     showToast("You’re signed out", "success");
   }
   return (
-    <header
-      className={`app-header${showSimilarSearch ? " has-similar-search" : ""}`}
-    >
+    <header className="app-header">
       <div
-        className={`header-content${showSimilarSearch ? " has-similar-search" : ""}`}
+        className={`header-bar${location.pathname === "/" ? " is-quiet" : ""}`}
       >
-        <button
-          aria-controls="nav-drawer"
-          aria-expanded={drawerOpen}
-          aria-haspopup="dialog"
-          aria-label="Menu"
-          className="page-menu-button"
-          onClick={() => {
-            setMenuOpen(false);
-            setDrawerOpen(true);
-          }}
-          ref={drawerButtonRef}
-          type="button"
-        >
-          <Menu aria-hidden="true" size={20} strokeWidth={1.5} />
-        </button>
-        <Link
-          aria-label="AniMatch home"
-          className="wordmark"
-          state={{ showHome: true }}
-          to="/"
-        >
-          <span>Ani</span>
-          <span className="wordmark-accent">Match</span>
-        </Link>
-        {showSimilarSearch && (
-          <div className="header-similar-search">
+        <div className="header-content">
+          <button
+            aria-controls="nav-drawer"
+            aria-expanded={drawerOpen}
+            aria-haspopup="dialog"
+            aria-label="Menu"
+            className="page-menu-button"
+            onClick={() => {
+              setMenuOpen(false);
+              setDrawerOpen(true);
+            }}
+            ref={drawerButtonRef}
+            type="button"
+          >
+            <Menu aria-hidden="true" size={20} strokeWidth={1.5} />
+          </button>
+          <Link
+            aria-label="AniMatch home"
+            className="wordmark"
+            state={{ showHome: true }}
+            to="/"
+          >
+            <span>Ani</span>
+            <span className="wordmark-accent">Match</span>
+          </Link>
+          <HeaderTabs pageLinks={pageLinks} quiet={location.pathname === "/"} />
+          <nav aria-label="Account" className="header-nav">
+            {user ? (
+              <>
+                <button
+                  aria-label="Include mature anime"
+                  aria-pressed={mature}
+                  className={`mature-toggle${mature ? " is-active" : ""}`}
+                  onClick={() => void setMature(!mature)}
+                  title="Show mature content"
+                  type="button"
+                >
+                  {mature ? "18+ on" : "18+ off"}
+                </button>
+                <div className="account-menu-wrap">
+                  <button
+                    aria-label="Account menu"
+                    aria-controls="account-menu"
+                    aria-expanded={menuOpen}
+                    aria-haspopup="menu"
+                    className="account-menu-button"
+                    onClick={() => {
+                      setDrawerOpen(false);
+                      setMenuOpen((open) => !open);
+                    }}
+                    ref={buttonRef}
+                    type="button"
+                  >
+                    <CircleUserRound aria-hidden="true" size={22} />
+                  </button>
+                  {menuOpen && (
+                    <div
+                      className="account-menu"
+                      id="account-menu"
+                      onKeyDown={(event) => onMenuKeyDown(event, closeMenu)}
+                      ref={menuRef}
+                      role="menu"
+                      aria-label="Account"
+                    >
+                      <NavLink
+                        onClick={() => closeMenu()}
+                        role="menuitem"
+                        to="/settings"
+                      >
+                        <Settings
+                          aria-hidden="true"
+                          size={18}
+                          strokeWidth={1.5}
+                        />
+                        Settings
+                      </NavLink>
+                      <button
+                        onClick={() => void handleSignOut()}
+                        role="menuitem"
+                        type="button"
+                      >
+                        <LogOut
+                          aria-hidden="true"
+                          size={18}
+                          strokeWidth={1.5}
+                        />
+                        Sign out
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <Link
+                  aria-label="Account settings"
+                  className="account-menu-button account-settings-link"
+                  to="/settings"
+                >
+                  <CircleUserRound aria-hidden="true" size={22} />
+                </Link>
+              </>
+            ) : (
+              <>
+                <button
+                  aria-label="Include mature anime"
+                  aria-pressed={mature}
+                  className={`mature-toggle${mature ? " is-active" : ""}`}
+                  onClick={() => setAuthPromptOpen(true)}
+                  title="Show mature content"
+                  type="button"
+                >
+                  {mature ? "18+ on" : "18+ off"}
+                </button>
+                <NavLink className="header-signin" to={signInPath}>
+                  Sign in
+                </NavLink>
+              </>
+            )}
+          </nav>
+        </div>
+      </div>
+      {showSimilarSearch && (
+        <div className="similar-search-bar">
+          <div className="similar-search-inner">
             <Search
               aria-hidden="true"
-              className="header-similar-search-icon"
-              size={16}
+              className="similar-search-icon"
+              size={18}
+              strokeWidth={1.5}
             />
             <TitleAutocomplete
               includeMature={mature}
@@ -248,101 +316,8 @@ export function Navbar() {
               selected={[]}
             />
           </div>
-        )}
-        <nav aria-label="Main navigation" className="header-nav">
-          {pageLinks.map((link) => (
-            <NavLink className={link.className} key={link.to} to={link.to}>
-              <link.Icon aria-hidden="true" size={18} strokeWidth={1.5} />
-              {link.label}
-            </NavLink>
-          ))}
-          {user ? (
-            <>
-              <button
-                aria-label="Include mature anime"
-                aria-pressed={mature}
-                className={`mature-toggle${mature ? " is-active" : ""}`}
-                onClick={() => void setMature(!mature)}
-                title="Show mature content"
-                type="button"
-              >
-                {mature ? "18+ on" : "18+ off"}
-              </button>
-              <div className="account-menu-wrap">
-                <button
-                  aria-label="Account menu"
-                  aria-controls="account-menu"
-                  aria-expanded={menuOpen}
-                  aria-haspopup="menu"
-                  className="account-menu-button"
-                  onClick={() => {
-                    setDrawerOpen(false);
-                    setMenuOpen((open) => !open);
-                  }}
-                  ref={buttonRef}
-                  type="button"
-                >
-                  <CircleUserRound aria-hidden="true" size={22} />
-                </button>
-                {menuOpen && (
-                  <div
-                    className="account-menu"
-                    id="account-menu"
-                    onKeyDown={(event) => onMenuKeyDown(event, closeMenu)}
-                    ref={menuRef}
-                    role="menu"
-                    aria-label="Account"
-                  >
-                    <NavLink
-                      onClick={() => closeMenu()}
-                      role="menuitem"
-                      to="/settings"
-                    >
-                      <Settings
-                        aria-hidden="true"
-                        size={18}
-                        strokeWidth={1.5}
-                      />
-                      Settings
-                    </NavLink>
-                    <button
-                      onClick={() => void handleSignOut()}
-                      role="menuitem"
-                      type="button"
-                    >
-                      <LogOut aria-hidden="true" size={18} strokeWidth={1.5} />
-                      Sign out
-                    </button>
-                  </div>
-                )}
-              </div>
-              <Link
-                aria-label="Account settings"
-                className="account-menu-button account-settings-link"
-                to="/settings"
-              >
-                <CircleUserRound aria-hidden="true" size={22} />
-              </Link>
-            </>
-          ) : (
-            <>
-              <button
-                aria-label="Include mature anime"
-                aria-pressed={mature}
-                className={`mature-toggle${mature ? " is-active" : ""}`}
-                onClick={() => setAuthPromptOpen(true)}
-                title="Show mature content"
-                type="button"
-              >
-                {mature ? "18+ on" : "18+ off"}
-              </button>
-              <NavLink className="header-signin" to={signInPath}>
-                Sign in
-              </NavLink>
-            </>
-          )}
-        </nav>
-      </div>
+        </div>
+      )}
       {drawerOpen && (
         <>
           <div aria-hidden="true" className="nav-drawer-scrim" />

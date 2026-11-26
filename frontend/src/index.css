@@ -125,10 +125,12 @@
 /* Shell                                                               */
 /* ------------------------------------------------------------------ */
 
+/* On desktop the page sits on a raised panel that the active tab joins. */
 .app-shell {
   display: flex;
   min-height: 100vh;
   flex-direction: column;
+  background: var(--surface);
 }
 
 .app-main {
@@ -160,18 +162,21 @@
 .app-header {
   position: relative;
   z-index: 30;
-  width: 100%;
-  max-width: calc(var(--page-width) + var(--gutter) * 2);
-  margin: 0 auto;
-  padding: 0 var(--gutter);
+}
+
+.header-bar {
+  border-bottom: 1px solid var(--line);
+  background: var(--graphite);
 }
 
 .header-content {
   display: flex;
+  max-width: calc(var(--page-width) + var(--gutter) * 2);
   height: 72px;
   align-items: center;
   gap: 24px;
-  border-bottom: 1px solid var(--line);
+  margin: 0 auto;
+  padding: 0 var(--gutter);
 }
 
 .wordmark {
@@ -189,40 +194,219 @@
   color: var(--lavender);
 }
 
-.header-similar-search {
-  position: relative;
-  width: 400px;
-  max-width: 100%;
-  margin-left: auto;
-  margin-right: 34px;
+/* Tabs: fixed page tabs, then closable tabs for opened pages. */
+.header-tabs {
+  display: flex;
+  min-width: 0;
+  height: 49px;
+  flex: 1;
+  align-self: flex-end;
+  align-items: stretch;
+  gap: 2px;
+  margin: 0 0 -1px 8px;
 }
 
-.header-similar-search-icon {
+.header-tab {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  border-bottom: 0;
+  border-radius: 10px 10px 0 0;
+  color: var(--muted);
+  white-space: nowrap;
+  transition: color var(--ease);
+}
+
+.header-tab:hover {
+  color: var(--paper);
+}
+
+.header-tab.active {
+  border-color: var(--line);
+  background: var(--surface);
+  color: var(--paper);
+}
+
+.header-tab.active > svg,
+.header-tab.active .header-open-tab-link > svg {
+  color: var(--lavender);
+}
+
+.header-tabs-divider {
+  width: 1px;
+  height: 20px;
+  flex-shrink: 0;
+  align-self: center;
+  margin: 0 5px 0 6px;
+  background: var(--line);
+}
+
+.header-open-tab {
+  min-width: 44px;
+  flex: 0 1 224px;
+  container-type: inline-size;
+  gap: 4px;
+  padding-right: 10px;
+}
+
+/* The open page keeps room for a few letters of its title. */
+.header-open-tab.active {
+  min-width: 120px;
+}
+
+.header-open-tab-link {
+  display: flex;
+  min-width: 0;
+  height: 100%;
+  flex: 1;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-open-tab-link > svg {
+  flex-shrink: 0;
+}
+
+.header-tab-thumb {
+  width: 14px;
+  height: 20px;
+  flex-shrink: 0;
+  border-radius: 3px;
+  background: var(--line) center / cover no-repeat;
+}
+
+.header-tab-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.header-tab-close {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.header-tab-close:hover {
+  background: var(--surface-2);
+  color: var(--paper);
+}
+
+.header-tab-close:focus-visible,
+.header-tab:focus-visible,
+.header-open-tab-link:focus-visible {
+  outline: 2px solid var(--lavender);
+  outline-offset: -2px;
+}
+
+/* Squeezed tabs keep only the active one's close button (or on hover). */
+@container (max-width: 110px) {
+  .header-open-tab:not(.active, :hover, :focus-within) .header-tab-close {
+    display: none;
+  }
+}
+
+.similar-search-bar {
+  border-bottom: 1px solid var(--line);
+}
+
+.similar-search-inner {
+  position: relative;
+  max-width: calc(var(--page-width) + var(--gutter) * 2);
+  margin: 0 auto;
+  padding: 14px var(--gutter);
+}
+
+.similar-search-inner .title-autocomplete {
+  max-width: 480px;
+}
+
+.similar-search-icon {
   position: absolute;
   z-index: 1;
   top: 50%;
-  left: 16px;
+  left: calc(var(--gutter) + 16px);
   color: var(--muted);
   pointer-events: none;
   transform: translateY(-50%);
 }
 
-.header-similar-search .title-autocomplete input {
-  height: 40px;
-  padding-left: 42px;
+.similar-search-inner .title-autocomplete input {
+  height: 44px;
+  padding-left: 44px;
+  border-radius: 999px;
+  background: var(--graphite);
+}
+
+/* Home page: a quiet header with no tabs strip and no rule under it. */
+.app-shell:has(.header-bar.is-quiet),
+.header-bar.is-quiet {
+  border-bottom-color: transparent;
+  background: var(--graphite);
+}
+
+.tabs-menu-wrap {
+  position: relative;
+  margin-left: auto;
+}
+
+.tabs-menu-wrap + .header-nav {
+  margin-left: 0;
+}
+
+.tabs-menu-button {
+  display: inline-flex;
+  height: 36px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
   border-radius: 999px;
   background: var(--surface);
+  color: var(--paper);
+  cursor: pointer;
+  transition: border-color var(--ease);
+}
+
+.tabs-menu-button:hover,
+.tabs-menu-button[aria-expanded="true"] {
+  border-color: var(--lavender);
+}
+
+.tabs-menu-count {
+  color: var(--lavender);
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.tabs-menu {
+  width: 280px;
+}
+
+.tabs-menu-divider {
+  height: 1px;
+  margin: 6px 4px;
+  background: var(--line);
 }
 
 .header-nav {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
-  gap: 28px;
+  gap: 24px;
   margin-left: auto;
-}
-
-.has-similar-search .header-nav {
-  margin-left: 0;
 }
 
 .header-nav > a {
@@ -237,16 +421,6 @@
 }
 
 .header-nav > a:hover {
-  color: var(--lavender);
-}
-
-.header-nav > a > svg {
-  color: var(--muted);
-  transition: color var(--ease);
-}
-
-.header-nav > a:hover > svg,
-.header-nav > a.active > svg {
   color: var(--lavender);
 }
 
@@ -550,32 +724,41 @@ button.nav-drawer-row:hover {
   }
 }
 
-@media (max-width: 960px) {
-  .header-content.has-similar-search {
-    height: auto;
-    flex-wrap: wrap;
-    padding: 14px 0;
-    row-gap: 12px;
+@media (max-width: 720px) {
+  /* Phones keep the flat page and the drawer; tabs are desktop only. */
+  .app-shell,
+  .header-bar {
+    background: var(--graphite);
   }
 
-  .header-content.has-similar-search .header-similar-search {
-    order: 3;
-    width: 100%;
-    margin: 0;
+  .header-bar {
+    border-bottom: 0;
   }
 
-  .header-content.has-similar-search .header-nav {
+  .header-content {
+    gap: 12px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .header-tabs,
+  .tabs-menu-wrap {
+    display: none;
+  }
+
+  .header-bar.is-quiet .header-content {
+    border-bottom-color: transparent;
+  }
+
+  .tabs-menu-wrap + .header-nav {
     margin-left: auto;
   }
 
-  .has-similar-search .header-nav > a {
-    height: 40px;
+  .similar-search-bar {
+    border-bottom: 0;
   }
-}
 
-@media (max-width: 720px) {
-  .header-content {
-    gap: 12px;
+  .similar-search-inner .title-autocomplete {
+    max-width: none;
   }
 
   .page-menu-button,

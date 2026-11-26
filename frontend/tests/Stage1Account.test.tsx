@@ -29,6 +29,7 @@ vi.mock("../src/api/hooks", () => ({
   queryKeys: { me: ["me"] },
   useProviders: () => ({ data: { google: false } }),
   useListStats: () => ({ data: undefined }),
+  useAnimeDetail: () => ({ data: undefined }),
   useQuizQuestions: () => ({ data: undefined }),
   useMe: () => ({
     data: {
@@ -251,7 +252,7 @@ describe("stage 1 account flows", () => {
       setMature: vi.fn(),
       signOut: vi.fn(),
     });
-    renderApp(<Navbar />, "/");
+    renderApp(<Navbar />, "/browse");
     expect(screen.getByRole("link", { name: "My list" })).toHaveAttribute(
       "href",
       "/list"
@@ -374,7 +375,7 @@ describe("stage 1 account flows", () => {
   });
 
   it("shows only Take the quiz and Sign in while signed out", () => {
-    renderApp(<Navbar />, "/");
+    renderApp(<Navbar />, "/browse");
     expect(screen.getByRole("link", { name: "Take the quiz" })).toHaveAttribute(
       "href",
       "/quiz"
