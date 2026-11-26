@@ -179,6 +179,22 @@ describe("My list page", () => {
   });
 });
 
+describe("list export", () => {
+  it("links JSON and MAL exports with the mature setting", async () => {
+    vi.mocked(api.list).mockResolvedValue(response(1, 1, true));
+    renderPage();
+    expect(
+      await screen.findByRole("link", { name: "Export JSON" })
+    ).toHaveAttribute(
+      "href",
+      "/api/list/export?format=json&includeMature=true"
+    );
+    expect(
+      screen.getByRole("link", { name: "Export for MyAnimeList" })
+    ).toHaveAttribute("href", "/api/list/export?format=xml&includeMature=true");
+  });
+});
+
 describe("episode progress", () => {
   it("steps progress up through the list API and stops at the episode count", async () => {
     const page = response(1, 1, true);

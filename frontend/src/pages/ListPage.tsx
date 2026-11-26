@@ -6,7 +6,7 @@ import {
   useNavigate,
   useSearchParams,
 } from "react-router-dom";
-import { ApiError } from "../api/client";
+import { ApiError, api } from "../api/client";
 import { useList, useListStats } from "../api/hooks";
 import type { ListSort, ListStatus } from "../api/types";
 import { useAuth } from "../auth/useAuth";
@@ -141,6 +141,20 @@ export function ListPage() {
           <Link className="text-link" to="/import">
             Import from MyAnimeList
           </Link>
+          <a
+            className="text-link"
+            download
+            href={api.listExportUrl("json", mature)}
+          >
+            Export JSON
+          </a>
+          <a
+            className="text-link"
+            download
+            href={api.listExportUrl("xml", mature)}
+          >
+            Export for MyAnimeList
+          </a>
         </div>
       </header>
       <div className="list-controls-row">

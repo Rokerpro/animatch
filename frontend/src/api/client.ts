@@ -274,6 +274,10 @@ export const api = {
     });
   },
   googleLogin: () => `${baseUrl}/api/auth/google/login`,
+  // Plain links: the browser downloads using the session cookie.
+  listExportUrl: (format: "json" | "xml", includeMature: boolean) =>
+    `${baseUrl}/api/list/export?format=${format}&includeMature=${includeMature}`,
+  accountExportUrl: () => `${baseUrl}/api/auth/me/export`,
   csrf: (signal?: AbortSignal) =>
     request<CsrfTokenResponse>("/api/auth/csrf", { signal }),
   updateMe: async (body: UserUpdateRequest) => {

@@ -437,6 +437,21 @@ describe("stage 1 account flows", () => {
     );
   });
 
+  it("links the data download to the account export endpoint", () => {
+    vi.mocked(useAuth).mockReturnValue({
+      user,
+      authLoading: false,
+      mature: false,
+      refresh: vi.fn(),
+      setMature: vi.fn(),
+      signOut: vi.fn(),
+    });
+    renderApp(<SettingsPage />);
+    const link = screen.getByRole("link", { name: "Download" });
+    expect(link).toHaveAttribute("href", "/api/auth/me/export");
+    expect(link).toHaveAttribute("download");
+  });
+
   it("clears local results after account deletion", async () => {
     const signOut = vi.fn().mockResolvedValue(undefined);
     vi.mocked(useAuth).mockReturnValue({
