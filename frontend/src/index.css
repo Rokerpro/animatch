@@ -449,13 +449,13 @@
   height: 40px;
   padding: 0 20px;
   border-radius: 999px;
-  background: var(--accent);
+  background: var(--paper);
   color: var(--graphite);
   font-weight: 700;
 }
 
 .header-nav > a.header-signin:hover {
-  background: #b8acff;
+  background: #ffffff;
   color: var(--graphite);
 }
 
@@ -940,13 +940,13 @@ button.nav-drawer-row:hover {
 
 .primary-action,
 .auth-form button[type="submit"] {
-  background: var(--accent);
+  background: var(--paper);
   color: var(--graphite);
 }
 
 .primary-action:hover:not(:disabled),
 .auth-form button[type="submit"]:hover:not(:disabled) {
-  background: #b8acff;
+  background: #ffffff;
 }
 
 .secondary-action,
@@ -2591,6 +2591,21 @@ input[type="radio"] {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
+}
+
+.for-you-heading-actions a {
+  height: 44px;
+  padding: 0 24px;
+}
+
+.for-you-heading-actions .secondary-action {
+  border-color: transparent;
+  background: var(--fill-strong);
+}
+
+.for-you-heading-actions .secondary-action:hover {
+  border-color: transparent;
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .for-you-empty-actions {

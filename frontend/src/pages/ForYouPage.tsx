@@ -57,8 +57,8 @@ export function ForYouPage() {
         <PageTitle lead="For" accent="You" />
         <p className="page-subtitle">
           {total > 0
-            ? `Picked from your quiz answers and the ${total} ${total === 1 ? "title" : "titles"} on your list.`
-            : "Picked from your quiz answers and your list."}
+            ? `Picked from your quiz answers and the ${total} ${total === 1 ? "title" : "titles"} on your list`
+            : "Picked from your quiz answers and your list"}
         </p>
       </div>
       <div className="page-header-aside for-you-heading-actions">
