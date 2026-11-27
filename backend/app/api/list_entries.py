@@ -481,11 +481,15 @@ async def import_mal_list(
                     anime_id=anime.id,
                     status=item.status,
                     rating=item.rating,
-                    # Same cap the list PUT enforces.
+                    # Same cap and completed rule the list PUT applies.
                     progress=(
-                        min(item.progress, anime.episodes)
-                        if anime.episodes is not None
-                        else item.progress
+                        item.progress
+                        if anime.episodes is None
+                        else (
+                            anime.episodes
+                            if item.status == "completed"
+                            else min(item.progress, anime.episodes)
+                        )
                     ),
                     source="mal_import",
                 )
@@ -580,6 +584,15 @@ async def put_list_entry(
             entry.rating = new_rating
         if "progress" in provided:
             entry.progress = payload.progress
+
+    # Completing a title means every episode is watched.
+    if (
+        new_status is not None
+        and new_status.value == "completed"
+        and "progress" not in provided
+        and anime.episodes is not None
+    ):
+        entry.progress = anime.episodes
 
     await db.commit()
     await db.refresh(entry)

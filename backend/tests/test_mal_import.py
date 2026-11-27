@@ -276,3 +276,18 @@ async def test_watched_episodes_round_trip_and_are_capped(
     }
     # MAL 40750 is AniList 113425, which has 12 episodes in the fixture catalog.
     assert progress == {16498: 7, 113425: 12, 5114: 0}
+
+
+@pytest.mark.asyncio
+async def test_mal_import_marks_completed_titles_fully_watched(
+    client, seeded_catalog, register_user
+):
+    headers = {"X-CSRF-Token": await register_user("mal-complete@example.com")}
+    xml = b"""<myanimelist>
+      <anime><series_animedb_id>40750</series_animedb_id><series_title>Done</series_title><my_watched_episodes>0</my_watched_episodes><my_status>Completed</my_status></anime>
+    </myanimelist>"""
+    imported = await client.post("/api/list/import", content=xml, headers=headers)
+    assert imported.status_code == 200, imported.text
+    items = (await client.get("/api/list?includeMature=true")).json()["items"]
+    # MAL 40750 is AniList 113425, which has 12 episodes in the fixture catalog.
+    assert [(i["animeId"], i["progress"]) for i in items] == [(113425, 12)]

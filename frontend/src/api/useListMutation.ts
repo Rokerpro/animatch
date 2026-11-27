@@ -82,7 +82,13 @@ export function useListMutation() {
                       ...entry,
                       status: change.status,
                       rating: change.rating,
-                      progress: change.progress ?? entry.progress,
+                      // Mirrors the server: completing fills every episode.
+                      progress:
+                        change.progress ??
+                        (change.body.status === "completed" &&
+                        entry.anime.episodes != null
+                          ? entry.anime.episodes
+                          : entry.progress),
                     }
                   : entry
               ),

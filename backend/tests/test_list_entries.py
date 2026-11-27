@@ -491,3 +491,34 @@ async def test_progress_updates_validates_and_exports(
     assert exported[0]["progress"] == 5
     account = (await client.get("/api/auth/me/export")).json()
     assert account["list"][0]["progress"] == 5
+
+
+@pytest.mark.asyncio
+async def test_completing_a_title_fills_every_episode(
+    client, seeded_catalog, register_user
+):
+    headers = {"X-CSRF-Token": await register_user("complete@example.com")}
+    created = await client.put(
+        "/api/list/154587", json={"status": "completed"}, headers=headers
+    )
+    # The fixture title has 28 episodes.
+    assert created.json()["progress"] == 28
+    await client.put(
+        "/api/list/154587",
+        json={"status": "watching", "progress": 3},
+        headers=headers,
+    )
+    completed = await client.put(
+        "/api/list/154587", json={"status": "completed"}, headers=headers
+    )
+    assert completed.json()["progress"] == 28
+    # An explicit progress in the same request wins.
+    explicit = await client.put(
+        "/api/list/154587",
+        json={"status": "completed", "progress": 10},
+        headers=headers,
+    )
+    assert explicit.json()["progress"] == 10
+    # Rating a completed title leaves its progress alone.
+    rated = await client.put("/api/list/154587", json={"rating": 8}, headers=headers)
+    assert rated.json()["progress"] == 10

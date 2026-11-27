@@ -241,6 +241,32 @@ describe("episode progress", () => {
     await waitFor(() => expect(plus).toBeDisabled());
   });
 
+  it("jumps the counter to every episode when a title is completed", async () => {
+    const page = response(1, 1, true);
+    page.items[0] = {
+      ...page.items[0],
+      status: "watching",
+      progress: 3,
+      anime: { ...page.items[0].anime, episodes: 12 },
+    };
+    vi.mocked(api.list).mockResolvedValue(page);
+    // Left pending so only the optimistic update is on screen.
+    const update = vi
+      .spyOn(api, "updateListEntry")
+      .mockReturnValue(new Promise(() => {}));
+    renderPage();
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: "Change list status for Example, Watching",
+      })
+    );
+    fireEvent.click(screen.getByRole("menuitemradio", { name: /Completed/ }));
+    await waitFor(() =>
+      expect(update).toHaveBeenCalledWith(7, { status: "completed" })
+    );
+    expect(await screen.findByText("12 / 12")).toBeInTheDocument();
+  });
+
   it("hides the progress control for planned titles", async () => {
     vi.mocked(api.list).mockResolvedValue(response(1, 1, true));
     renderPage();
