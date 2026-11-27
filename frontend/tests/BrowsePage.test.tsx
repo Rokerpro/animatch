@@ -60,7 +60,9 @@ describe("BrowsePage URL state", () => {
         </MemoryRouter>
       </QueryClientProvider>
     );
-    expect(screen.getByText("40 anime")).toBeInTheDocument();
+    expect(
+      screen.getByText("40 anime, sorted by popularity")
+    ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "2" }));
     expect(screen.getByText("?genres=Action&page=2")).toBeInTheDocument();
   });

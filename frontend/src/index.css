@@ -1827,22 +1827,28 @@ button.filter-chip:hover {
   height: 44px;
   place-items: center;
   padding: 0 16px;
-  border: 1px solid var(--line);
+  border: 0;
   border-radius: 999px;
-  background: transparent;
+  background: var(--fill);
   color: var(--paper);
   cursor: pointer;
-  font-weight: 500;
-  transition: border-color var(--ease);
+  transition: background var(--ease);
+}
+
+.pagination button:first-child,
+.pagination button:last-child {
+  min-width: 120px;
+  border: 1px solid var(--line);
+  background: transparent;
 }
 
 .pagination button:hover:not(:disabled) {
-  border-color: var(--muted);
+  background: rgba(255, 255, 255, 0.1);
 }
 
-.pagination button[aria-current="page"] {
-  border-color: var(--accent);
-  background: var(--accent);
+.pagination button[aria-current="page"],
+.pagination button[aria-current="page"]:hover {
+  background: var(--paper);
   color: var(--graphite);
   font-weight: 700;
 }
@@ -2227,19 +2233,69 @@ button.filter-chip:hover {
 /* ------------------------------------------------------------------ */
 
 .result-total {
-  margin: 0;
-  padding-bottom: 6px;
+  margin-top: 12px;
 }
 
 .filter-section {
-  margin-bottom: 40px;
+  margin-bottom: 48px;
 }
 
 .filter-primary-controls {
-  display: grid;
-  align-items: end;
-  gap: 24px;
-  grid-template-columns: minmax(220px, 440px) 180px 140px 180px auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.filter-search {
+  width: 360px;
+  max-width: 100%;
+}
+
+.filter-search input {
+  height: 44px;
+  background: var(--graphite);
+}
+
+/* Label and control share one pill: "Format  Any format". */
+.filter-primary-controls label.filter-field {
+  position: relative;
+  display: flex;
+  width: 182px;
+  height: 44px;
+  flex-direction: row;
+  align-items: center;
+  gap: 0;
+  padding-left: 18px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: var(--graphite);
+  transition:
+    border-color var(--ease),
+    box-shadow var(--ease);
+}
+
+.filter-primary-controls label.filter-field:first-of-type {
+  width: 220px;
+}
+
+.filter-primary-controls label.filter-field:focus-within {
+  border-color: var(--accent);
+  box-shadow: var(--ring);
+}
+
+.filter-primary-controls label.filter-field select,
+.filter-primary-controls label.filter-field input {
+  height: 42px;
+  flex: 1;
+  padding-left: 8px;
+  border: 0;
+  background-color: transparent;
+  box-shadow: none;
+}
+
+.filter-primary-controls label.filter-field input {
+  padding-right: 12px;
 }
 
 .filter-field {
@@ -2250,6 +2306,7 @@ button.filter-chip:hover {
 }
 
 .filter-label {
+  flex: none;
   color: var(--muted);
 }
 
@@ -2272,7 +2329,9 @@ button.filter-chip:hover {
 }
 
 .more-filters-toggle {
-  justify-self: start;
+  height: 44px;
+  justify-content: flex-start;
+  font-weight: 400;
 }
 
 .more-filters-toggle:not(:has(.filter-count)) {
@@ -2413,21 +2472,17 @@ input[type="radio"] {
 }
 
 .filter-drawer .filter-primary-controls {
-  grid-template-columns: 1fr;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.filter-drawer .filter-search,
+.filter-drawer .filter-primary-controls label.filter-field {
+  width: 100%;
 }
 
 .filter-drawer .more-filters {
   grid-template-columns: 1fr;
-}
-
-@media (max-width: 1100px) {
-  .filter-primary-controls {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .filter-search {
-    grid-column: 1 / -1;
-  }
 }
 
 @media (max-width: 640px) {
