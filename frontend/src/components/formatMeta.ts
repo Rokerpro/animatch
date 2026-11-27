@@ -28,14 +28,19 @@ export function statusLabel(status?: string | null): string | null {
   return STATUS_LABELS[status] ?? status.toLowerCase().replace(/_/g, " ");
 }
 
-/** "TV, 2020, 24 eps" */
+/** "TV, 2020, 24 eps", or "TV, 2020, 24 episodes" when `long`. */
 export function cardMeta(
-  anime: Pick<AnimeCardData, "format" | "year" | "episodes">
+  anime: Pick<AnimeCardData, "format" | "year" | "episodes">,
+  long = false
 ): string {
   return [
     formatLabel(anime.format),
     anime.year,
-    anime.episodes ? `${anime.episodes} eps` : null,
+    long
+      ? episodesText(anime.episodes)
+      : anime.episodes
+        ? `${anime.episodes} eps`
+        : null,
   ]
     .filter((part) => part !== null && part !== undefined && part !== "")
     .join(", ");

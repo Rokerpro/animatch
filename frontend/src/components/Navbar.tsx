@@ -113,6 +113,7 @@ export function Navbar() {
   const showSimilarSearch =
     location.pathname === "/browse" ||
     location.pathname === "/for-you" ||
+    location.pathname === "/list" ||
     location.pathname === "/results" ||
     location.pathname.startsWith("/similar/") ||
     location.pathname.startsWith("/anime/");

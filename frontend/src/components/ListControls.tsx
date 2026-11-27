@@ -49,7 +49,7 @@ export function ListControl({
   status: ListStatus | null;
   rating: number | null;
   statusLoading?: boolean;
-  variant?: "card" | "detail";
+  variant?: "card" | "detail" | "icon";
 }) {
   const { user } = useAuth();
   const location = useLocation();
@@ -411,25 +411,34 @@ export function ListProgressControl({
   }
   return (
     <div className="list-progress-control">
-      <span>Episodes</span>
+      <div className="list-progress-copy">
+        <span aria-hidden="true">Episode</span>
+        <output aria-label={`Episodes watched of ${anime.title}`}>
+          {progress} / {total ?? "?"}
+        </output>
+        {total !== null && total > 0 && (
+          <span aria-hidden="true" className="list-progress-track">
+            <span
+              style={{ width: `${Math.min(100, (progress / total) * 100)}%` }}
+            />
+          </span>
+        )}
+      </div>
       <button
         aria-label={`One fewer episode watched of ${anime.title}`}
         disabled={mutation.isPending || progress <= 0}
         onClick={() => step(-1)}
         type="button"
       >
-        <Minus aria-hidden="true" size={14} />
+        <Minus aria-hidden="true" size={16} />
       </button>
-      <output aria-label={`Episodes watched of ${anime.title}`}>
-        {progress} / {total ?? "?"}
-      </output>
       <button
         aria-label={`One more episode watched of ${anime.title}`}
         disabled={mutation.isPending || (total !== null && progress >= total)}
         onClick={() => step(1)}
         type="button"
       >
-        <Plus aria-hidden="true" size={14} />
+        <Plus aria-hidden="true" size={16} />
       </button>
     </div>
   );

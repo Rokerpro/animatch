@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { Download } from "lucide-react";
 import {
   Link,
   Navigate,
@@ -21,6 +22,7 @@ import { Pagination } from "../components/Pagination";
 import { PosterImage } from "../components/PosterImage";
 import { ErrorState, PosterSkeleton } from "../components/RequestStates";
 import { PageTitle } from "../components/PageTitle";
+import { cardMeta } from "../components/formatMeta";
 import "../styles/list.css";
 
 const tabs: { value: ListStatus | "all"; label: string }[] = [
@@ -99,7 +101,7 @@ export function ListPage() {
         <p>Redirecting to sign in…</p>
       </section>
     );
-  const title = <PageTitle lead="My" accent="List" />;
+  const title = <PageTitle lead="My List" />;
   if (list.isLoading && !list.data)
     return (
       <section className="browse-page my-list-page">
@@ -133,28 +135,31 @@ export function ListPage() {
   return (
     <section className="browse-page my-list-page">
       <header className="page-header">
-        {title}
+        <div>
+          {title}
+          <p className="page-subtitle list-total">
+            {overallTotal} {overallTotal === 1 ? "title" : "titles"}. Track
+            episodes, rate what you finish.
+          </p>
+        </div>
         <div className="page-header-aside list-heading-actions">
-          <span className="list-total">
-            {overallTotal} {overallTotal === 1 ? "title" : "titles"}
-          </span>
           <Link className="text-link" to="/import">
             Import from MyAnimeList
           </Link>
-          <a
-            className="text-link"
-            download
-            href={api.listExportUrl("json", mature)}
-          >
-            Export JSON
-          </a>
-          <a
-            className="text-link"
-            download
-            href={api.listExportUrl("xml", mature)}
-          >
-            Export for MyAnimeList
-          </a>
+          <details className="list-export">
+            <summary>
+              <Download aria-hidden="true" size={18} strokeWidth={1.5} />
+              Export
+            </summary>
+            <div className="list-export-menu">
+              <a download href={api.listExportUrl("json", mature)}>
+                Export JSON
+              </a>
+              <a download href={api.listExportUrl("xml", mature)}>
+                Export for MyAnimeList
+              </a>
+            </div>
+          </details>
         </div>
       </header>
       <div className="list-controls-row">
@@ -214,7 +219,7 @@ export function ListPage() {
           })}
         </div>
         <label className="list-sort-control">
-          <span>Sort by</span>
+          <span>Sort</span>
           <select
             aria-label="Sort list"
             onChange={(event) => setParam("sort", event.target.value)}
@@ -234,48 +239,33 @@ export function ListPage() {
       >
         {list.data.items.length ? (
           <>
-            <p className="list-showing">
-              Showing {list.data.items.length} of {list.data.pageInfo.total}{" "}
-              titles
-            </p>
-            <div className="my-list-grid">
+            <ul aria-label="Your titles" className="my-list-rows">
               {list.data.items.map((entry) => (
-                <article className="anime-card my-list-card" key={entry.id}>
-                  <div className="anime-poster">
+                <li className="my-list-row" key={entry.id}>
+                  <Link
+                    aria-hidden="true"
+                    className="my-list-cover"
+                    tabIndex={-1}
+                    to={`/anime/${entry.animeId}`}
+                  >
+                    <PosterImage
+                      alt=""
+                      color={entry.anime.coverColor}
+                      src={entry.anime.coverImage}
+                    />
+                  </Link>
+                  <div className="my-list-copy">
                     <Link
-                      aria-label={entry.anime.title}
-                      to={`/anime/${entry.animeId}`}
-                    >
-                      <PosterImage
-                        alt={entry.anime.title}
-                        color={entry.anime.coverColor}
-                        src={entry.anime.coverImage}
-                      />
-                    </Link>
-                    <div className="anime-save-control">
-                      <ListControl
-                        anime={entry.anime}
-                        status={entry.status}
-                        rating={entry.rating}
-                        variant="card"
-                      />
-                    </div>
-                  </div>
-                  <div className="my-list-card-content">
-                    <Link
-                      className="my-list-card-title"
+                      className="my-list-title"
                       to={`/anime/${entry.animeId}`}
                     >
                       {entry.anime.title}
                     </Link>
-                    <p className="my-list-status-label">
-                      {listStatusLabels[entry.status]}
+                    <p className="my-list-meta">
+                      {cardMeta(entry.anime, true)}
                     </p>
-                    <ListRatingControl
-                      anime={entry.anime}
-                      status={entry.status}
-                      rating={entry.rating}
-                    />
+                  </div>
+                  <div className="my-list-progress">
                     {entry.status !== "planning" && (
                       <ListProgressControl
                         anime={entry.anime}
@@ -285,9 +275,25 @@ export function ListPage() {
                       />
                     )}
                   </div>
-                </article>
+                  <div className="my-list-rating">
+                    <span aria-hidden="true" className="my-list-label">
+                      Rating
+                    </span>
+                    <ListRatingControl
+                      anime={entry.anime}
+                      status={entry.status}
+                      rating={entry.rating}
+                    />
+                  </div>
+                  <ListControl
+                    anime={entry.anime}
+                    status={entry.status}
+                    rating={entry.rating}
+                    variant="icon"
+                  />
+                </li>
               ))}
-            </div>
+            </ul>
             <Pagination
               page={page}
               lastPage={Math.max(

@@ -27,6 +27,9 @@ function response(total = 0, lastPage = 1, withItem = false): ListResponse {
               id: 7,
               title: "Example",
               coverImage: "https://img.test/7.jpg",
+              format: "TV",
+              year: 2024,
+              episodes: 12,
             },
             status: "planning" as const,
             rating: null,
@@ -129,9 +132,22 @@ describe("My list page", () => {
   it("supports keyboard status tabs, sorting, numbered pagination, and total count", async () => {
     vi.spyOn(api, "list").mockResolvedValue(response(49, 3, true));
     renderPage("/list?page=2");
-    expect(await screen.findByText("49 titles")).toBeInTheDocument();
+    expect(
+      await screen.findByText(
+        "49 titles. Track episodes, rate what you finish."
+      )
+    ).toBeInTheDocument();
     expect(await screen.findByText("22")).toHaveClass("list-tab-count");
-    expect(screen.getByText("Showing 1 of 49 titles")).toBeInTheDocument();
+    expect(screen.getByRole("list", { name: "Your titles" })).toHaveTextContent(
+      "TV, 2024, 12 episodes"
+    );
+    const row = screen.getByRole("list", { name: "Your titles" });
+    expect(row).toContainElement(
+      screen.getByRole("button", {
+        name: "Change list status for Example, Planning",
+      })
+    );
+    expect(row).toHaveTextContent("Not rated");
     expect(api.list).toHaveBeenCalledWith({
       status: undefined,
       sort: "updated",
