@@ -17,8 +17,12 @@ from app.schemas.anime import (
     AnimeCard,
     AnimeDetail,
     AnimeListResponse,
+    ExtraItem,
     FiltersResponse,
+    MainStoryItem,
     PageInfo,
+    SeasonItem,
+    SeasonsResponse,
     TagDetail,
 )
 from app.services.maturity import (
@@ -27,6 +31,7 @@ from app.services.maturity import (
     load_anime_tag_ranks,
     mature_anime_clause,
 )
+from app.services.seasons import load_seasons
 from app.services.title_search import normalized_title_column, title_search_clause
 
 router = APIRouter(
@@ -390,3 +395,65 @@ async def get_anime_detail(
     ]
 
     return serialize_anime_detail(anime, tag_details=tag_details)
+
+
+def season_fields(anime: Anime) -> dict[str, object]:
+    """Fields shared by main-story and extra items."""
+    return SeasonItem(
+        id=anime.id,
+        title=(
+            anime.title_english
+            or anime.title_romaji
+            or anime.title_native
+            or "Unknown Title"
+        ),
+        cover_image=anime.cover_image_url,
+        cover_color=anime.cover_color,
+        format=anime.format,
+        year=anime.season_year,
+        episodes=anime.episodes,
+    ).model_dump()
+
+
+@router.get("/anime/{id}/seasons", response_model=SeasonsResponse)
+async def get_anime_seasons(
+    id: int,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    include_mature: Annotated[bool, Query(alias="includeMature")] = False,
+) -> SeasonsResponse:
+    """Main story (PREQUEL/SEQUEL chain) in release order, plus related extras.
+
+    Mature titles are dropped on the server, and linked titles outside the
+    catalog are left out without breaking the chain. A standalone show returns
+    empty lists.
+    """
+    stmt = (
+        select(Anime)
+        .where(Anime.id == id)
+        .options(selectinload(Anime.genres), selectinload(Anime.tags))
+    )
+    anime = (await db.execute(stmt)).scalar_one_or_none()
+    if anime is None or (
+        not include_mature
+        and is_mature_anime(anime, await load_anime_tag_ranks(db, anime))
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Anime with id {id} not found",
+        )
+
+    main, extras = await load_seasons(db, id, include_mature)
+    if len(main) <= 1 and not extras:
+        return SeasonsResponse()
+    return SeasonsResponse(
+        main=[
+            MainStoryItem(
+                **season_fields(entry), position=index, is_current=entry.id == id
+            )
+            for index, entry in enumerate(main, start=1)
+        ],
+        extras=[
+            ExtraItem(**season_fields(entry), relation=relation)
+            for entry, relation in extras
+        ],
+    )
