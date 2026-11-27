@@ -289,7 +289,13 @@ async def export_list(
 
     if export_format == "xml":
         rows = [
-            (entry.anime.id_mal, title_of(entry), entry.status, entry.rating)
+            (
+                entry.anime.id_mal,
+                title_of(entry),
+                entry.status,
+                entry.rating,
+                entry.progress,
+            )
             for entry in entries
             if entry.anime.id_mal
         ]
@@ -475,6 +481,12 @@ async def import_mal_list(
                     anime_id=anime.id,
                     status=item.status,
                     rating=item.rating,
+                    # Same cap the list PUT enforces.
+                    progress=(
+                        min(item.progress, anime.episodes)
+                        if anime.episodes is not None
+                        else item.progress
+                    ),
                     source="mal_import",
                 )
             )

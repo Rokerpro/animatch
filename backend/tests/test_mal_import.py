@@ -247,3 +247,32 @@ async def test_only_dry_run_query_parameter_is_supported(client, register_user):
         "/api/list/import?other=true", content=XML, headers={"X-CSRF-Token": csrf}
     )
     assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_watched_episodes_round_trip_and_are_capped(
+    client, seeded_catalog, register_user
+):
+    headers = {"X-CSRF-Token": await register_user("mal-progress@example.com")}
+    await client.put(
+        "/api/list/16498", json={"status": "watching", "progress": 7}, headers=headers
+    )
+    exported = (await client.get("/api/list/export?format=xml")).content
+    assert b"<my_watched_episodes>7</my_watched_episodes>" in exported
+
+    headers = {"X-CSRF-Token": await register_user("mal-progress-2@example.com")}
+    imported = await client.post("/api/list/import", content=exported, headers=headers)
+    assert imported.status_code == 200, imported.text
+    xml = b"""<myanimelist>
+      <anime><series_animedb_id>40750</series_animedb_id><series_title>Over</series_title><my_watched_episodes>99</my_watched_episodes><my_status>Watching</my_status></anime>
+      <anime><series_animedb_id>5114</series_animedb_id><series_title>Junk</series_title><my_watched_episodes>abc</my_watched_episodes><my_status>Watching</my_status></anime>
+    </myanimelist>"""
+    assert (
+        await client.post("/api/list/import", content=xml, headers=headers)
+    ).status_code == 200
+    progress = {
+        item["animeId"]: item["progress"]
+        for item in (await client.get("/api/list?includeMature=true")).json()["items"]
+    }
+    # MAL 40750 is AniList 113425, which has 12 episodes in the fixture catalog.
+    assert progress == {16498: 7, 113425: 12, 5114: 0}

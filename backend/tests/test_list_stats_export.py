@@ -70,7 +70,8 @@ async def test_xml_export_round_trips_through_the_importer(
 
 
 def test_build_mal_xml_escapes_titles_and_parses_back():
-    xml = build_mal_xml([(1, "Tom & <Jerry>", "completed", 9)])
+    xml = build_mal_xml([(1, "Tom & <Jerry>", "completed", 9, 12)])
     assert "Tom &amp; &lt;Jerry&gt;" in xml
     _, parsed = parse_mal_xml(xml.encode())
     assert parsed[0].status == "completed" and parsed[0].rating == 9
+    assert parsed[0].progress == 12
