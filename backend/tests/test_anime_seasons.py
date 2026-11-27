@@ -202,3 +202,19 @@ async def test_standalone_show_returns_nothing(client, db_session):
     assert await seasons(client, 2) == {"main": [], "extras": []}
     missing = await client.get(f"/api/anime/{BASE + 99}/seasons")
     assert missing.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_ovas_in_the_sequel_chain_are_listed_as_extras(client, db_session):
+    await add_anime(db_session, (1, 2013, None), (2, 2014, None), (3, 2017, None))
+    ova = await db_session.get(Anime, BASE + 2)
+    ova.format = "OVA"
+    await db_session.commit()
+    await link(db_session, *chain(1, 2), *chain(2, 3))
+    body = await seasons(client, 1)
+    assert main_ids(body) == [1, 3]
+    assert [(item["id"] - BASE, item["relation"]) for item in body["extras"]] == [
+        (2, "SIDE_STORY")
+    ]
+    # On the OVA's own page it stays in the main story as the current entry.
+    assert main_ids(await seasons(client, 2)) == [1, 2, 3]

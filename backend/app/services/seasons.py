@@ -17,6 +17,8 @@ from app.services.maturity import mature_anime_clause
 MAIN_TYPES = ("PREQUEL", "SEQUEL")
 EXTRA_TYPES = ("SIDE_STORY", "SPIN_OFF", "SUMMARY", "ALTERNATIVE")
 SEASON_RANK = {"WINTER": 0, "SPRING": 1, "SUMMER": 2, "FALL": 3}
+# AniList often links OVAs and specials as sequels; they read as extras.
+EXTRA_FORMATS = frozenset({"OVA", "SPECIAL", "MUSIC"})
 # shortcut: stops the walk on very large PREQUEL/SEQUEL graphs; raise it if a
 # real franchise gets cut off.
 MAX_CHAIN = 200
@@ -63,6 +65,9 @@ async def load_seasons(
 ) -> tuple[list[Anime], list[tuple[Anime, str]]]:
     """Return the visible main story in release order and the visible extras.
 
+    OVAs, specials and music videos found in the PREQUEL/SEQUEL chain are
+    listed as side stories, unless one is the requested title.
+
     Linked titles outside the catalog are left out: only their id is known.
     """
     chain = await main_story_ids(db, anime_id)
@@ -82,9 +87,18 @@ async def load_seasons(
         query = query.where(~mature_anime_clause())
     found = {anime.id: anime for anime in (await db.execute(query)).scalars()}
 
-    main = sorted((found[i] for i in chain if i in found), key=release_key)
-    extras = sorted(
-        ((found[i], rel_type) for i, rel_type in extra_types.items() if i in found),
-        key=lambda pair: release_key(pair[0]),
-    )
+    main: list[Anime] = []
+    extras: list[tuple[Anime, str]] = [
+        (found[i], rel_type) for i, rel_type in extra_types.items() if i in found
+    ]
+    for i in chain:
+        anime = found.get(i)
+        if anime is None:
+            continue
+        if i != anime_id and anime.format in EXTRA_FORMATS:
+            extras.append((anime, "SIDE_STORY"))
+        else:
+            main.append(anime)
+    main.sort(key=release_key)
+    extras.sort(key=lambda pair: release_key(pair[0]))
     return main, extras
