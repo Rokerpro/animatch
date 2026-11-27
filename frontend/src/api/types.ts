@@ -138,6 +138,7 @@ export type ListSort = "updated" | "rating" | "title";
 export interface ListEntryPut {
   status?: ListStatus;
   rating?: number | null;
+  progress?: number;
 }
 export interface ListEntryResponse {
   id: number;
@@ -145,6 +146,7 @@ export interface ListEntryResponse {
   anime: AnimeCardData;
   status: ListStatus;
   rating: number | null;
+  progress: number;
   source: "manual" | "mal_import";
   addedAt: string;
   updatedAt: string;

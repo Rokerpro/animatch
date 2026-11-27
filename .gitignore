@@ -72,3 +72,6 @@ Thumbs.db
 
 # graphify knowledge graph output
 graphify-out/
+
+# TypeScript incremental build cache
+*.tsbuildinfo

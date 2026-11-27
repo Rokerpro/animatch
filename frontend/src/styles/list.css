@@ -5,7 +5,8 @@
 .list-heading-actions {
   display: flex;
   align-items: center;
-  gap: 24px;
+  flex-wrap: wrap;
+  gap: 12px 24px;
 }
 
 .list-total {
@@ -149,6 +150,53 @@
   height: 36px;
   padding-left: 14px;
   background-color: transparent;
+}
+
+.list-progress-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 10px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.list-progress-control > span {
+  margin-right: auto;
+}
+
+.list-progress-control output {
+  min-width: 52px;
+  color: var(--paper);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.list-progress-control button {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--paper);
+  cursor: pointer;
+  transition: border-color 160ms var(--ease);
+}
+
+.list-progress-control button:hover:not(:disabled) {
+  border-color: var(--lavender);
+}
+
+.list-progress-control button:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.list-progress-control button:disabled {
+  cursor: default;
+  opacity: 0.4;
 }
 
 .empty-list-actions {

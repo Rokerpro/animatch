@@ -240,6 +240,7 @@ export function RegisterPage() {
 const SETTINGS_SECTIONS = [
   { id: "profile", label: "Profile" },
   { id: "preferences", label: "Preferences" },
+  { id: "your-data", label: "Your data" },
   { id: "delete-account", label: "Delete account" },
 ];
 export function SettingsPage() {
@@ -426,6 +427,29 @@ export function SettingsPage() {
                 <Link className="secondary-action" to="/quiz">
                   Retake quiz
                 </Link>
+              </div>
+            </div>
+          </section>
+          <section aria-labelledby="your-data-title" id="your-data">
+            <h2 className="settings-heading" id="your-data-title">
+              Your data
+            </h2>
+            <div className="settings-panel">
+              <div className="settings-row">
+                <div className="settings-row-copy">
+                  <p className="settings-label">Download your data</p>
+                  <p className="muted">
+                    Your account, quiz answers, list and hidden picks as a JSON
+                    file.
+                  </p>
+                </div>
+                <a
+                  className="secondary-action"
+                  download
+                  href={api.accountExportUrl()}
+                >
+                  Download
+                </a>
               </div>
             </div>
           </section>

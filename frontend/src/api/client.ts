@@ -194,6 +194,13 @@ export const api = {
     }),
   myRecommendations: (includeMature: boolean) =>
     request<Recommendation[]>(`/api/recs/me?includeMature=${includeMature}`),
+  hideRecommendation: async (animeId: number) => {
+    const csrf = await api.csrf();
+    return request<{ anime_ids: number[] }>(`/api/recs/feedback/${animeId}`, {
+      method: "PUT",
+      headers: { "X-CSRF-Token": csrf.csrf_token },
+    });
+  },
   list: (params: ListParams) => {
     const query = new URLSearchParams({
       sort: params.sort,
@@ -274,6 +281,10 @@ export const api = {
     });
   },
   googleLogin: () => `${baseUrl}/api/auth/google/login`,
+  // Plain links: the browser downloads using the session cookie.
+  listExportUrl: (format: "json" | "xml", includeMature: boolean) =>
+    `${baseUrl}/api/list/export?format=${format}&includeMature=${includeMature}`,
+  accountExportUrl: () => `${baseUrl}/api/auth/me/export`,
   csrf: (signal?: AbortSignal) =>
     request<CsrfTokenResponse>("/api/auth/csrf", { signal }),
   updateMe: async (body: UserUpdateRequest) => {

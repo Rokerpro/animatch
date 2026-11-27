@@ -55,10 +55,20 @@ class ListEntryPut(BaseModel):
         ),
     )
 
+    progress: int = Field(
+        default=None,
+        ge=0,
+        strict=True,
+        description=(
+            "Optional count of episodes watched. Omission retains the existing "
+            "value. Cannot exceed the title's episode count when it is known."
+        ),
+    )
+
     @model_validator(mode="after")
     def require_update_field(self) -> "ListEntryPut":
         if not self.model_fields_set:
-            raise ValueError("At least one of status or rating is required")
+            raise ValueError("At least one of status, rating or progress is required")
         return self
 
 
@@ -70,6 +80,7 @@ class ListEntryResponse(BaseSchema):
     anime: AnimeCard
     status: ListStatus
     rating: int | None
+    progress: int
     source: Literal["manual", "mal_import"]
     added_at: datetime
     updated_at: datetime

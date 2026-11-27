@@ -36,6 +36,7 @@ class MALAnime:
     title: str
     status: str
     rating: int | None
+    progress: int = 0
 
 
 def _bad_request(message: str) -> HTTPException:
@@ -114,6 +115,7 @@ def parse_mal_xml(body: bytes) -> tuple[int, list[MALAnime]]:
                         "series_title",
                         "my_score",
                         "my_status",
+                        "my_watched_episodes",
                     )
                 }
                 try:
@@ -138,7 +140,13 @@ def parse_mal_xml(body: bytes) -> tuple[int, list[MALAnime]]:
                 except ValueError:
                     score = 0
                 rating = score if 1 <= score <= 10 else None
-                entries[mal_id] = MALAnime(mal_id, title, mapped_status, rating)
+                try:
+                    progress = max(0, int(fields.get("my_watched_episodes", "0")))
+                except ValueError:
+                    progress = 0
+                entries[mal_id] = MALAnime(
+                    mal_id, title, mapped_status, rating, progress
+                )
                 element.clear()
             depth -= 1
     except HTTPException:
@@ -162,20 +170,21 @@ MAL_EXPORT_STATUS = {
 }
 
 
-def build_mal_xml(entries: list[tuple[int, str, str, int | None]]) -> str:
-    """Render (mal_id, title, status, rating) rows as a MAL-compatible XML export.
+def build_mal_xml(entries: list[tuple[int, str, str, int | None, int]]) -> str:
+    """Render (mal_id, title, status, rating, progress) rows as a MAL-compatible XML export.
 
     The output is accepted by `parse_mal_xml`, so a user can re-import it.
     """
     from xml.sax.saxutils import escape
 
     lines = ['<?xml version="1.0" encoding="UTF-8"?>', "<myanimelist>"]
-    for mal_id, title, entry_status, rating in entries:
+    for mal_id, title, entry_status, rating, progress in entries:
         lines.extend(
             [
                 "  <anime>",
                 f"    <series_animedb_id>{mal_id}</series_animedb_id>",
                 f"    <series_title>{escape(title)}</series_title>",
+                f"    <my_watched_episodes>{progress}</my_watched_episodes>",
                 f"    <my_score>{rating or 0}</my_score>",
                 f"    <my_status>{MAL_EXPORT_STATUS.get(entry_status, 'Plan to Watch')}</my_status>",
                 "  </anime>",

@@ -221,6 +221,71 @@ describe("stage 1 account flows", () => {
     );
   });
 
+  it("removes a pick marked Not interested and saves the feedback", async () => {
+    vi.mocked(useAuth).mockReturnValue({
+      user,
+      authLoading: false,
+      mature: false,
+      refresh: vi.fn(),
+      setMature: vi.fn(),
+      signOut: vi.fn(),
+    });
+    const picks = [
+      { id: 1, title: "Keep me", reason: "" },
+      { id: 2, title: "Skip me", reason: "" },
+    ];
+    vi.spyOn(api, "myRecommendations")
+      .mockResolvedValueOnce(picks)
+      .mockResolvedValue([picks[0]]);
+    const hide = vi
+      .spyOn(api, "hideRecommendation")
+      .mockResolvedValue({ anime_ids: [2] });
+    renderApp(
+      <Routes>
+        <Route path="/for-you" element={<ForYouPage />} />
+      </Routes>,
+      "/for-you"
+    );
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Not interested in Skip me" })
+    );
+    await waitFor(() => expect(hide).toHaveBeenCalledWith(2));
+    await waitFor(() =>
+      expect(screen.queryByText("Skip me")).not.toBeInTheDocument()
+    );
+    expect(screen.getByText("Keep me")).toBeInTheDocument();
+  });
+
+  it("restores a pick when Not interested fails", async () => {
+    vi.mocked(useAuth).mockReturnValue({
+      user,
+      authLoading: false,
+      mature: false,
+      refresh: vi.fn(),
+      setMature: vi.fn(),
+      signOut: vi.fn(),
+    });
+    vi.spyOn(api, "myRecommendations").mockResolvedValue([
+      { id: 2, title: "Skip me", reason: "" },
+    ]);
+    vi.spyOn(api, "hideRecommendation").mockRejectedValue(
+      new ApiError("Anime not found.", 404)
+    );
+    renderApp(
+      <Routes>
+        <Route path="/for-you" element={<ForYouPage />} />
+      </Routes>,
+      "/for-you"
+    );
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Not interested in Skip me" })
+    );
+    expect(await screen.findByText("Anime not found.")).toBeInTheDocument();
+    expect(
+      await screen.findByRole("button", { name: "Not interested in Skip me" })
+    ).toBeInTheDocument();
+  });
+
   it("redirects to login if the personalised request returns 401", async () => {
     vi.mocked(useAuth).mockReturnValue({
       user,
@@ -435,6 +500,21 @@ describe("stage 1 account flows", () => {
       "aria-describedby",
       "delete-account-warning"
     );
+  });
+
+  it("links the data download to the account export endpoint", () => {
+    vi.mocked(useAuth).mockReturnValue({
+      user,
+      authLoading: false,
+      mature: false,
+      refresh: vi.fn(),
+      setMature: vi.fn(),
+      signOut: vi.fn(),
+    });
+    renderApp(<SettingsPage />);
+    const link = screen.getByRole("link", { name: "Download" });
+    expect(link).toHaveAttribute("href", "/api/auth/me/export");
+    expect(link).toHaveAttribute("download");
   });
 
   it("clears local results after account deletion", async () => {

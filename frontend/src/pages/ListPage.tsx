@@ -6,12 +6,16 @@ import {
   useNavigate,
   useSearchParams,
 } from "react-router-dom";
-import { ApiError } from "../api/client";
+import { ApiError, api } from "../api/client";
 import { useList, useListStats } from "../api/hooks";
 import type { ListSort, ListStatus } from "../api/types";
 import { useAuth } from "../auth/useAuth";
 import { safeNextPath } from "../auth/nextPath";
-import { ListControl, ListRatingControl } from "../components/ListControls";
+import {
+  ListControl,
+  ListProgressControl,
+  ListRatingControl,
+} from "../components/ListControls";
 import { listStatusLabels, listStatuses } from "../components/listStatus";
 import { Pagination } from "../components/Pagination";
 import { PosterImage } from "../components/PosterImage";
@@ -137,6 +141,20 @@ export function ListPage() {
           <Link className="text-link" to="/import">
             Import from MyAnimeList
           </Link>
+          <a
+            className="text-link"
+            download
+            href={api.listExportUrl("json", mature)}
+          >
+            Export JSON
+          </a>
+          <a
+            className="text-link"
+            download
+            href={api.listExportUrl("xml", mature)}
+          >
+            Export for MyAnimeList
+          </a>
         </div>
       </header>
       <div className="list-controls-row">
@@ -258,6 +276,14 @@ export function ListPage() {
                       status={entry.status}
                       rating={entry.rating}
                     />
+                    {entry.status !== "planning" && (
+                      <ListProgressControl
+                        anime={entry.anime}
+                        status={entry.status}
+                        rating={entry.rating}
+                        progress={entry.progress}
+                      />
+                    )}
                   </div>
                 </article>
               ))}
