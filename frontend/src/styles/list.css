@@ -67,7 +67,7 @@
 }
 
 .list-status-tab[aria-selected="true"] {
-  background: var(--lavender);
+  background: var(--accent);
   color: var(--graphite);
 }
 
@@ -124,7 +124,7 @@
 
 .my-list-card:hover .my-list-card-title,
 .my-list-card-title:focus-visible {
-  color: var(--lavender);
+  color: var(--accent);
 }
 
 .my-list-status-label {
@@ -186,7 +186,7 @@
 }
 
 .list-progress-control button:hover:not(:disabled) {
-  border-color: var(--lavender);
+  border-color: var(--accent);
 }
 
 .list-progress-control button:focus-visible {
@@ -255,8 +255,8 @@
 }
 
 .mal-drop-zone.is-dragging {
-  border-color: var(--lavender);
-  background: var(--lavender-tint);
+  border-color: var(--accent);
+  background: var(--accent-tint);
 }
 
 .mal-drop-icon {
@@ -266,8 +266,8 @@
   place-items: center;
   margin-bottom: 20px;
   border-radius: 999px;
-  background: var(--lavender-tint);
-  color: var(--lavender);
+  background: var(--accent-tint);
+  color: var(--accent);
 }
 
 .mal-drop-title {
@@ -302,7 +302,7 @@
 
 .mal-selected-file > svg {
   flex: none;
-  color: var(--lavender);
+  color: var(--accent);
 }
 
 .mal-selected-name {
@@ -422,7 +422,7 @@
   place-items: center;
   border: 1px solid var(--line);
   border-radius: 999px;
-  color: var(--lavender);
+  color: var(--accent);
   font-size: 14px;
   font-weight: 500;
 }

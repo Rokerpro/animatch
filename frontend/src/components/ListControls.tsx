@@ -4,11 +4,13 @@ import {
   Bookmark,
   BookmarkCheck,
   Check,
+  ChevronDown,
   Clock,
   Minus,
   Pause,
   Play,
   Plus,
+  Star,
   Trash2,
   X,
   type LucideIcon,
@@ -20,6 +22,7 @@ import { safeNextPath } from "../auth/nextPath";
 import { useListMutation } from "../api/useListMutation";
 import { AuthPrompt } from "./AuthPrompt";
 import { listStatusLabels, listStatuses } from "./listStatus";
+import { ratingOutOfFive } from "./formatMeta";
 
 // Exit timing, matching the CSS: buttons leave one by one, then the X flies
 // home and becomes the bookmark. "landing" lets the real bookmark fade in
@@ -354,8 +357,13 @@ export function ListRatingControl({
   }
   return (
     <>
-      <label className="list-rating-control">
+      <label className={`list-rating-control${rating ? "" : " is-empty"}`}>
         <span>Your rating</span>
+        <Star aria-hidden="true" className="rating-star" size={16} />
+        <span aria-hidden="true" className="rating-value">
+          {ratingOutOfFive(rating) ?? "Not rated"}
+        </span>
+        <ChevronDown aria-hidden="true" className="rating-chevron" size={16} />
         <select
           aria-label={`Your rating for ${anime.title}`}
           disabled={(statusLoading && user !== null) || mutation.isPending}
@@ -365,7 +373,7 @@ export function ListRatingControl({
           <option value="">Not rated</option>
           {Array.from({ length: 10 }, (_, index) => index + 1).map((value) => (
             <option key={value} value={value}>
-              {value} / 10
+              {ratingOutOfFive(value)} / 5
             </option>
           ))}
         </select>

@@ -12,6 +12,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   useAnimeDetail: vi.fn(),
   useSimilar: vi.fn(),
+  useSeasons: vi.fn(),
   useListStatuses: vi.fn(),
   useAuth: vi.fn(),
   useProviders: vi.fn(),
@@ -20,6 +21,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("../src/api/hooks", () => ({
   useAnimeDetail: mocks.useAnimeDetail,
   useSimilar: mocks.useSimilar,
+  useSeasons: mocks.useSeasons,
   useListStatuses: mocks.useListStatuses,
   useProviders: mocks.useProviders,
   useMe: mocks.useMe,
@@ -45,6 +47,7 @@ describe("auth and detail states", () => {
     });
     mocks.useProviders.mockReturnValue({ data: { google: false } });
     mocks.useMe.mockReturnValue({ data: undefined });
+    mocks.useSeasons.mockReturnValue({ data: undefined });
   });
   it("shows the exact detail 404 message", () => {
     mocks.useAnimeDetail.mockReturnValue({
@@ -71,7 +74,7 @@ describe("auth and detail states", () => {
       screen.getByText("Not found, or hidden by your content settings")
     ).toBeInTheDocument();
   });
-  it("asks guests to sign in from Add to list or rating and shows the rating out of ten", () => {
+  it("asks guests to sign in from Add to list or rating and shows the score out of five", () => {
     mocks.useAnimeDetail.mockReturnValue({
       isLoading: false,
       isError: false,
@@ -103,21 +106,20 @@ describe("auth and detail states", () => {
       </MemoryRouter>
     );
 
-    const sidebar = screen.getByRole("complementary", {
-      name: "Anime controls",
-    });
-    expect(sidebar).toContainElement(screen.getByText("AniList score"));
-    expect(sidebar).toContainElement(
+    const score = screen.getByText("AniList score").closest("div");
+    expect(score).toHaveTextContent("AniList score4.2 / 5");
+    const hero = screen
+      .getByRole("heading", { level: 1, name: "Test Anime" })
+      .closest("header");
+    expect(hero).toContainElement(
       screen.getByRole("button", { name: "Add Test Anime to My list" })
     );
-    expect(sidebar).toContainElement(
+    expect(hero).toContainElement(
       screen.getByRole("combobox", { name: "Your rating for Test Anime" })
     );
-    expect(
-      screen
-        .getByRole("heading", { name: "Test Anime" })
-        .closest(".detail-main")
-    ).not.toBeNull();
+    expect(screen.getByRole("list", { name: "Overview" })).toHaveTextContent(
+      "TV"
+    );
     fireEvent.click(
       screen.getByRole("button", { name: "Add Test Anime to My list" })
     );
@@ -142,6 +144,86 @@ describe("auth and detail states", () => {
     expect(
       screen.getByRole("dialog", { name: "Sign in to save anime" })
     ).toBeInTheDocument();
+  });
+  it("lists the main story with the current entry and the optional extras", () => {
+    mocks.useAnimeDetail.mockReturnValue({
+      isLoading: false,
+      isError: false,
+      data: { id: 2, title: "Season Two", format: "TV" },
+    });
+    mocks.useSimilar.mockReturnValue({ isLoading: false, data: [] });
+    mocks.useListStatuses.mockReturnValue({ data: { items: [] } });
+    const item = { coverImage: null, coverColor: null, format: "TV" };
+    mocks.useSeasons.mockReturnValue({
+      data: {
+        main: [
+          {
+            ...item,
+            id: 1,
+            title: "Season One",
+            year: 2013,
+            episodes: 25,
+            position: 1,
+            isCurrent: false,
+          },
+          {
+            ...item,
+            id: 2,
+            title: "Season Two",
+            year: 2017,
+            episodes: 12,
+            position: 2,
+            isCurrent: true,
+          },
+        ],
+        extras: [
+          {
+            ...item,
+            id: 5,
+            title: "Lost Girls",
+            format: "OVA",
+            year: 2017,
+            episodes: 2,
+            relation: "SIDE_STORY",
+          },
+          {
+            ...item,
+            id: 6,
+            title: "Recap",
+            format: "MOVIE",
+            year: 2014,
+            episodes: 1,
+            relation: "SUMMARY",
+          },
+        ],
+      },
+    });
+    render(
+      <MemoryRouter
+        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+        initialEntries={["/anime/2"]}
+      >
+        <Routes>
+          <Route path="/anime/:id" element={<AnimeDetailPage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+    expect(
+      screen.getByText("2 entries in the main story, in release order")
+    ).toBeInTheDocument();
+    const current = document.querySelector("[aria-current='page']");
+    expect(current).toHaveTextContent("Season Two");
+    expect(current).toHaveTextContent("You're here");
+    expect(screen.getByRole("link", { name: /Season One/ })).toHaveAttribute(
+      "href",
+      "/anime/1"
+    );
+    expect(screen.getByRole("link", { name: /Lost Girls/ })).toHaveTextContent(
+      "OVA, 2 episodes, 2017"
+    );
+    expect(screen.getByRole("link", { name: /Recap/ })).toHaveTextContent(
+      "Recap film, 2014"
+    );
   });
   it("shows similar recommendations for the selected anime without rendering its full details", () => {
     mocks.useAnimeDetail.mockReturnValue({

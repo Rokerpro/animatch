@@ -7,15 +7,21 @@
 /* ------------------------------------------------------------------ */
 
 :root {
-  --graphite: #101114;
-  --surface: #191b21;
-  --surface-2: #1f2029;
-  --line: #2b2e37;
-  --paper: #f2f1f6;
-  --muted: #a3a4b0;
-  --lavender: #a99bff;
-  --lavender-soft: rgba(169, 155, 255, 0.2);
-  --lavender-tint: #262340;
+  /* Cover-led palette: warm neutrals; titles tint --accent with their cover. */
+  --graphite: #0e0f11;
+  --surface: #141519;
+  --surface-2: #17181c;
+  --line: #2a2c33;
+  --line-soft: #24262c;
+  --paper: #f4f3f0;
+  --muted: #9c9da6;
+  --fill: rgba(255, 255, 255, 0.06);
+  --fill-strong: rgba(255, 255, 255, 0.07);
+  --fill-faint: rgba(255, 255, 255, 0.04);
+  --brand: #a99bff;
+  --accent: #f4f3f0;
+  --accent-soft: rgba(244, 243, 240, 0.2);
+  --accent-tint: #1f2024;
   --danger: #f07178;
   --success: #7fd1a8;
   --scrim: rgba(16, 17, 20, 0.86);
@@ -38,7 +44,7 @@
   --radius-card: 6px;
   --shadow-lift:
     0 16px 32px -4px rgba(0, 0, 0, 0.55), 0 4px 10px rgba(0, 0, 0, 0.35);
-  --ring: 0 0 0 3px var(--lavender-soft);
+  --ring: 0 0 0 3px var(--accent-soft);
   --ease: 180ms ease;
 
   color-scheme: dark;
@@ -82,7 +88,7 @@
   }
 
   ::selection {
-    background: var(--lavender);
+    background: var(--accent);
     color: var(--graphite);
   }
 
@@ -106,7 +112,7 @@
   }
 
   :focus-visible {
-    outline: 2px solid var(--lavender);
+    outline: 2px solid var(--accent);
     outline-offset: 2px;
   }
 }
@@ -152,7 +158,7 @@
   left: 8px;
   padding: 8px 16px;
   border-radius: 999px;
-  background: var(--lavender);
+  background: var(--accent);
   color: var(--graphite);
   font-weight: 700;
 }
@@ -187,11 +193,16 @@
   font-size: var(--text-21);
   line-height: 1;
   letter-spacing: 0;
+  color: var(--paper);
 }
 
-.wordmark-accent,
+/* Fixed brand colour: title pages override --accent with the cover tone. */
+.wordmark-accent {
+  color: var(--brand);
+}
+
 .accent {
-  color: var(--lavender);
+  color: var(--accent);
 }
 
 /* Tabs: fixed page tabs, then closable tabs for opened pages. */
@@ -233,7 +244,7 @@
 
 .header-tab.active > svg,
 .header-tab.active .header-open-tab-link > svg {
-  color: var(--lavender);
+  color: var(--accent);
 }
 
 .header-tabs-divider {
@@ -305,7 +316,7 @@
 .header-tab-close:focus-visible,
 .header-tab:focus-visible,
 .header-open-tab-link:focus-visible {
-  outline: 2px solid var(--lavender);
+  outline: 2px solid var(--accent);
   outline-offset: -2px;
 }
 
@@ -380,11 +391,11 @@
 
 .tabs-menu-button:hover,
 .tabs-menu-button[aria-expanded="true"] {
-  border-color: var(--lavender);
+  border-color: var(--accent);
 }
 
 .tabs-menu-count {
-  color: var(--lavender);
+  color: var(--accent);
   font-family: var(--font-display);
   font-size: 13px;
   font-variant-numeric: tabular-nums;
@@ -421,7 +432,7 @@
 }
 
 .header-nav > a:hover {
-  color: var(--lavender);
+  color: var(--accent);
 }
 
 .header-nav > a.active::after {
@@ -430,7 +441,7 @@
   bottom: -1px;
   left: 0;
   height: 2px;
-  background: var(--lavender);
+  background: var(--accent);
   content: "";
 }
 
@@ -438,7 +449,7 @@
   height: 40px;
   padding: 0 20px;
   border-radius: 999px;
-  background: var(--lavender);
+  background: var(--accent);
   color: var(--graphite);
   font-weight: 700;
 }
@@ -475,8 +486,8 @@
 }
 
 .mature-toggle.is-active {
-  border-color: var(--lavender);
-  color: var(--lavender);
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .account-menu-wrap {
@@ -501,7 +512,7 @@
 .account-menu-button[aria-expanded="true"],
 .page-menu-button:hover,
 .page-menu-button[aria-expanded="true"] {
-  border-color: var(--lavender);
+  border-color: var(--accent);
 }
 
 .account-menu,
@@ -559,7 +570,7 @@
 }
 
 .list-status-menu button[aria-checked="true"] {
-  color: var(--lavender);
+  color: var(--accent);
 }
 
 .page-menu-button,
@@ -604,7 +615,7 @@
 
 .nav-drawer-top .page-menu-button {
   display: grid;
-  border-color: var(--lavender);
+  border-color: var(--accent);
 }
 
 .nav-drawer-links {
@@ -648,12 +659,12 @@ button.nav-drawer-row:hover {
 
 .nav-drawer-row.active {
   background: rgb(169 155 255 / 14%);
-  color: var(--lavender);
+  color: var(--accent);
   font-weight: 700;
 }
 
 .nav-drawer-row.active > svg {
-  color: var(--lavender);
+  color: var(--accent);
 }
 
 .nav-drawer-row label {
@@ -690,7 +701,7 @@ button.nav-drawer-row:hover {
   place-items: center;
   border-radius: 999px;
   background: var(--line);
-  color: var(--lavender);
+  color: var(--accent);
   font-family: var(--font-display);
 }
 
@@ -893,7 +904,7 @@ button.nav-drawer-row:hover {
 }
 
 .text-link {
-  color: var(--lavender);
+  color: var(--accent);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
@@ -929,7 +940,7 @@ button.nav-drawer-row:hover {
 
 .primary-action,
 .auth-form button[type="submit"] {
-  background: var(--lavender);
+  background: var(--accent);
   color: var(--graphite);
 }
 
@@ -981,7 +992,7 @@ button.nav-drawer-row:hover {
   padding: 0;
   border: 0;
   background: none;
-  color: var(--lavender);
+  color: var(--accent);
   cursor: pointer;
   font-weight: 500;
   text-decoration: underline;
@@ -1054,7 +1065,7 @@ textarea::placeholder {
 input:where(:not([type="checkbox"], [type="radio"])):focus,
 select:focus,
 textarea:focus {
-  border-color: var(--lavender);
+  border-color: var(--accent);
   outline: none;
   box-shadow: var(--ring);
 }
@@ -1125,9 +1136,7 @@ button.filter-chip:hover {
   gap: 8px;
 }
 
-.badge,
-.score-text,
-.similarity-badge {
+.badge {
   display: inline-flex;
   height: 26px;
   align-items: center;
@@ -1140,10 +1149,6 @@ button.filter-chip:hover {
   line-height: 1;
 }
 
-.similarity-badge {
-  color: var(--lavender);
-}
-
 .count-badge,
 .filter-count {
   display: inline-grid;
@@ -1152,7 +1157,7 @@ button.filter-chip:hover {
   place-items: center;
   padding: 0 7px;
   border-radius: 999px;
-  background: var(--lavender);
+  background: var(--accent);
   color: var(--graphite);
   font-size: 13px;
   font-weight: 700;
@@ -1191,14 +1196,11 @@ button.filter-chip:hover {
   color: var(--muted);
 }
 
-.poster-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(176px, 1fr));
-  gap: 48px 24px;
-}
-
+.poster-grid,
 .poster-grid.is-wide {
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(192px, 1fr));
+  gap: 40px 20px;
 }
 
 @media (max-width: 640px) {
@@ -1217,8 +1219,8 @@ button.filter-chip:hover {
 
 .anime-poster {
   position: relative;
-  aspect-ratio: 193 / 274;
-  border-radius: var(--radius-card);
+  aspect-ratio: 208 / 295;
+  border-radius: 12px;
   transition:
     box-shadow var(--ease),
     transform var(--ease);
@@ -1227,23 +1229,17 @@ button.filter-chip:hover {
 .anime-poster > a {
   display: block;
   height: 100%;
-  border-radius: var(--radius-card);
+  border-radius: 12px;
+}
+
+.anime-poster .poster-art {
+  border-radius: 12px;
 }
 
 .anime-card:hover .anime-poster,
 .anime-card:focus-within .anime-poster {
   box-shadow: var(--shadow-lift);
   transform: translateY(-4px);
-}
-
-.poster-badges {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  pointer-events: none;
 }
 
 /* Covers the poster so the radial list menu can sit over it. */
@@ -1258,7 +1254,19 @@ button.filter-chip:hover {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding-top: 16px;
+  padding-top: 14px;
+}
+
+.card-title-row,
+.card-match-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.card-title-row > a {
+  min-width: 0;
 }
 
 .anime-card-copy h2,
@@ -1271,12 +1279,39 @@ button.filter-chip:hover {
 
 .anime-card:hover .anime-card-copy h2,
 .anime-card-copy a:focus-visible h2 {
-  color: var(--lavender);
+  color: var(--muted);
+}
+
+.card-score {
+  flex: none;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.card-match-row .card-score {
+  font-size: var(--text-16);
+}
+
+.card-match-track {
+  display: block;
+  overflow: hidden;
+  height: 4px;
+  margin: 4px 0 8px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.card-match-track > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
 }
 
 .anime-meta {
   margin: 0;
   color: var(--muted);
+  font-size: 14px;
 }
 
 .recommendation-card {
@@ -1285,8 +1320,37 @@ button.filter-chip:hover {
   flex-direction: column;
 }
 
-.recommendation-card .anime-poster {
-  aspect-ratio: 237 / 336;
+.rec-shares {
+  margin-top: 12px;
+}
+
+.rec-shares-label {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.rec-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0;
+  margin: 6px 0 0;
+  list-style: none;
+}
+
+.rec-chips li {
+  display: inline-flex;
+  height: 26px;
+  align-items: center;
+  padding: 0 10px;
+  border-radius: 13px;
+  background: var(--fill);
+  font-size: 13px;
+}
+
+.title-page .rec-chips li {
+  border: 1px solid var(--line);
+  background: transparent;
 }
 
 .reason-text {
@@ -1305,12 +1369,15 @@ button.filter-chip:hover {
 }
 
 .reason-more:hover {
-  color: var(--lavender);
+  color: var(--muted);
 }
 
 .rec-dismiss {
+  display: inline-flex;
+  align-items: center;
   align-self: flex-start;
-  margin-top: 8px;
+  gap: 6px;
+  margin-top: 12px;
   padding: 0;
   border: 0;
   background: none;
@@ -1341,9 +1408,9 @@ button.filter-chip:hover {
   width: 36px;
   height: 36px;
   place-items: center;
-  border: 1px solid var(--line);
+  border: 0;
   border-radius: 999px;
-  background: var(--graphite);
+  background: rgb(14 15 17 / 72%);
   color: var(--paper);
   cursor: pointer;
   opacity: 0;
@@ -1433,14 +1500,14 @@ button.filter-chip:hover {
 
 .list-radial-item:hover,
 .list-radial-item:focus-visible {
-  border-color: var(--lavender);
+  border-color: var(--accent);
   outline: none;
 }
 
 .list-radial-item:focus-visible {
   box-shadow:
     0 0 0 2px var(--graphite),
-    0 0 0 4px var(--lavender);
+    0 0 0 4px var(--accent);
 }
 
 .list-radial-item:active {
@@ -1448,8 +1515,8 @@ button.filter-chip:hover {
 }
 
 .list-radial-item[aria-checked="true"] {
-  border-color: var(--lavender);
-  background: var(--lavender);
+  border-color: var(--accent);
+  background: var(--accent);
   color: var(--graphite);
 }
 
@@ -1487,7 +1554,7 @@ button.filter-chip:hover {
 }
 
 .list-radial-close.is-listed .list-radial-home-icon {
-  color: var(--lavender);
+  color: var(--accent);
 }
 
 .list-radial-close:hover {
@@ -1495,7 +1562,7 @@ button.filter-chip:hover {
 }
 
 .list-radial-close:focus-visible {
-  outline: 2px solid var(--lavender);
+  outline: 2px solid var(--accent);
   outline-offset: 3px;
 }
 
@@ -1650,11 +1717,11 @@ button.filter-chip:hover {
 }
 
 .list-control-card .list-control-trigger.is-listed {
-  color: var(--lavender);
+  color: var(--accent);
 }
 
 .list-control-card .list-control-trigger:hover {
-  color: var(--lavender);
+  color: var(--accent);
 }
 
 .list-control-detail .list-control-trigger {
@@ -1666,7 +1733,7 @@ button.filter-chip:hover {
   gap: 10px;
   border: 1px solid transparent;
   border-radius: 999px;
-  background: var(--lavender);
+  background: var(--accent);
   color: var(--graphite);
   cursor: pointer;
   font-weight: 700;
@@ -1679,7 +1746,7 @@ button.filter-chip:hover {
 }
 
 .list-control-detail .list-control-trigger.is-listed svg {
-  color: var(--lavender);
+  color: var(--accent);
 }
 
 .list-control-trigger:disabled {
@@ -1700,10 +1767,44 @@ button.filter-chip:hover {
   justify-content: flex-start !important;
 }
 
+/* A styled value with the native select laid over it, invisible but focusable. */
 .list-rating-control {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--paper);
+}
+
+.list-rating-control > span:first-child {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+.list-rating-control select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.list-rating-control select:disabled {
+  cursor: wait;
+}
+
+.list-rating-control:focus-within {
+  box-shadow: var(--ring);
+}
+
+.rating-star,
+.rating-chevron {
+  flex: none;
   color: var(--muted);
 }
 
@@ -1740,8 +1841,8 @@ button.filter-chip:hover {
 }
 
 .pagination button[aria-current="page"] {
-  border-color: var(--lavender);
-  background: var(--lavender);
+  border-color: var(--accent);
+  background: var(--accent);
   color: var(--graphite);
   font-weight: 700;
 }
@@ -1946,7 +2047,7 @@ button.filter-chip:hover {
 }
 
 .toast-info .toast-icon {
-  color: var(--lavender);
+  color: var(--accent);
 }
 
 .toast-icon {
@@ -2244,7 +2345,7 @@ input[type="radio"] {
   width: 18px;
   height: 18px;
   flex-shrink: 0;
-  accent-color: var(--lavender);
+  accent-color: var(--accent);
 }
 
 .active-filters {
@@ -2263,7 +2364,7 @@ input[type="radio"] {
   padding: 0 4px;
   border: 0;
   background: none;
-  color: var(--lavender);
+  color: var(--accent);
   cursor: pointer;
   font-weight: 500;
 }
@@ -2340,211 +2441,6 @@ input[type="radio"] {
 }
 
 /* ------------------------------------------------------------------ */
-/* Anime detail                                                        */
-/* ------------------------------------------------------------------ */
-
-.detail-page {
-  position: relative;
-}
-
-.detail-state {
-  padding-top: 56px;
-}
-
-.detail-banner {
-  position: absolute;
-  z-index: 0;
-  top: 0;
-  left: 50%;
-  width: 100vw;
-  height: 340px;
-  background-color: var(--surface);
-  background-position: center;
-  background-size: cover;
-  transform: translateX(-50%);
-}
-
-.detail-banner::after {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    to bottom,
-    rgba(16, 17, 20, 0.25) 0%,
-    rgba(16, 17, 20, 0.7) 60%,
-    var(--graphite) 100%
-  );
-  content: "";
-}
-
-.detail-banner:not(.has-image) {
-  opacity: 0.35;
-}
-
-.detail-layout {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  align-items: start;
-  gap: 40px;
-  padding-top: 160px;
-  grid-template-columns: 260px minmax(0, 1fr);
-}
-
-.detail-sidebar {
-  position: sticky;
-  top: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.detail-cover {
-  aspect-ratio: 260 / 370;
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-lift);
-}
-
-.detail-action-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.detail-anilist-score {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  color: var(--muted);
-}
-
-.detail-score {
-  color: var(--paper);
-  font-weight: 700;
-}
-
-.detail-main {
-  min-width: 0;
-  padding-top: 140px;
-}
-
-.detail-kind {
-  margin: 0 0 8px;
-  color: var(--muted);
-}
-
-.detail-title {
-  font-family: var(--font-display);
-  font-size: var(--text-50);
-  font-weight: 400;
-  line-height: 1.1;
-  overflow-wrap: anywhere;
-}
-
-.detail-native {
-  margin-left: 8px;
-}
-
-.detail-subtitle {
-  margin: 12px 0 4px;
-  font-size: var(--text-21);
-  line-height: 1.3;
-}
-
-.detail-content {
-  display: flex;
-  flex-direction: column;
-  gap: 40px;
-  margin-top: 40px;
-}
-
-.detail-overview {
-  display: grid;
-  align-items: start;
-  gap: 32px 64px;
-  grid-template-columns: minmax(0, 1fr) 320px;
-}
-
-.detail-synopsis p {
-  margin: 0;
-  line-height: 1.6;
-  white-space: pre-line;
-}
-
-.detail-facts {
-  padding: 24px;
-}
-
-.detail-list {
-  margin: 0;
-}
-
-.detail-list div {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 8px 0;
-}
-
-.detail-list div + div {
-  border-top: 1px solid var(--line);
-}
-
-.detail-list dt {
-  color: var(--muted);
-}
-
-.detail-list dd {
-  margin: 0;
-  font-weight: 500;
-  text-align: right;
-}
-
-a.tag-pill {
-  transition: border-color var(--ease);
-}
-
-a.tag-pill:hover {
-  border-color: var(--muted);
-}
-
-.detail-similar {
-  padding-top: 40px;
-  border-top: 1px solid var(--line);
-}
-
-.detail-similar .section-title {
-  margin-bottom: 32px;
-}
-
-@media (max-width: 1100px) {
-  .detail-overview {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 760px) {
-  .detail-layout {
-    padding-top: 120px;
-    grid-template-columns: 1fr;
-  }
-
-  .detail-sidebar {
-    position: static;
-    display: grid;
-    align-items: start;
-    grid-template-columns: 140px minmax(0, 1fr);
-  }
-
-  .detail-cover {
-    grid-row: span 2;
-  }
-
-  .detail-main {
-    padding-top: 0;
-  }
-}
-
-/* ------------------------------------------------------------------ */
 /* Results pages (similar, quiz, picks, for you)                       */
 /* ------------------------------------------------------------------ */
 
@@ -2585,7 +2481,7 @@ a.tag-pill:hover {
 }
 
 .similar-seed-title:hover {
-  color: var(--lavender);
+  color: var(--accent);
 }
 
 .similar-seed-count {
@@ -2612,7 +2508,7 @@ a.tag-pill:hover {
 }
 
 .answer-retake {
-  color: var(--lavender);
+  color: var(--accent);
 }
 
 .result-count {

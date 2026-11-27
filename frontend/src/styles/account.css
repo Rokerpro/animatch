@@ -76,7 +76,7 @@
 }
 
 .auth-switch a {
-  color: var(--lavender);
+  color: var(--accent);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
@@ -251,8 +251,8 @@
   flex: none;
   place-items: center;
   border-radius: 999px;
-  background: var(--lavender-tint);
-  color: var(--lavender);
+  background: var(--accent-tint);
+  color: var(--accent);
   font-family: var(--font-display);
   font-size: var(--text-21);
 }
@@ -297,8 +297,8 @@ input.switch[type="checkbox"]::after {
 }
 
 input.switch[type="checkbox"]:checked {
-  border-color: var(--lavender);
-  background: var(--lavender);
+  border-color: var(--accent);
+  background: var(--accent);
 }
 
 input.switch[type="checkbox"]:checked::after {
@@ -307,7 +307,7 @@ input.switch[type="checkbox"]:checked::after {
 }
 
 input.switch[type="checkbox"]:focus-visible {
-  outline: 2px solid var(--lavender);
+  outline: 2px solid var(--accent);
   outline-offset: 3px;
 }
 

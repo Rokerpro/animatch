@@ -2,7 +2,7 @@ import { forwardRef } from "react";
 
 /**
  * Two-tone page heading: the lead words in paper white, the final words in
- * lavender. Screen readers get one continuous heading.
+ * accent. Screen readers get one continuous heading.
  */
 export const PageTitle = forwardRef<
   HTMLHeadingElement,

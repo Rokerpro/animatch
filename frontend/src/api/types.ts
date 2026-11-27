@@ -34,6 +34,26 @@ export interface TagDetail {
   rank?: number;
   isSpoiler?: boolean;
 }
+export interface SeasonItem {
+  id: number;
+  title: string;
+  coverImage?: string | null;
+  coverColor?: string | null;
+  format?: string | null;
+  year?: number | null;
+  episodes?: number | null;
+}
+export interface MainStoryItem extends SeasonItem {
+  position: number;
+  isCurrent: boolean;
+}
+export interface ExtraItem extends SeasonItem {
+  relation: "SIDE_STORY" | "SPIN_OFF" | "SUMMARY" | "ALTERNATIVE";
+}
+export interface SeasonsResponse {
+  main: MainStoryItem[];
+  extras: ExtraItem[];
+}
 export interface PageInfo {
   total: number;
   currentPage: number;

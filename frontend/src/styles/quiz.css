@@ -31,7 +31,7 @@
 }
 
 .quiz-progress-track span.is-done {
-  background: var(--lavender);
+  background: var(--accent);
 }
 
 .quiz-layout {
@@ -108,8 +108,8 @@
 }
 
 .quiz-option:has(input:checked) {
-  border-color: var(--lavender);
-  background: color-mix(in srgb, var(--lavender) 8%, var(--surface));
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
 }
 
 .quiz-option:has(input:focus-visible) {
@@ -138,14 +138,14 @@
   width: 10px;
   height: 10px;
   border-radius: inherit;
-  background: var(--lavender);
+  background: var(--accent);
   content: "";
   transform: scale(0);
   transition: transform var(--ease);
 }
 
 .quiz-option input:checked {
-  border-color: var(--lavender);
+  border-color: var(--accent);
 }
 
 .quiz-option input:checked::before {

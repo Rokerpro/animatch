@@ -47,7 +47,7 @@
 }
 
 .landing-search-field:focus-within {
-  border-color: var(--lavender);
+  border-color: var(--accent);
   box-shadow: var(--ring);
 }
 
@@ -161,7 +161,7 @@
 }
 
 .landing-cover:focus-visible {
-  outline: 2px solid var(--lavender);
+  outline: 2px solid var(--accent);
   outline-offset: 4px;
 }
 
@@ -238,7 +238,7 @@
 }
 
 .pair-title a:hover {
-  color: var(--lavender);
+  color: var(--accent);
 }
 
 .pair-reason {

@@ -12,6 +12,7 @@ import type {
   NaturalLanguageResponse,
   Recommendation,
   RegisterRequest,
+  SeasonsResponse,
   UserResponse,
   UserUpdateRequest,
   QuizQuestion,
@@ -159,6 +160,10 @@ export const api = {
     ),
   detail: (id: number, includeMature: boolean) =>
     request<AnimeDetailData>(`/api/anime/${id}?includeMature=${includeMature}`),
+  seasons: (id: number, includeMature: boolean) =>
+    request<SeasonsResponse>(
+      `/api/anime/${id}/seasons?includeMature=${includeMature}`
+    ),
   similar: (id: number, includeMature: boolean) =>
     request<Recommendation[]>(
       `/api/recs/similar/${id}?includeMature=${includeMature}`

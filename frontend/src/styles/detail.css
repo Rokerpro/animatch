@@ -1,0 +1,472 @@
+/* Anime detail: cover-led hero, stat strip, overview, seasons, similar. */
+
+.title-state {
+  padding-top: 48px;
+}
+
+.title-hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  align-items: center;
+  gap: 48px;
+  padding: 48px 0 40px;
+}
+
+.title-page {
+  position: relative;
+  isolation: isolate;
+}
+
+/* Full-bleed diagonal glow in the cover colour, fading out under the stats. */
+.title-page::before {
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  right: calc(50% - 50vw);
+  left: calc(50% - 50vw);
+  height: 620px;
+  background: linear-gradient(
+    141deg,
+    color-mix(in srgb, var(--cover, transparent) 20%, transparent) 0%,
+    color-mix(in srgb, var(--cover, transparent) 5%, transparent) 50%,
+    transparent 85%
+  );
+  content: "";
+  mask-image: linear-gradient(to bottom, #000 70%, transparent);
+  pointer-events: none;
+}
+
+.title-cover {
+  aspect-ratio: 240 / 340;
+  border-radius: 14px;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.55);
+}
+
+.title-cover .poster-art {
+  border-radius: 14px;
+}
+
+.title-heading {
+  min-width: 0;
+}
+
+.title-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0;
+  margin: 0 0 16px;
+  list-style: none;
+}
+
+.title-pills li {
+  display: inline-flex;
+  height: 28px;
+  align-items: center;
+  padding: 0 14px;
+  border-radius: 14px;
+  background: var(--fill-strong);
+  font-size: 13px;
+}
+
+.title-name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-67);
+  font-weight: 400;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.title-alt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 19px;
+  margin: 12px 0 0;
+}
+
+.title-native {
+  color: rgba(244, 243, 240, 0.72);
+  font-size: var(--text-21);
+}
+
+.title-romaji {
+  color: var(--muted);
+}
+
+.title-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 32px;
+}
+
+.title-actions .list-control-detail {
+  position: relative;
+  min-width: 184px;
+}
+
+.title-actions .list-control-detail .list-control-trigger {
+  padding: 0 24px;
+}
+
+.title-actions .list-control-detail .list-control-trigger:not(.is-listed) {
+  background: var(--paper);
+}
+
+.title-actions .list-rating-control {
+  height: 48px;
+  min-width: 168px;
+  padding: 0 20px;
+  border-radius: 999px;
+  background: var(--fill);
+}
+
+/* Stat strip */
+.title-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  padding: 20px 0;
+  margin: 0;
+  border-top: 1px solid var(--line-soft);
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.title-stats > div {
+  padding: 0 24px;
+}
+
+.title-stats > div:first-child {
+  padding-left: 0;
+}
+
+.title-stats > div + div {
+  border-left: 1px solid var(--line-soft);
+}
+
+.title-stats dt {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.title-stats dd {
+  margin: 6px 0 0;
+  font-size: var(--text-21);
+  overflow-wrap: anywhere;
+}
+
+.title-score {
+  color: var(--accent);
+}
+
+.title-unit {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* Overview */
+.title-overview {
+  display: grid;
+  grid-template-columns: minmax(0, 680px) minmax(0, 1fr);
+  gap: 32px 80px;
+  padding: 48px 0;
+}
+
+.title-label {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.title-synopsis p {
+  margin: 0 0 1em;
+  color: rgba(244, 243, 240, 0.88);
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+.title-facets {
+  display: grid;
+  align-content: start;
+  gap: 32px;
+}
+
+.title-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.title-chips a {
+  display: inline-flex;
+  height: 32px;
+  align-items: center;
+  padding: 0 14px;
+  border-radius: 16px;
+  background: var(--fill);
+  transition: background var(--ease);
+}
+
+.title-chips a:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.title-more {
+  padding: 0;
+  margin-top: 12px;
+  border: 0;
+  background: none;
+  color: var(--paper);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Sections below the overview */
+.title-section {
+  padding-top: 30px;
+  margin-top: 0;
+  border-top: 1px solid var(--line-soft);
+}
+
+.title-section + .title-section {
+  margin-top: 56px;
+}
+
+.title-section-heading {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-28);
+  font-weight: 400;
+}
+
+.title-section-sub {
+  margin: 8px 0 24px;
+  color: var(--muted);
+}
+
+/* Seasons strip */
+.seasons-strip {
+  position: relative;
+}
+
+.seasons-track {
+  display: flex;
+  gap: 20px;
+  padding: 2px;
+  margin: 0;
+  list-style: none;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+}
+
+.seasons-track::-webkit-scrollbar {
+  display: none;
+}
+
+.seasons-track li {
+  position: relative;
+  flex: none;
+  scroll-snap-align: start;
+}
+
+/* Connector rule between consecutive seasons. */
+.seasons-track li + li::before {
+  position: absolute;
+  top: 50%;
+  left: -20px;
+  width: 20px;
+  height: 1px;
+  background: var(--line);
+  content: "";
+}
+
+.season-card {
+  display: flex;
+  width: 208px;
+  height: 128px;
+  gap: 12px;
+  padding: 8px;
+  border-radius: 12px;
+  background: var(--fill-faint);
+  transition: background var(--ease);
+}
+
+a.season-card:hover {
+  background: var(--fill-strong);
+}
+
+.season-card.is-current {
+  background: var(--fill-strong);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 70%, transparent);
+}
+
+.season-card .poster-art {
+  width: 72px;
+  height: 112px;
+  flex: none;
+  border-radius: 8px;
+}
+
+.season-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  padding: 4px 0;
+}
+
+.season-year,
+.season-foot {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.season-title {
+  display: -webkit-box;
+  overflow: hidden;
+  margin-top: 4px;
+  font-size: 15px;
+  line-height: 1.3;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.season-foot {
+  margin-top: auto;
+}
+
+.season-card.is-current .season-foot {
+  color: var(--accent);
+}
+
+.seasons-nav {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: #1b1c21;
+  color: var(--paper);
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.seasons-nav.is-back {
+  right: auto;
+  left: 0;
+}
+
+/* Fade the track edge under the forward button. */
+.seasons-strip:has(.seasons-nav:not(.is-back))::after {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 80px;
+  background: linear-gradient(90deg, transparent, var(--surface) 85%);
+  content: "";
+  pointer-events: none;
+}
+
+.seasons-nav {
+  z-index: 1;
+}
+
+.extras-heading {
+  margin: 40px 0 16px;
+  font-family: var(--font-body);
+  font-size: var(--text-16);
+  font-weight: 400;
+}
+
+.extras-heading span {
+  margin-left: 8px;
+  color: var(--muted);
+}
+
+.extras-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.extra-card {
+  display: flex;
+  height: 72px;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  border-radius: 12px;
+  background: var(--fill-faint);
+  transition: background var(--ease);
+}
+
+.extra-card:hover {
+  background: var(--fill-strong);
+}
+
+.extra-card .poster-art {
+  width: 40px;
+  height: 56px;
+  flex: none;
+  border-radius: 6px;
+}
+
+.extra-copy {
+  display: grid;
+  min-width: 0;
+}
+
+.extra-title {
+  overflow: hidden;
+  font-size: 15px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.extra-meta {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+@media (max-width: 900px) {
+  .title-hero {
+    grid-template-columns: 160px minmax(0, 1fr);
+    gap: 24px;
+  }
+
+  .title-overview {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .title-hero {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .title-cover {
+    width: 160px;
+  }
+
+  .title-stats > div {
+    padding: 12px 0;
+  }
+
+  .title-stats > div + div {
+    border-left: 0;
+  }
+}

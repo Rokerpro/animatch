@@ -81,9 +81,9 @@
 }
 
 .new-page .quiz-option:has(input:checked) {
-  border-color: var(--lavender);
-  background: var(--lavender-tint);
-  color: var(--lavender);
+  border-color: var(--accent);
+  background: var(--accent-tint);
+  color: var(--accent);
 }
 
 .new-page .quiz-option:has(input:focus-visible) {
@@ -132,5 +132,5 @@
 }
 
 .new-fallback-notice a {
-  color: var(--lavender);
+  color: var(--accent);
 }

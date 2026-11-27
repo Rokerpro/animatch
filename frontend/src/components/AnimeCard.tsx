@@ -19,6 +19,8 @@ export function AnimeCard({
   const detail = useAnimeDetail(anime.id, mature, !anime.coverImage);
   const coverImage = anime.coverImage || detail.data?.coverImage;
   const metadata = cardMeta(anime);
+  const match =
+    anime.similarity == null ? null : Math.round(anime.similarity * 100);
   return (
     <article className="anime-card">
       <div className="anime-poster">
@@ -29,17 +31,6 @@ export function AnimeCard({
             color={anime.coverColor ?? detail.data?.coverColor}
           />
         </Link>
-        <div className="poster-badges">
-          {anime.similarity !== undefined && anime.similarity !== null && (
-            <span
-              aria-label={`Similarity: ${Math.round(anime.similarity * 100)}%`}
-              className="similarity-badge"
-            >
-              {Math.round(anime.similarity * 100)}% match
-            </span>
-          )}
-          <ScoreBadge score={anime.score ?? null} />
-        </div>
         <div className="anime-save-control">
           <ListControl
             anime={anime}
@@ -50,9 +41,25 @@ export function AnimeCard({
         </div>
       </div>
       <div className="anime-card-copy">
-        <Link to={`/anime/${anime.id}`}>
-          <h2>{anime.title}</h2>
-        </Link>
+        {match !== null && (
+          <>
+            <div className="card-match-row">
+              <span aria-label={`Similarity: ${match}%`}>{match}% match</span>
+              <ScoreBadge score={anime.score ?? null} />
+            </div>
+            <span aria-hidden="true" className="card-match-track">
+              <span
+                style={{ width: `${Math.min(100, Math.max(0, match))}%` }}
+              />
+            </span>
+          </>
+        )}
+        <div className="card-title-row">
+          <Link to={`/anime/${anime.id}`}>
+            <h2>{anime.title}</h2>
+          </Link>
+          {match === null && <ScoreBadge score={anime.score ?? null} />}
+        </div>
         {metadata && <p className="anime-meta">{metadata}</p>}
       </div>
     </article>
