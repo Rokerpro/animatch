@@ -123,7 +123,7 @@ describe("MyAnimeList import", () => {
     fireEvent.click(screen.getByRole("button", { name: "Preview import" }));
     expect(await screen.findByText("Unknown Show")).toBeInTheDocument();
     expect(api.importMALList).toHaveBeenCalledWith(expect.any(File), true);
-    fireEvent.click(screen.getByRole("button", { name: "Confirm import" }));
+    fireEvent.click(screen.getByRole("button", { name: "Import 2 titles" }));
     await screen.findByRole("heading", { name: "Import complete" });
     expect(api.importMALList).toHaveBeenLastCalledWith(expect.any(File), false);
     expect(screen.getByRole("link", { name: "My list" })).toHaveAttribute(

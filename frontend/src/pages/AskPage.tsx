@@ -6,7 +6,7 @@ import {
   type KeyboardEvent,
 } from "react";
 import { Link, Navigate } from "react-router-dom";
-import { Search, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { ApiError, getErrorMessage } from "../api/client";
 import { useAskRecommendations } from "../api/useAskRecommendations";
 import { useFeatures } from "../api/useFeatures";
@@ -18,15 +18,11 @@ import "../styles/ask.css";
 
 // Mirrors backend/app/recs/natural_language.py:NL_MAX_CHARS default.
 const NL_MAX_CHARS = 300;
-const TIPS = [
-  { title: "A mood or feeling", body: "Cozy, bittersweet, tense, funny." },
-  { title: "Titles you liked", body: "“Like Mushishi, but with a story arc.”" },
-  { title: "Limits", body: "Short series, finished airing, recent." },
-];
 const EXAMPLES = [
-  "I want a cozy fantasy with a hopeful ending.",
-  "Something tense and clever, but not too long.",
-  "I liked Frieren and Fullmetal Alchemist; what else might I enjoy?",
+  "Something cozy to watch after work",
+  "Like Frieren, but shorter",
+  "A sports show for people who hate sports",
+  "Dark fantasy with a good ending",
 ];
 
 export function AskPage() {
@@ -104,9 +100,9 @@ export function AskPage() {
     return (
       <section className="browse-page ask-page">
         <header className="page-header">
-          <PageTitle lead="Describe" accent="What You Want" />
+          <PageTitle lead="Describe what you want" />
         </header>
-        <div className="ask-disabled panel">
+        <div className="ask-disabled">
           <p role="status">This feature is not enabled on this server.</p>
           <Link className="secondary-action" to="/new">
             Use Find something new
@@ -114,88 +110,6 @@ export function AskPage() {
         </div>
       </section>
     );
-
-  if (showResults && ask.data) {
-    const { results, understood, message } = ask.data;
-    return (
-      <section className="browse-page ask-page ask-results">
-        <header className="page-header">
-          <PageTitle
-            accent="I Found"
-            focusable
-            lead="Here’s What"
-            ref={resultsHeadingRef}
-          />
-          <div className="page-header-aside">
-            <button
-              className="secondary-action"
-              onClick={editRequest}
-              type="button"
-            >
-              Edit request
-            </button>
-          </div>
-        </header>
-        <section
-          aria-labelledby="ask-understood-heading"
-          className="ask-understood"
-        >
-          <h2 className="subheading" id="ask-understood-heading">
-            How I read your request
-          </h2>
-          {understood.quiz_answers.length > 0 && (
-            <ul className="ask-chips" aria-label="Interpreted preferences">
-              {understood.quiz_answers.map((answer) => (
-                <li
-                  className="chip"
-                  key={`${answer.question_id}-${answer.answer_id}`}
-                >
-                  {answer.question_label}: {answer.answer_label}
-                </li>
-              ))}
-            </ul>
-          )}
-          {understood.matched_seed_titles.length > 0 && (
-            <ul className="ask-chips" aria-label="Matched titles">
-              {understood.matched_seed_titles.map((seed) => (
-                <li key={seed.id}>
-                  <Link className="chip" to={`/anime/${seed.id}`}>
-                    {seed.title}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-          {understood.unmatched_seed_titles.length > 0 && (
-            <p className="ask-unmatched muted">
-              Couldn't find: {understood.unmatched_seed_titles.join(", ")}
-            </p>
-          )}
-        </section>
-        {results.length > 0 ? (
-          <PosterGrid
-            animeIds={results.map((result) => result.id)}
-            label="Recommendations from your request"
-            wide
-          >
-            {results.map((result) => (
-              <RecommendationCard key={result.id} recommendation={result} />
-            ))}
-          </PosterGrid>
-        ) : (
-          <div
-            aria-live="polite"
-            className="empty-recommendations ask-empty-results"
-          >
-            <p>
-              {message || "I couldn’t find recommendations for that request."}
-            </p>
-            <p>Try mentioning a mood or a few titles you enjoy.</p>
-          </div>
-        )}
-      </section>
-    );
-  }
 
   const error = ask.error;
   const isAssistantUnavailable =
@@ -213,86 +127,85 @@ export function AskPage() {
           : "";
 
   const overLimit = text.length > NL_MAX_CHARS;
+  const answer = showResults ? ask.data : undefined;
   return (
     <section className="browse-page ask-page">
       <header className="page-header">
         <div>
-          <PageTitle lead="Describe" accent="What You Want" />
+          <PageTitle lead="Describe what you want" />
           <p className="page-subtitle">
-            Describe what you’re looking for and we’ll find titles that fit.
+            Say it the way you would to a friend. Mention a mood or a few titles
+            you enjoy.
           </p>
         </div>
       </header>
       <div className="ask-layout">
-        <div className="ask-main">
-          <form className="ask-form" onSubmit={(event) => void submit(event)}>
-            <div className="ask-composer">
-              <label className="sr-only" htmlFor="ask-request">
-                What are you in the mood to watch?
-              </label>
-              <textarea
-                aria-describedby="ask-counter ask-privacy"
-                id="ask-request"
-                onChange={(event) => setText(event.currentTarget.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="A clever mystery with a small cast and a twist at the end, under 13 episodes."
-                ref={textareaRef}
-                rows={3}
-                value={text}
-              />
-              <div className="ask-toolbar">
-                <p className="ask-model-note">
-                  <Sparkles aria-hidden="true" size={16} strokeWidth={1.6} />
-                  Interpreted by Gemini
-                </p>
-                <p
-                  aria-live="polite"
-                  className={`ask-counter${overLimit ? " is-over-limit" : ""}`}
-                  id="ask-counter"
-                >
-                  {text.length} / {NL_MAX_CHARS}
-                </p>
-                <button
-                  className="primary-action"
-                  disabled={!text.trim() || overLimit || ask.isPending}
-                  type="submit"
-                >
-                  {ask.isPending
-                    ? "Finding recommendations…"
-                    : "Find recommendations"}
-                </button>
-              </div>
+        <form className="ask-form" onSubmit={(event) => void submit(event)}>
+          <div className="ask-composer">
+            <label className="sr-only" htmlFor="ask-request">
+              What are you in the mood to watch?
+            </label>
+            <textarea
+              aria-describedby="ask-counter ask-privacy"
+              id="ask-request"
+              onChange={(event) => setText(event.currentTarget.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="A clever mystery with a small cast and a twist at the end, under 13 episodes."
+              ref={textareaRef}
+              rows={3}
+              value={text}
+            />
+            <div className="ask-toolbar">
+              <p className="ask-model-note">
+                <Sparkles aria-hidden="true" size={16} strokeWidth={1.6} />
+                Interpreted by Gemini
+              </p>
+              <p
+                aria-live="polite"
+                className={`ask-counter${overLimit ? " is-over-limit" : ""}`}
+                id="ask-counter"
+              >
+                {text.length} / {NL_MAX_CHARS}
+              </p>
+              <button
+                className="primary-action"
+                disabled={!text.trim() || overLimit || ask.isPending}
+                type="submit"
+              >
+                {ask.isPending
+                  ? "Finding recommendations…"
+                  : "Get recommendations"}
+              </button>
             </div>
-            <p className="ask-privacy" id="ask-privacy">
-              Your request is sent to Google’s Gemini API to be interpreted. It
-              isn’t saved to your account.
-            </p>
-            {error && (
-              <div aria-live="assertive" className="ask-error" role="alert">
-                <p>{inlineError}</p>
-                {isAssistantUnavailable && (
-                  <Link to="/new">Try the normal quiz</Link>
+          </div>
+          <p className="ask-privacy" id="ask-privacy">
+            Your request is sent to Google’s Gemini API to be interpreted. It
+            isn’t saved to your account.
+          </p>
+          {error && (
+            <div aria-live="assertive" className="ask-error" role="alert">
+              <p>{inlineError}</p>
+              {isAssistantUnavailable && (
+                <Link to="/new">Try the normal quiz</Link>
+              )}
+              {error instanceof ApiError &&
+                error.code === "natural_language_unavailable" && (
+                  <button
+                    className="text-button"
+                    onClick={() => void features.refetch()}
+                    type="button"
+                  >
+                    Refresh availability
+                  </button>
                 )}
-                {error instanceof ApiError &&
-                  error.code === "natural_language_unavailable" && (
-                    <button
-                      className="text-button"
-                      onClick={() => void features.refetch()}
-                      type="button"
-                    >
-                      Refresh availability
-                    </button>
-                  )}
-              </div>
-            )}
-            <div aria-live="polite" className="sr-only">
-              {ask.isPending ? "Getting recommendations…" : ""}
             </div>
-          </form>
-          <section
-            aria-labelledby="ask-examples-heading"
-            className="ask-examples"
-          >
+          )}
+          <div aria-live="polite" className="sr-only">
+            {ask.isPending ? "Getting recommendations…" : ""}
+          </div>
+        </form>
+        <aside className="ask-side">
+          <section aria-labelledby="ask-examples-heading">
             <h2 className="ask-side-heading" id="ask-examples-heading">
               Examples
             </h2>
@@ -307,28 +220,103 @@ export function AskPage() {
                     }}
                     type="button"
                   >
-                    <Search aria-hidden="true" size={16} strokeWidth={1.8} />
                     {example}
                   </button>
                 </li>
               ))}
             </ul>
           </section>
-        </div>
-        <aside aria-labelledby="ask-tips-heading" className="ask-tips">
-          <h2 className="ask-side-heading" id="ask-tips-heading">
-            What to include
-          </h2>
-          <dl>
-            {TIPS.map((tip) => (
-              <div key={tip.title}>
-                <dt>{tip.title}</dt>
-                <dd>{tip.body}</dd>
-              </div>
-            ))}
-          </dl>
+          <section aria-labelledby="ask-tips-heading" className="ask-tips">
+            <h2 className="ask-side-heading" id="ask-tips-heading">
+              Tips
+            </h2>
+            <p>
+              Name titles you liked and what you liked about them. Length and
+              era help too.
+            </p>
+          </section>
         </aside>
       </div>
+      {answer && (
+        <section
+          aria-labelledby="ask-understood-heading"
+          className="ask-results"
+        >
+          <div className="ask-results-head">
+            <div className="ask-understood">
+              <h2
+                className="ask-understood-heading"
+                id="ask-understood-heading"
+                ref={resultsHeadingRef}
+                tabIndex={-1}
+              >
+                What we understood
+              </h2>
+              {answer.understood.quiz_answers.length > 0 && (
+                <ul className="ask-chips" aria-label="Interpreted preferences">
+                  {answer.understood.quiz_answers.map((item) => (
+                    <li
+                      className="ask-chip"
+                      key={`${item.question_id}-${item.answer_id}`}
+                    >
+                      {item.question_label}: {item.answer_label}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {answer.understood.matched_seed_titles.length > 0 && (
+                <ul className="ask-chips" aria-label="Matched titles">
+                  {answer.understood.matched_seed_titles.map((seed) => (
+                    <li key={seed.id}>
+                      <Link className="ask-chip" to={`/anime/${seed.id}`}>
+                        {seed.title}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {answer.understood.unmatched_seed_titles.length > 0 && (
+                <p className="ask-unmatched">
+                  Couldn't find:{" "}
+                  {answer.understood.unmatched_seed_titles.join(", ")}
+                </p>
+              )}
+            </div>
+            <button
+              className="secondary-action"
+              onClick={editRequest}
+              type="button"
+            >
+              Edit request
+            </button>
+          </div>
+          {answer.results.length > 0 ? (
+            <PosterGrid
+              animeIds={answer.results.map((result) => result.id)}
+              label="Recommendations from your request"
+              wide
+            >
+              {answer.results.map((result) => (
+                <RecommendationCard key={result.id} recommendation={result} />
+              ))}
+            </PosterGrid>
+          ) : (
+            <div
+              aria-live="polite"
+              className="empty-recommendations ask-empty-results"
+            >
+              <p>
+                {answer.message ||
+                  "I couldn’t find recommendations for that request."}
+              </p>
+              <p>Try mentioning a mood or a few titles you enjoy.</p>
+            </div>
+          )}
+          <p className="ask-footnote">
+            Not quite right? <Link to="/new">Try the normal quiz</Link>.
+          </p>
+        </section>
+      )}
     </section>
   );
 }

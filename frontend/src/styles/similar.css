@@ -1,0 +1,99 @@
+/* Similar titles (/similar/:id): cover-led hero over a full-bleed glow. */
+
+.similar-page {
+  position: relative;
+  isolation: isolate;
+  padding-bottom: 56px;
+}
+
+/* Diagonal glow in the seed's cover colour, fading out under the hero. */
+.similar-page::before {
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  right: calc(50% - 50vw);
+  left: calc(50% - 50vw);
+  height: 360px;
+  background: linear-gradient(
+    110deg,
+    color-mix(in srgb, var(--cover, transparent) 16%, transparent) 0%,
+    color-mix(in srgb, var(--cover, transparent) 4%, transparent) 50%,
+    transparent 100%
+  );
+  content: "";
+  mask-image: linear-gradient(to bottom, #000 70%, transparent);
+  pointer-events: none;
+}
+
+.similar-hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 20px 28px;
+  padding: 46px 0 54px;
+}
+
+.similar-cover {
+  width: 96px;
+  flex: none;
+}
+
+.similar-cover .poster-art {
+  aspect-ratio: 96 / 136;
+  border-radius: 10px;
+}
+
+.similar-heading {
+  min-width: 0;
+  flex: 1 1 320px;
+}
+
+.similar-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-50);
+  font-weight: 400;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.similar-lead {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: var(--text-21);
+  line-height: 1.3;
+}
+
+.similar-count {
+  margin: 12px 0 0;
+  color: var(--muted);
+}
+
+.similar-open {
+  height: 44px;
+  border-color: transparent;
+  background: var(--fill-strong);
+}
+
+.similar-open:hover:not(:disabled) {
+  border-color: transparent;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+@media (max-width: 640px) {
+  .similar-cover {
+    width: 72px;
+  }
+
+  .similar-hero {
+    padding: 32px 0 36px;
+  }
+
+  .similar-open {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}

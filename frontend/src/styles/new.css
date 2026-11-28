@@ -1,93 +1,76 @@
-/* Find something new (/new). Scoped so the main quiz styles stay separate. */
+/* Find something new (/new). */
 
-.new-page,
-.new-results-page {
-  padding-top: 56px;
-}
-
-.new-page .page-title {
-  margin-bottom: 12px;
-}
-
-.new-page .page-title:focus {
-  outline: none;
-}
-
-.new-page .quiz-card {
-  max-width: 880px;
-}
-
-.new-page-intro {
-  margin: 0 0 32px;
-  color: var(--muted);
-}
-
-.new-quiz-form {
+.new-form {
   display: grid;
   gap: 28px;
+  max-width: 740px;
 }
 
-.new-quiz-form > .primary-action {
-  justify-self: start;
-  margin-top: 4px;
-}
-
-.new-quiz-question {
+.new-question {
+  min-width: 0;
   margin: 0;
-  padding: 0 0 28px;
+  padding: 0;
   border: 0;
-  border-bottom: 1px solid var(--line);
 }
 
-.new-quiz-question legend {
-  margin-bottom: 14px;
+.new-question legend {
+  margin-bottom: 12px;
   padding: 0;
   color: var(--paper);
-  font-size: var(--text-21);
-  font-weight: 700;
+  font-size: 18px;
 }
 
-.new-page .quiz-options {
+.new-options {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
-.new-page .quiz-option {
+.new-option {
   position: relative;
   display: inline-flex;
-  min-height: 44px;
+  min-height: 38px;
   align-items: center;
-  padding: 0 18px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: var(--surface);
+  padding: 0 14px;
+  border-radius: 19px;
+  background: var(--fill);
   color: var(--paper);
+  font-size: 15px;
   cursor: pointer;
   transition:
-    border-color var(--ease),
     background-color var(--ease),
     color var(--ease);
 }
 
-.new-page .quiz-option input {
+.new-option input {
   position: absolute;
   opacity: 0;
   pointer-events: none;
 }
 
-.new-page .quiz-option:hover {
-  border-color: var(--muted);
+.new-option:hover {
+  background: rgba(255, 255, 255, 0.1);
 }
 
-.new-page .quiz-option:has(input:checked) {
-  border-color: var(--accent);
-  background: var(--accent-tint);
-  color: var(--accent);
+.new-option:has(input:checked) {
+  background: var(--paper);
+  color: var(--graphite);
 }
 
-.new-page .quiz-option:has(input:focus-visible) {
+.new-option:has(input:focus-visible) {
   box-shadow: var(--ring);
+}
+
+.new-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.new-actions .primary-action,
+.new-actions .secondary-action {
+  height: 44px;
 }
 
 .new-quiz-error {
@@ -97,22 +80,31 @@
 
 /* Results */
 
-.new-page-heading {
+.new-results {
   display: grid;
-  justify-items: start;
-  gap: 8px;
-  margin-bottom: 40px;
+  gap: 12px;
+  margin-top: 56px;
+  padding-top: 40px;
+  border-top: 1px solid var(--line);
 }
 
-.new-page-heading .page-title:focus {
+.new-results > .poster-grid,
+.new-results > .empty-recommendations {
+  margin-top: 24px;
+}
+
+.new-results-title {
+  font-family: var(--font-display);
+  font-size: var(--text-28);
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+.new-results-title:focus {
   outline: none;
 }
 
-.new-page-heading .eyebrow {
-  margin: 0;
-  color: var(--muted);
-}
-
+.new-results-summary,
 .new-mode-message {
   margin: 0;
   color: var(--muted);
@@ -123,14 +115,32 @@
   gap: 4px;
   padding: 16px 20px;
   border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--surface);
+  border-radius: 12px;
 }
 
 .new-fallback-notice p {
   margin: 0;
 }
 
-.new-fallback-notice a {
-  color: var(--accent);
+.new-fallback-notice a,
+.new-footnote a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.new-footnote {
+  margin: 36px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.new-footnote a {
+  color: var(--paper);
+}
+
+@media (max-width: 640px) {
+  .new-results {
+    margin-top: 40px;
+    padding-top: 32px;
+  }
 }

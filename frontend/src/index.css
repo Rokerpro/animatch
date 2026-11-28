@@ -2499,52 +2499,6 @@ input[type="radio"] {
 /* Results pages (similar, quiz, picks, for you)                       */
 /* ------------------------------------------------------------------ */
 
-.similar-seed {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  padding: 16px;
-  margin-bottom: 40px;
-}
-
-.similar-seed-cover {
-  width: 64px;
-  flex: none;
-}
-
-.similar-seed-cover .poster-art {
-  aspect-ratio: 193 / 274;
-  border-radius: 4px;
-}
-
-.similar-seed-copy {
-  display: grid;
-  gap: 2px;
-  min-width: 0;
-}
-
-.similar-seed-label {
-  color: var(--muted);
-  font-size: 14px;
-}
-
-.similar-seed-title {
-  color: var(--paper);
-  font-size: 21px;
-  font-weight: 700;
-  text-decoration: none;
-}
-
-.similar-seed-title:hover {
-  color: var(--accent);
-}
-
-.similar-seed-count {
-  margin-left: auto;
-  color: var(--muted);
-  white-space: nowrap;
-}
-
 .answer-chips {
   display: flex;
   flex-wrap: wrap;
@@ -2621,9 +2575,5 @@ input[type="radio"] {
   .for-you-heading {
     flex-direction: column;
     align-items: flex-start;
-  }
-
-  .similar-seed-count {
-    display: none;
   }
 }

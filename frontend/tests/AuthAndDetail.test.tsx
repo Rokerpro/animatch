@@ -193,10 +193,7 @@ describe("auth and detail states", () => {
       },
     });
     render(
-      <MemoryRouter
-        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
-        initialEntries={["/anime/2"]}
-      >
+      <MemoryRouter initialEntries={["/anime/2"]}>
         <Routes>
           <Route path="/anime/:id" element={<AnimeDetailPage />} />
         </Routes>
@@ -254,12 +251,11 @@ describe("auth and detail states", () => {
       </MemoryRouter>
     );
     expect(
-      screen.getByRole("heading", { name: "Anime Similar to Seed Anime" })
+      screen.getByRole("heading", { name: "Anime like Seed Anime" })
     ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Seed Anime" })).toHaveAttribute(
-      "href",
-      "/anime/4"
-    );
+    expect(
+      screen.getByRole("link", { name: "Open Seed Anime" })
+    ).toHaveAttribute("href", "/anime/4");
     expect(screen.getByText("Similar Anime")).toBeInTheDocument();
     expect(
       screen.queryByRole("heading", { name: "Synopsis" })

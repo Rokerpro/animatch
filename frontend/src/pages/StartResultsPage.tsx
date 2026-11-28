@@ -7,6 +7,7 @@ import { PosterSkeleton } from "../components/RequestStates";
 import { PageTitle } from "../components/PageTitle";
 import { useAuth } from "../auth/useAuth";
 import { readSavedStart, saveStart } from "../startStorage";
+import "../styles/quiz.css";
 
 export function StartResultsPage() {
   const [saved, setSaved] = useState(readSavedStart);
@@ -48,17 +49,22 @@ export function StartResultsPage() {
 
   return (
     <section className="browse-page results-page">
-      <header className="page-header">
-        <PageTitle lead="Recommendations Based on" accent="Your Picks" />
+      <header className="page-header results-heading">
+        <div>
+          <PageTitle lead="Your matches" />
+          <div className="results-answers">
+            <p className="results-answers-label">From your picks</p>
+          </div>
+        </div>
+        <div className="results-actions">
+          <Link className="secondary-action" to="/quiz?mode=titles">
+            Pick different titles
+          </Link>
+          <Link className="secondary-action" to="/quiz">
+            Take the quiz
+          </Link>
+        </div>
       </header>
-      <div className="answer-chips">
-        <Link className="text-button answer-retake" to="/quiz?mode=titles">
-          Pick different titles
-        </Link>
-        <Link className="text-button answer-retake" to="/quiz">
-          Take the quiz
-        </Link>
-      </div>
       {error && (
         <div className="status-box status-error" role="alert">
           <p>{error}</p>
