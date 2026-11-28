@@ -238,4 +238,67 @@ describe("list controls", () => {
     expect(trigger).toHaveFocus();
     expect(trigger).toHaveAttribute("aria-expanded", "false");
   });
+
+  it("opens a radial menu on cards with the statuses clockwise and Remove only when listed", async () => {
+    const { unmount } = renderWithProviders(
+      <ListControl anime={anime} status={null} rating={null} />
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Add Example to My list" })
+    );
+    const menu = screen.getByRole("menu", { name: "List status for Example" });
+    const items = Array.from(menu.querySelectorAll("button"));
+    expect(items.map((item) => item.getAttribute("aria-label"))).toEqual([
+      "Planning",
+      "Watching",
+      "Completed",
+      "Dropped",
+      "On hold",
+    ]);
+    expect(items.map((item) => item.style.getPropertyValue("--angle"))).toEqual(
+      ["0deg", "72deg", "144deg", "216deg", "288deg"]
+    );
+    // Focus starts on the first status and the label pill names it.
+    expect(items[0]).toHaveFocus();
+    expect(document.querySelector(".list-radial-label")).toHaveTextContent(
+      "Planning"
+    );
+    fireEvent.keyDown(menu, { key: "ArrowRight" });
+    expect(items[1]).toHaveFocus();
+    expect(document.querySelector(".list-radial-label")).toHaveTextContent(
+      "Watching"
+    );
+    fireEvent.pointerDown(document.body);
+    // The menu plays its exit animation before it unmounts.
+    expect(document.querySelector(".list-radial")).toHaveClass("is-closing");
+    await waitFor(
+      () => expect(screen.queryByRole("menu")).not.toBeInTheDocument(),
+      { timeout: 2000 }
+    );
+    unmount();
+
+    renderWithProviders(
+      <ListControl anime={anime} status="watching" rating={null} />
+    );
+    const trigger = screen.getByRole("button", {
+      name: /Change list status for Example, Watching/,
+    });
+    fireEvent.click(trigger);
+    expect(
+      screen.getByRole("menuitemradio", { name: "Watching" })
+    ).toHaveFocus();
+    expect(
+      screen.getByRole("menuitemradio", { name: "Watching" })
+    ).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByRole("menuitem", { name: "Remove" })).toHaveStyle({
+      "--angle": "300deg",
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Close list menu" }));
+    expect(trigger).toHaveFocus();
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+    await waitFor(
+      () => expect(screen.queryByRole("menu")).not.toBeInTheDocument(),
+      { timeout: 2000 }
+    );
+  });
 });

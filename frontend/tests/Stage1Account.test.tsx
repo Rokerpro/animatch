@@ -29,6 +29,7 @@ vi.mock("../src/api/hooks", () => ({
   queryKeys: { me: ["me"] },
   useProviders: () => ({ data: { google: false } }),
   useListStats: () => ({ data: undefined }),
+  useAnimeDetail: () => ({ data: undefined }),
   useQuizQuestions: () => ({ data: undefined }),
   useMe: () => ({
     data: {
@@ -251,7 +252,7 @@ describe("stage 1 account flows", () => {
       setMature: vi.fn(),
       signOut: vi.fn(),
     });
-    renderApp(<Navbar />, "/");
+    renderApp(<Navbar />, "/browse");
     expect(screen.getByRole("link", { name: "My list" })).toHaveAttribute(
       "href",
       "/list"
@@ -271,31 +272,48 @@ describe("stage 1 account flows", () => {
     expect(screen.getByRole("button", { name: "Account menu" })).toHaveFocus();
   });
 
-  it("lists every page in the phone menu beside the logo", () => {
+  it("opens a phone drawer with every page, the 18+ switch and the profile", () => {
+    const setMature = vi.fn();
+    const signOut = vi.fn().mockResolvedValue(undefined);
     vi.mocked(useAuth).mockReturnValue({
       user,
       authLoading: false,
       mature: false,
       refresh: vi.fn(),
-      setMature: vi.fn(),
-      signOut: vi.fn(),
+      setMature,
+      signOut,
     });
-    renderApp(<Navbar />, "/");
-    fireEvent.click(screen.getByRole("button", { name: "Pages" }));
-    const menu = screen.getByRole("menu", { name: "Pages" });
+    renderApp(<Navbar />, "/browse");
     expect(
-      within(menu)
-        .getAllByRole("menuitem")
+      screen.getByRole("link", { name: "Account settings" })
+    ).toHaveAttribute("href", "/settings");
+    fireEvent.click(screen.getByRole("button", { name: "Menu" }));
+    const drawer = screen.getByRole("dialog", { name: "Menu" });
+    const pages = within(drawer).getByRole("navigation", { name: "Pages" });
+    expect(
+      within(pages)
+        .getAllByRole("link")
         .map((item) => item.textContent)
     ).toEqual(["Browse", "For you", "My list"]);
+    const browse = within(pages).getByRole("link", { name: "Browse" });
+    expect(browse).toHaveFocus();
+    expect(browse).toHaveClass("active");
+    fireEvent.click(
+      within(drawer).getByRole("switch", { name: "Mature (18+)" })
+    );
+    expect(setMature).toHaveBeenCalledWith(true);
     expect(
-      within(menu).getByRole("menuitem", { name: "Browse" })
-    ).toHaveFocus();
-    fireEvent.keyDown(menu, { key: "Escape" });
-    expect(screen.getByRole("button", { name: "Pages" })).toHaveFocus();
+      within(drawer).getByRole("link", { name: "Person Account settings" })
+    ).toHaveAttribute("href", "/settings");
+    expect(
+      within(drawer).getByRole("button", { name: "Sign out" })
+    ).toBeInTheDocument();
+    fireEvent.keyDown(drawer, { key: "Escape" });
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Menu" })).toHaveFocus();
   });
 
-  it("keeps one header menu open and closes it on an outside tap", () => {
+  it("closes the drawer on an outside tap or when a row is picked", () => {
     vi.mocked(useAuth).mockReturnValue({
       user,
       authLoading: false,
@@ -305,26 +323,59 @@ describe("stage 1 account flows", () => {
       signOut: vi.fn(),
     });
     renderApp(<Navbar />, "/");
-    fireEvent.click(screen.getByRole("button", { name: "Pages" }));
+    fireEvent.click(screen.getByRole("button", { name: "Menu" }));
+    fireEvent.pointerDown(document.body);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Menu" }));
+    fireEvent.click(
+      within(screen.getByRole("dialog")).getByRole("link", { name: "My list" })
+    );
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("keeps one header menu open at a time", () => {
+    vi.mocked(useAuth).mockReturnValue({
+      user,
+      authLoading: false,
+      mature: false,
+      refresh: vi.fn(),
+      setMature: vi.fn(),
+      signOut: vi.fn(),
+    });
+    renderApp(<Navbar />, "/");
+    fireEvent.click(screen.getByRole("button", { name: "Menu" }));
     fireEvent.click(screen.getByRole("button", { name: "Account menu" }));
-    expect(screen.getAllByRole("menu")).toHaveLength(1);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(screen.getByRole("menu", { name: "Account" })).toBeInTheDocument();
     fireEvent.pointerDown(document.body);
     expect(screen.queryByRole("menu")).not.toBeInTheDocument();
   });
 
-  it("offers Browse and the quiz in the phone menu while signed out", () => {
-    renderApp(<Navbar />, "/");
-    fireEvent.click(screen.getByRole("button", { name: "Pages" }));
+  it("offers Browse, the quiz and Sign in in the drawer while signed out", () => {
+    renderApp(<Navbar />, "/quiz");
+    fireEvent.click(screen.getByRole("button", { name: "Menu" }));
+    const drawer = screen.getByRole("dialog", { name: "Menu" });
     expect(
-      within(screen.getByRole("menu", { name: "Pages" }))
-        .getAllByRole("menuitem")
+      within(within(drawer).getByRole("navigation", { name: "Pages" }))
+        .getAllByRole("link")
         .map((item) => item.textContent)
     ).toEqual(["Browse", "Take the quiz"]);
+    expect(
+      within(drawer).getByRole("link", { name: "Sign in" })
+    ).toHaveAttribute("href", "/login?next=%2Fquiz");
+    fireEvent.click(
+      within(drawer).getByRole("switch", { name: "Mature (18+)" })
+    );
+    expect(
+      screen.queryByRole("dialog", { name: "Menu" })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("dialog", { name: "Sign in to view 18+ content" })
+    ).toBeInTheDocument();
   });
 
   it("shows only Take the quiz and Sign in while signed out", () => {
-    renderApp(<Navbar />, "/");
+    renderApp(<Navbar />, "/browse");
     expect(screen.getByRole("link", { name: "Take the quiz" })).toHaveAttribute(
       "href",
       "/quiz"
@@ -462,7 +513,7 @@ describe("stage 1 account flows", () => {
     await waitFor(() =>
       expect(update).toHaveBeenCalledWith({ display_name: "New name" })
     );
-    fireEvent.click(screen.getByLabelText("Include mature anime (18+)"));
+    fireEvent.click(screen.getByLabelText("Mature (18+)"));
     expect(setMature).toHaveBeenCalledWith(true);
   });
 });
