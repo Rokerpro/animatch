@@ -13,9 +13,7 @@ function renderRecommendation(
 ) {
   return render(
     <QueryClientProvider client={new QueryClient()}>
-      <MemoryRouter
-        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
-      >
+      <MemoryRouter>
         <RecommendationCard recommendation={recommendation} />
       </MemoryRouter>
     </QueryClientProvider>

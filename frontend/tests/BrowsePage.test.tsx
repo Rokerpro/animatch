@@ -42,10 +42,7 @@ describe("BrowsePage URL state", () => {
   it("reads filters and page from the URL and keeps filters when changing page", () => {
     render(
       <QueryClientProvider client={new QueryClient()}>
-        <MemoryRouter
-          future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
-          initialEntries={["/browse?genres=Action&page=1"]}
-        >
+        <MemoryRouter initialEntries={["/browse?genres=Action&page=1"]}>
           <Routes>
             <Route
               path="/browse"
@@ -73,7 +70,6 @@ describe("BrowsePage URL state", () => {
     render(
       <QueryClientProvider client={new QueryClient()}>
         <MemoryRouter
-          future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
           initialEntries={[
             "/browse?genres=Action&tags=Thriller&yearMin=2021&status=FINISHED",
           ]}

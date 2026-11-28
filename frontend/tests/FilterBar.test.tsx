@@ -9,10 +9,7 @@ function LocationText() {
 describe("FilterBar", () => {
   it("sets URL filters and exposes removable chips and clear all", () => {
     render(
-      <MemoryRouter
-        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
-        initialEntries={["/browse"]}
-      >
+      <MemoryRouter initialEntries={["/browse"]}>
         <FilterBar options={{ genres: ["Action"], tags: ["Time Loop"] }} />
         <LocationText />
       </MemoryRouter>

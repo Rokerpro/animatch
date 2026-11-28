@@ -11,9 +11,7 @@ describe("AnimeCard", () => {
     const queryClient = new QueryClient();
     render(
       <QueryClientProvider client={queryClient}>
-        <MemoryRouter
-          future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
-        >
+        <MemoryRouter>
           <AnimeCard
             anime={{
               id: 7,
