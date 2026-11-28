@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { api } from "../src/api/client";
 import { useAuth } from "../src/auth/useAuth";
 import { ToastProvider } from "../src/components/ToastProvider";
+import type { ListResponse } from "../src/api/types";
 import { ListPage } from "../src/pages/ListPage";
 
 vi.mock("../src/auth/useAuth", () => ({ useAuth: vi.fn() }));
@@ -15,7 +16,7 @@ const user = {
   show_mature: true,
   created_at: "today",
 };
-function response(total = 0, lastPage = 1, withItem = false) {
+function response(total = 0, lastPage = 1, withItem = false): ListResponse {
   return {
     items: withItem
       ? [
@@ -26,9 +27,13 @@ function response(total = 0, lastPage = 1, withItem = false) {
               id: 7,
               title: "Example",
               coverImage: "https://img.test/7.jpg",
+              format: "TV",
+              year: 2024,
+              episodes: 12,
             },
             status: "planning" as const,
             rating: null,
+            progress: 0,
             source: "manual" as const,
             addedAt: "today",
             updatedAt: "today",
@@ -127,9 +132,22 @@ describe("My list page", () => {
   it("supports keyboard status tabs, sorting, numbered pagination, and total count", async () => {
     vi.spyOn(api, "list").mockResolvedValue(response(49, 3, true));
     renderPage("/list?page=2");
-    expect(await screen.findByText("49 titles")).toBeInTheDocument();
+    expect(
+      await screen.findByText(
+        "49 titles. Track episodes, rate what you finish."
+      )
+    ).toBeInTheDocument();
     expect(await screen.findByText("22")).toHaveClass("list-tab-count");
-    expect(screen.getByText("Showing 1 of 49 titles")).toBeInTheDocument();
+    expect(screen.getByRole("list", { name: "Your titles" })).toHaveTextContent(
+      "TV, 2024, 12 episodes"
+    );
+    const row = screen.getByRole("list", { name: "Your titles" });
+    expect(row).toContainElement(
+      screen.getByRole("button", {
+        name: "Change list status for Example, Planning",
+      })
+    );
+    expect(row).toHaveTextContent("Not rated");
     expect(api.list).toHaveBeenCalledWith({
       status: undefined,
       sort: "updated",
@@ -174,5 +192,87 @@ describe("My list page", () => {
         includeMature: true,
       })
     );
+  });
+});
+
+describe("list export", () => {
+  it("links JSON and MAL exports with the mature setting", async () => {
+    vi.mocked(api.list).mockResolvedValue(response(1, 1, true));
+    renderPage();
+    expect(
+      await screen.findByRole("link", { name: "Export JSON" })
+    ).toHaveAttribute(
+      "href",
+      "/api/list/export?format=json&includeMature=true"
+    );
+    expect(
+      screen.getByRole("link", { name: "Export for MyAnimeList" })
+    ).toHaveAttribute("href", "/api/list/export?format=xml&includeMature=true");
+  });
+});
+
+describe("episode progress", () => {
+  it("steps progress up through the list API and stops at the episode count", async () => {
+    const page = response(1, 1, true);
+    page.items[0] = {
+      ...page.items[0],
+      status: "watching",
+      progress: 11,
+      anime: { ...page.items[0].anime, episodes: 12 },
+    };
+    vi.mocked(api.list).mockResolvedValue(page);
+    const update = vi
+      .spyOn(api, "updateListEntry")
+      .mockResolvedValue({ ...page.items[0], progress: 12 });
+    renderPage();
+    const plus = await screen.findByRole("button", {
+      name: "One more episode watched of Example",
+    });
+    expect(screen.getByText("11 / 12")).toBeInTheDocument();
+    vi.mocked(api.list).mockResolvedValue({
+      ...page,
+      items: [{ ...page.items[0], progress: 12 }],
+    });
+    fireEvent.click(plus);
+    await waitFor(() =>
+      expect(update).toHaveBeenCalledWith(7, { progress: 12 })
+    );
+    expect(await screen.findByText("12 / 12")).toBeInTheDocument();
+    await waitFor(() => expect(plus).toBeDisabled());
+  });
+
+  it("jumps the counter to every episode when a title is completed", async () => {
+    const page = response(1, 1, true);
+    page.items[0] = {
+      ...page.items[0],
+      status: "watching",
+      progress: 3,
+      anime: { ...page.items[0].anime, episodes: 12 },
+    };
+    vi.mocked(api.list).mockResolvedValue(page);
+    // Left pending so only the optimistic update is on screen.
+    const update = vi
+      .spyOn(api, "updateListEntry")
+      .mockReturnValue(new Promise(() => {}));
+    renderPage();
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: "Change list status for Example, Watching",
+      })
+    );
+    fireEvent.click(screen.getByRole("menuitemradio", { name: /Completed/ }));
+    await waitFor(() =>
+      expect(update).toHaveBeenCalledWith(7, { status: "completed" })
+    );
+    expect(await screen.findByText("12 / 12")).toBeInTheDocument();
+  });
+
+  it("hides the progress control for planned titles", async () => {
+    vi.mocked(api.list).mockResolvedValue(response(1, 1, true));
+    renderPage();
+    await screen.findByText("Example", { selector: "a" });
+    expect(
+      screen.queryByRole("button", { name: /episode watched/ })
+    ).not.toBeInTheDocument();
   });
 });

@@ -149,13 +149,9 @@ describe("Find something new", () => {
     expect(
       screen.queryByText("How do you like your story paced?")
     ).not.toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Find recommendations" })
-    ).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Show picks" })).toBeDisabled();
     fireEvent.click(screen.getByLabelText("Epic / action-packed"));
-    expect(
-      screen.getByRole("button", { name: "Find recommendations" })
-    ).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Show picks" })).toBeEnabled();
   });
 
   it("sends exactly the selected answers and renders reasons with the existing card controls", async () => {
@@ -163,9 +159,7 @@ describe("Find something new", () => {
     await screen.findByText("What mood are you in?");
     fireEvent.click(screen.getByLabelText("Epic / action-packed"));
     fireEvent.click(screen.getByLabelText("Short"));
-    fireEvent.click(
-      screen.getByRole("button", { name: "Find recommendations" })
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Show picks" }));
     expect(await screen.findByText(recommendation.reason)).toBeInTheDocument();
     expect(api.newRecommendations).toHaveBeenCalledTimes(1);
     expect(api.newRecommendations).toHaveBeenCalledWith({
@@ -187,9 +181,7 @@ describe("Find something new", () => {
     renderRoute();
     await screen.findByText("What mood are you in?");
     fireEvent.click(screen.getByLabelText("Epic / action-packed"));
-    fireEvent.click(
-      screen.getByRole("button", { name: "Find recommendations" })
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Show picks" }));
     expect(
       await screen.findByText(/Your list is still empty/)
     ).toBeInTheDocument();
@@ -209,9 +201,7 @@ describe("Find something new", () => {
     renderRoute();
     await screen.findByText("What mood are you in?");
     fireEvent.click(screen.getByLabelText("Epic / action-packed"));
-    fireEvent.click(
-      screen.getByRole("button", { name: "Find recommendations" })
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Show picks" }));
     expect(
       await screen.findByText("These picks sit outside your usual taste.")
     ).toBeInTheDocument();
@@ -243,9 +233,7 @@ describe("Find something new", () => {
     renderRoute();
     await screen.findByText("What mood are you in?");
     fireEvent.click(screen.getByLabelText("Epic / action-packed"));
-    fireEvent.click(
-      screen.getByRole("button", { name: "Find recommendations" })
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Show picks" }));
     expect(await screen.findByRole("alert")).toHaveTextContent(message);
   });
 
@@ -266,9 +254,7 @@ describe("Find something new", () => {
     renderRoute();
     await screen.findByText("What mood are you in?");
     fireEvent.click(screen.getByLabelText("Epic / action-packed"));
-    fireEvent.click(
-      screen.getByRole("button", { name: "Find recommendations" })
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Show picks" }));
     await screen.findByText(recommendation.reason);
     expect(quizStorageSpies.every((spy) => spy.mock.calls.length === 0)).toBe(
       true

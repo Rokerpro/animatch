@@ -1,20 +1,21 @@
 import { Link } from "react-router-dom";
 import "../styles/account.css";
+import "../styles/landing.css";
 import { PageTitle } from "../components/PageTitle";
 import { PosterStack } from "../components/PosterStack";
 
 export function NotFoundPage() {
   return (
-    <section className="not-found-page">
-      <div className="not-found-copy">
-        <PageTitle lead="Page" accent="Not Found" className="not-found-title" />
-        <p className="not-found-text">
-          This page doesn't exist or has moved. Check the address, or pick up
-          from one of these.
+    <section className="nf-page">
+      <div className="nf-copy">
+        <PageTitle lead="Page not found" className="nf-title" />
+        <p className="nf-text">
+          That link does not go anywhere. It may have moved, or the title was
+          hidden.
         </p>
-        <div className="button-row not-found-actions">
+        <div className="nf-actions">
           <Link className="primary-action" to="/">
-            Back to home
+            Go home
           </Link>
           <Link className="secondary-action" to="/browse">
             Browse anime
@@ -24,7 +25,7 @@ export function NotFoundPage() {
           </Link>
         </div>
       </div>
-      <PosterStack className="not-found-posters" />
+      <PosterStack className="nf-posters" />
     </section>
   );
 }

@@ -5,11 +5,72 @@
 .list-heading-actions {
   display: flex;
   align-items: center;
-  gap: 24px;
+  flex-wrap: wrap;
+  gap: 12px 24px;
 }
 
 .list-total {
-  color: var(--muted);
+  margin-top: 12px;
+}
+
+.list-export {
+  position: relative;
+}
+
+.list-export summary {
+  display: inline-flex;
+  height: 44px;
+  align-items: center;
+  gap: 10px;
+  padding: 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  cursor: pointer;
+  list-style: none;
+  transition: border-color var(--ease);
+}
+
+.list-export summary::-webkit-details-marker {
+  display: none;
+}
+
+.list-export summary:hover,
+.list-export[open] summary {
+  border-color: var(--muted);
+}
+
+.list-export summary:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}
+
+.list-export-menu {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 8px);
+  right: 0;
+  display: flex;
+  min-width: 220px;
+  flex-direction: column;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: var(--shadow-lift);
+}
+
+.list-export-menu a {
+  display: flex;
+  height: 40px;
+  align-items: center;
+  padding: 0 12px;
+  border-radius: 8px;
+}
+
+.list-export-menu a:hover,
+.list-export-menu a:focus-visible {
+  outline: none;
+  background: var(--surface-2);
 }
 
 .list-controls-row {
@@ -24,18 +85,16 @@
 .list-status-tabs {
   display: flex;
   max-width: 100%;
-  gap: 2px;
+  gap: 8px;
   padding: 3px;
   overflow-x: auto;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: var(--surface);
   scrollbar-width: none;
 }
 
 .list-status-tabs:focus-visible {
   outline: none;
   box-shadow: var(--ring);
+  border-radius: 24px;
 }
 
 .list-status-tab {
@@ -43,21 +102,18 @@
   flex: none;
   align-items: center;
   gap: 8px;
-  height: 36px;
-  padding: 0 16px;
+  height: 40px;
+  padding: 0 18px;
   border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--muted);
+  border-radius: 20px;
+  background: var(--fill);
+  color: var(--paper);
   cursor: pointer;
-  font-weight: 500;
-  transition:
-    background-color var(--ease),
-    color var(--ease);
+  transition: background-color var(--ease);
 }
 
 .list-status-tab:hover {
-  color: var(--paper);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .list-status-tab:focus-visible {
@@ -66,89 +122,190 @@
 }
 
 .list-status-tab[aria-selected="true"] {
-  background: var(--lavender);
+  background: var(--paper);
   color: var(--graphite);
 }
 
 .list-tab-count {
-  font-size: 13px;
-  opacity: 0.8;
+  color: var(--muted);
 }
 
+.list-status-tab[aria-selected="true"] .list-tab-count {
+  color: rgb(14 15 17 / 60%);
+}
+
+/* Label and select share one pill: "Sort  Recently updated". */
 .list-sort-control {
   display: flex;
+  width: 240px;
+  height: 40px;
   align-items: center;
-  gap: 12px;
+  padding-left: 18px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
   color: var(--muted);
+  transition:
+    border-color var(--ease),
+    box-shadow var(--ease);
+}
+
+.list-sort-control:focus-within {
+  border-color: var(--accent);
+  box-shadow: var(--ring);
 }
 
 .list-sort-control select {
-  width: 200px;
-}
-
-.list-showing {
-  margin: 0 0 24px;
-  color: var(--muted);
-}
-
-.my-list-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(176px, 1fr));
-  gap: 48px 24px;
-}
-
-.my-list-card {
-  display: flex;
-  flex-direction: column;
-}
-
-.my-list-card .anime-poster {
-  border: 1px solid var(--line);
-}
-
-.my-list-card-content {
-  display: flex;
+  height: 38px;
   flex: 1;
-  flex-direction: column;
-  gap: 4px;
-  padding-top: 16px;
+  padding-left: 8px;
+  border: 0;
+  background-color: transparent;
+  box-shadow: none;
 }
 
-.my-list-card-title {
-  color: var(--paper);
-  font-weight: 700;
-  line-height: 1.35;
+.list-sort-control select:focus {
+  box-shadow: none;
+}
+
+.my-list-rows {
+  display: grid;
+  gap: 12px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.my-list-row {
+  display: grid;
+  min-height: 120px;
+  align-items: center;
+  grid-template-columns: 68px minmax(0, 1fr) 280px 200px 40px;
+  gap: 24px;
+  padding: 12px 20px 12px 12px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.my-list-cover {
+  width: 68px;
+  height: 96px;
+}
+
+.my-list-cover .poster-art {
+  border-radius: 8px;
+}
+
+.my-list-copy {
+  min-width: 0;
+  padding-left: 16px;
+}
+
+.my-list-title {
+  display: block;
+  overflow: hidden;
+  font-size: var(--text-21);
+  text-overflow: ellipsis;
+  white-space: nowrap;
   transition: color var(--ease);
 }
 
-.my-list-card:hover .my-list-card-title,
-.my-list-card-title:focus-visible {
-  color: var(--lavender);
-}
-
-.my-list-status-label {
-  margin: 0;
+.my-list-title:hover,
+.my-list-title:focus-visible {
   color: var(--muted);
 }
 
-.my-list-card .list-rating-control {
-  margin-top: auto;
-  padding-top: 16px;
+.my-list-meta {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 14px;
 }
 
-.my-list-card .list-rating-control > span {
-  position: absolute;
-  width: 1px;
-  height: 1px;
+.my-list-label,
+.list-progress-copy > span:first-child {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.my-list-rating {
+  display: grid;
+  justify-items: start;
+  gap: 4px;
+}
+
+.my-list-row .list-rating-control .rating-value {
+  font-size: var(--text-21);
+}
+
+.my-list-row .list-rating-control.is-empty .rating-value {
+  color: var(--muted);
+  font-size: var(--text-16);
+}
+
+.my-list-row .rating-chevron,
+.my-list-row .list-rating-control.is-empty .rating-star {
+  display: none;
+}
+
+.list-progress-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.list-progress-copy {
+  display: grid;
+  width: 150px;
+  margin-right: 8px;
+  gap: 4px;
+}
+
+.list-progress-copy output {
+  font-size: var(--text-21);
+  font-variant-numeric: tabular-nums;
+}
+
+.list-progress-track {
+  display: block;
   overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.1);
 }
 
-.my-list-card .list-rating-control select {
-  height: 36px;
-  padding-left: 14px;
-  background-color: transparent;
+.list-progress-track > span {
+  display: block;
+  height: 100%;
+  background: var(--paper);
+}
+
+.list-progress-control button,
+.list-control-icon .list-control-trigger {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: var(--fill);
+  color: var(--paper);
+  cursor: pointer;
+  transition: background-color var(--ease);
+}
+
+.list-progress-control button:hover:not(:disabled),
+.list-control-icon .list-control-trigger:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.list-progress-control button:focus-visible,
+.list-control-icon .list-control-trigger:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}
+
+.list-progress-control button:disabled {
+  cursor: default;
+  opacity: 0.4;
 }
 
 .empty-list-actions {
@@ -159,255 +316,46 @@
   margin-top: 20px;
 }
 
+@media (max-width: 1024px) {
+  .my-list-row {
+    grid-template-columns: 68px minmax(0, 1fr) 40px;
+    grid-template-areas:
+      "cover copy menu"
+      "cover progress progress"
+      "cover rating rating";
+    gap: 12px 16px;
+  }
+
+  .my-list-cover {
+    grid-area: cover;
+    align-self: start;
+  }
+
+  .my-list-copy {
+    grid-area: copy;
+  }
+
+  .my-list-progress {
+    grid-area: progress;
+  }
+
+  .my-list-rating {
+    grid-area: rating;
+  }
+
+  .my-list-row > .list-control {
+    grid-area: menu;
+    align-self: start;
+  }
+}
+
 @media (max-width: 720px) {
   .list-controls-row {
     align-items: stretch;
     flex-direction: column;
   }
 
-  .list-sort-control select {
-    flex: 1;
-    width: auto;
-  }
-
-  .my-list-grid {
-    grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
-    gap: 32px 16px;
-  }
-}
-
-/* ------------------------------------------------------------------ */
-/* MyAnimeList import                                                  */
-/* ------------------------------------------------------------------ */
-
-.mal-import-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 760px) minmax(0, 1fr);
-  gap: 80px;
-  align-items: start;
-}
-
-.mal-import-main {
-  display: grid;
-  gap: 24px;
-}
-
-.mal-drop-zone {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 56px 24px;
-  border: 1.5px dashed var(--line);
-  border-radius: 8px;
-  background: var(--surface);
-  text-align: center;
-  transition:
-    border-color var(--ease),
-    background-color var(--ease);
-}
-
-.mal-drop-zone.is-dragging {
-  border-color: var(--lavender);
-  background: var(--lavender-tint);
-}
-
-.mal-drop-icon {
-  display: grid;
-  width: 56px;
-  height: 56px;
-  place-items: center;
-  margin-bottom: 20px;
-  border-radius: 999px;
-  background: var(--lavender-tint);
-  color: var(--lavender);
-}
-
-.mal-drop-title {
-  margin: 0 0 6px;
-  font-size: var(--text-21);
-  font-weight: 700;
-}
-
-.mal-drop-description {
-  margin: 0 0 24px;
-  color: var(--muted);
-}
-
-.mal-file-button {
-  cursor: pointer;
-}
-
-.mal-drop-zone:has(input:focus-visible) .mal-file-button {
-  box-shadow: var(--ring);
-}
-
-.mal-selected-file {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-height: 64px;
-  padding: 0 16px 0 24px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: var(--surface);
-}
-
-.mal-selected-file > svg {
-  flex: none;
-  color: var(--lavender);
-}
-
-.mal-selected-name {
-  min-width: 0;
-  overflow: hidden;
-  font-weight: 500;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.mal-selected-size {
-  flex: none;
-  color: var(--muted);
-}
-
-.mal-selected-remove {
-  margin-left: auto;
-  border-color: transparent;
-}
-
-.mal-selected-remove:hover {
-  border-color: var(--line);
-}
-
-.mal-import-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 16px 20px;
-}
-
-.mal-import-actions p {
-  margin: 0;
-}
-
-.mal-import-summary {
-  padding: 28px 32px;
-}
-
-.mal-import-summary .mal-import-actions {
-  margin-top: 24px;
-}
-
-.mal-summary-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
-  margin: 0;
-}
-
-.mal-summary-grid div {
-  display: flex;
-  flex-direction: column-reverse;
-  gap: 4px;
-}
-
-.mal-summary-grid dt {
-  color: var(--muted);
-}
-
-.mal-summary-grid dd {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: var(--text-28);
-}
-
-.mal-unmatched {
-  margin-top: 24px;
-  color: var(--muted);
-}
-
-.mal-unmatched summary {
-  color: var(--paper);
-  cursor: pointer;
-}
-
-.mal-unmatched ul {
-  max-height: 240px;
-  margin: 12px 0 0;
-  padding-left: 20px;
-  overflow-y: auto;
-}
-
-.mal-import-guide {
-  padding-top: 8px;
-}
-
-.mal-steps {
-  display: grid;
-  margin: 24px 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.mal-steps li {
-  position: relative;
-  display: flex;
-  gap: 20px;
-  padding-bottom: 40px;
-}
-
-.mal-steps li:not(:last-child)::before {
-  position: absolute;
-  top: 44px;
-  bottom: 8px;
-  left: 17px;
-  width: 1px;
-  background: var(--line);
-  content: "";
-}
-
-.mal-step-marker {
-  display: grid;
-  flex: none;
-  width: 36px;
-  height: 36px;
-  place-items: center;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  color: var(--lavender);
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.mal-steps p {
-  margin: 0;
-}
-
-.mal-steps .mal-step-title {
-  padding-top: 6px;
-  margin-bottom: 4px;
-  font-weight: 700;
-}
-
-.mal-mature-note {
-  margin: 0;
-  padding-top: 32px;
-  border-top: 1px solid var(--line);
-}
-
-@media (max-width: 1000px) {
-  .mal-import-layout {
-    grid-template-columns: 1fr;
-    gap: 56px;
-  }
-}
-
-@media (max-width: 640px) {
-  .mal-summary-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .mal-drop-zone {
-    padding: 40px 20px;
+  .list-sort-control {
+    width: 100%;
   }
 }

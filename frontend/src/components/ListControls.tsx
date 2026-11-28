@@ -4,9 +4,13 @@ import {
   Bookmark,
   BookmarkCheck,
   Check,
+  ChevronDown,
   Clock,
+  Minus,
   Pause,
   Play,
+  Plus,
+  Star,
   Trash2,
   X,
   type LucideIcon,
@@ -18,6 +22,7 @@ import { safeNextPath } from "../auth/nextPath";
 import { useListMutation } from "../api/useListMutation";
 import { AuthPrompt } from "./AuthPrompt";
 import { listStatusLabels, listStatuses } from "./listStatus";
+import { ratingOutOfFive } from "./formatMeta";
 
 // Exit timing, matching the CSS: buttons leave one by one, then the X flies
 // home and becomes the bookmark. "landing" lets the real bookmark fade in
@@ -44,7 +49,7 @@ export function ListControl({
   status: ListStatus | null;
   rating: number | null;
   statusLoading?: boolean;
-  variant?: "card" | "detail";
+  variant?: "card" | "detail" | "icon";
 }) {
   const { user } = useAuth();
   const location = useLocation();
@@ -352,8 +357,13 @@ export function ListRatingControl({
   }
   return (
     <>
-      <label className="list-rating-control">
+      <label className={`list-rating-control${rating ? "" : " is-empty"}`}>
         <span>Your rating</span>
+        <Star aria-hidden="true" className="rating-star" size={16} />
+        <span aria-hidden="true" className="rating-value">
+          {ratingOutOfFive(rating) ?? "Not rated"}
+        </span>
+        <ChevronDown aria-hidden="true" className="rating-chevron" size={16} />
         <select
           aria-label={`Your rating for ${anime.title}`}
           disabled={(statusLoading && user !== null) || mutation.isPending}
@@ -363,7 +373,7 @@ export function ListRatingControl({
           <option value="">Not rated</option>
           {Array.from({ length: 10 }, (_, index) => index + 1).map((value) => (
             <option key={value} value={value}>
-              {value} / 10
+              {ratingOutOfFive(value)} / 5
             </option>
           ))}
         </select>
@@ -372,5 +382,64 @@ export function ListRatingControl({
         <AuthPrompt nextPath={nextPath} onClose={() => setPromptOpen(false)} />
       )}
     </>
+  );
+}
+
+export function ListProgressControl({
+  anime,
+  status,
+  rating,
+  progress,
+}: {
+  anime: AnimeCardData;
+  status: ListStatus;
+  rating: number | null;
+  progress: number;
+}) {
+  const mutation = useListMutation();
+  const total = anime.episodes ?? null;
+  function step(delta: number) {
+    const next = progress + delta;
+    mutation.mutate({
+      kind: "put",
+      anime,
+      body: { progress: next },
+      status,
+      rating,
+      progress: next,
+    });
+  }
+  return (
+    <div className="list-progress-control">
+      <div className="list-progress-copy">
+        <span aria-hidden="true">Episode</span>
+        <output aria-label={`Episodes watched of ${anime.title}`}>
+          {progress} / {total ?? "?"}
+        </output>
+        {total !== null && total > 0 && (
+          <span aria-hidden="true" className="list-progress-track">
+            <span
+              style={{ width: `${Math.min(100, (progress / total) * 100)}%` }}
+            />
+          </span>
+        )}
+      </div>
+      <button
+        aria-label={`One fewer episode watched of ${anime.title}`}
+        disabled={mutation.isPending || progress <= 0}
+        onClick={() => step(-1)}
+        type="button"
+      >
+        <Minus aria-hidden="true" size={16} />
+      </button>
+      <button
+        aria-label={`One more episode watched of ${anime.title}`}
+        disabled={mutation.isPending || (total !== null && progress >= total)}
+        onClick={() => step(1)}
+        type="button"
+      >
+        <Plus aria-hidden="true" size={16} />
+      </button>
+    </div>
   );
 }

@@ -285,8 +285,8 @@ describe("home page", () => {
     expect(
       screen.getByRole("heading", { name: "Name one anime you love." })
     ).toBeInTheDocument();
-    expect(screen.getByText("You loved")).toBeInTheDocument();
-    expect(screen.getByText("Try next")).toBeInTheDocument();
+    expect(screen.getByText("You loved Mushi-shi, so try")).toBeInTheDocument();
+    expect(screen.getByText("Natsume's Book of Friends")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Mushi-shi" })).toHaveAttribute(
       "href",
       "/anime/457"
@@ -295,7 +295,7 @@ describe("home page", () => {
       screen.getByRole("link", { name: "Cowboy Bebop to Carole & Tuesday" })
     ).toHaveAttribute("href", "/similar/1");
     expect(
-      screen.getByRole("heading", { name: "More Pairs to Try" })
+      screen.getByRole("heading", { name: "More pairs to try" })
     ).toBeInTheDocument();
     expect(screen.getAllByRole("listitem")).toHaveLength(4);
     expect(
@@ -391,7 +391,7 @@ describe("title recommendation entry", () => {
     await act(async () => Promise.resolve());
     expect(
       screen.getByRole("heading", {
-        name: "Recommendations Based on Your Picks",
+        name: "Your matches",
       })
     ).toBeInTheDocument();
     expect(api.startRecommendations).toHaveBeenCalledWith(
@@ -451,7 +451,7 @@ describe("title recommendation entry", () => {
     await act(async () => resolveRequest([recommendation]));
     expect(
       screen.getByRole("heading", {
-        name: "Recommendations Based on Your Picks",
+        name: "Your matches",
       })
     ).toBeInTheDocument();
   }, 10000);
@@ -465,7 +465,7 @@ describe("title recommendation entry", () => {
     const view = renderRoutes("/results");
     expect(
       screen.getByRole("heading", {
-        name: "Recommendations Based on Your Picks",
+        name: "Your matches",
       })
     ).toBeInTheDocument();
 

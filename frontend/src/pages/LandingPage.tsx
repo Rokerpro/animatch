@@ -1,4 +1,5 @@
 import "../styles/landing.css";
+import { Search } from "lucide-react";
 import { useRef, useState, type CSSProperties, type FormEvent } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { api } from "../api/client";
@@ -180,6 +181,7 @@ function HeroSearch() {
       role="search"
     >
       <div className="landing-search-field">
+        <Search aria-hidden="true" className="landing-search-icon" size={18} />
         <TitleAutocomplete
           includeMature={mature}
           inputLabel="Anime you love"
@@ -205,16 +207,19 @@ export function LandingPage() {
   const saved = readSavedQuiz() || readSavedStart();
   if (saved && !location.state?.showHome)
     return <Navigate to="/results" replace />;
+  return <LandingHome />;
+}
 
+function LandingHome() {
   const { loved, next, reason } = HERO_PAIR;
+  const glow = useCover(next).color;
   return (
-    <div className="landing-page">
+    <div className="landing-page" style={{ "--cover": glow } as CSSProperties}>
       <section className="landing-hero">
         <div className="landing-hero-copy">
           <PageTitle
-            accent="you love."
             className="landing-title"
-            lead="Name one anime"
+            lead="Name one anime you love."
           />
           <p className="landing-lede">
             AniMatch finds shows with the same feel and tells you why each one
@@ -230,32 +235,27 @@ export function LandingPage() {
         </div>
 
         <figure className="landing-showcase">
-          <div className="showcase-pair">
-            <div className="showcase-item showcase-loved">
-              <p className="showcase-label muted">You loved</p>
-              <p className="showcase-title">{loved.title}</p>
-              <p className="showcase-meta muted" lang="ja">
-                {loved.native}
-              </p>
-              <ShowcaseCover title={loved} />
-            </div>
-            <div className="showcase-item showcase-next">
-              <p className="showcase-label muted">Try next</p>
-              <p className="showcase-title">{next.title}</p>
-              <p className="showcase-meta muted">
-                <span lang="ja">{next.native}</span>
-                {next.meta && <span>{next.meta}</span>}
-              </p>
-              <ShowcaseCover title={next} />
-            </div>
+          <div className="showcase-covers">
+            <ShowcaseCover className="showcase-loved" title={loved} />
+            <ShowcaseCover className="showcase-next" title={next} />
           </div>
-          <figcaption className="showcase-reason">{reason}</figcaption>
+          <figcaption className="showcase-caption">
+            <p className="showcase-label muted">
+              You loved {loved.title}, so try
+            </p>
+            <p className="showcase-title">{next.title}</p>
+            <p className="showcase-meta muted">
+              <span lang="ja">{next.native}</span>
+              {next.meta && <span>{next.meta}</span>}
+            </p>
+            <p className="showcase-reason">{reason}</p>
+          </figcaption>
         </figure>
       </section>
 
       <section aria-labelledby="pairs-title" className="landing-pairs">
         <h2 className="section-title" id="pairs-title">
-          More Pairs <span className="accent">to Try</span>
+          More pairs to try
         </h2>
         <ul className="pair-grid">
           {MORE_PAIRS.map((pair) => (
@@ -287,9 +287,7 @@ export function LandingPage() {
         <div className="strip-item">
           <div>
             <h2 className="strip-title">Already on MyAnimeList?</h2>
-            <p className="muted">
-              Import your list to bring your watch history into AniMatch.
-            </p>
+            <p className="muted">Bring your watch history into AniMatch.</p>
           </div>
           <Link className="secondary-action" to="/import">
             Import from MyAnimeList

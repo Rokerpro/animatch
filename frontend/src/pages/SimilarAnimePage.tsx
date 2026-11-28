@@ -1,7 +1,7 @@
+import type { CSSProperties } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useAnimeDetail, useSimilar } from "../api/hooks";
 import { useAuth } from "../auth/useAuth";
-import { PageTitle } from "../components/PageTitle";
 import { PosterGrid } from "../components/PosterGrid";
 import { RecommendationCard } from "../components/RecommendationCard";
 import {
@@ -10,7 +10,8 @@ import {
   PosterSkeleton,
 } from "../components/RequestStates";
 import { PosterImage } from "../components/PosterImage";
-import { formatLabel } from "../components/formatMeta";
+import { coverTone } from "../components/formatMeta";
+import "../styles/similar.css";
 
 export function SimilarAnimePage() {
   const id = Number(useParams().id);
@@ -35,34 +36,39 @@ export function SimilarAnimePage() {
 
   const seed = anime.data;
   const count = similar.data?.length ?? 0;
+  const tone = coverTone(seed.coverColor);
+  const style = {
+    ...(seed.coverColor ? { "--cover": seed.coverColor } : {}),
+    ...(tone ? { "--accent": tone } : {}),
+  } as CSSProperties;
   return (
-    <section className="browse-page similar-results-page">
-      <header className="page-header">
-        <PageTitle lead="Anime Similar to" accent={seed.title} />
-      </header>
-      <div className="similar-seed panel">
-        <div className="similar-seed-cover">
+    <section className="browse-page similar-page" style={style}>
+      <header className="similar-hero">
+        <div className="similar-cover">
           <PosterImage
             alt={seed.title}
             color={seed.coverColor}
             src={seed.coverImage}
           />
         </div>
-        <div className="similar-seed-copy">
-          <p className="similar-seed-label">Based on your pick</p>
-          <Link className="similar-seed-title" to={`/anime/${seed.id}`}>
-            {seed.title}
-          </Link>
-          <p className="muted">
-            {[formatLabel(seed.format), seed.year].filter(Boolean).join(", ")}
-          </p>
+        <div className="similar-heading">
+          <h1 className="similar-title">
+            <span className="similar-lead">Anime like</span> {seed.title}
+          </h1>
+          {count > 0 && (
+            <p className="similar-count">
+              {count} {count === 1 ? "match" : "matches"}, ranked by shared
+              genres and themes
+            </p>
+          )}
         </div>
-        {count > 0 && (
-          <p className="similar-seed-count">
-            {count} {count === 1 ? "match" : "matches"}
-          </p>
-        )}
-      </div>
+        <Link
+          className="secondary-action similar-open"
+          to={`/anime/${seed.id}`}
+        >
+          Open {seed.title}
+        </Link>
+      </header>
       {similar.isLoading ? (
         <PosterSkeleton count={5} wide />
       ) : similar.isError ? (

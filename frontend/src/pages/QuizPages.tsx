@@ -10,7 +10,7 @@ import { TitleAutocomplete } from "../components/TitleAutocomplete";
 import { useAuth } from "../auth/useAuth";
 import { useQuizQuestions } from "../api/hooks";
 import { PageTitle } from "../components/PageTitle";
-import { CircleAlert, X } from "lucide-react";
+import { ChevronLeft, CircleAlert, X } from "lucide-react";
 import {
   clearQuizDraft,
   clearSavedQuiz,
@@ -395,29 +395,29 @@ export function QuizPage() {
         </div>
       ) : (
         <>
-          {quizHeader}
-          <div className="quiz-progress-block">
-            <p className="quiz-progress">
-              Question {step + 1} of {questions.length}
-            </p>
-            <div
-              aria-label="Quiz progress"
-              aria-valuemax={questions.length}
-              aria-valuemin={1}
-              aria-valuenow={step + 1}
-              className="quiz-progress-track"
-              role="progressbar"
-            >
-              {questions.map((item, index) => (
-                <span
-                  className={index <= step ? "is-done" : undefined}
-                  key={item.id}
-                />
-              ))}
-            </div>
-          </div>
+          <PageTitle className="sr-only" lead="Anime" accent="Quiz" />
           <div className="quiz-layout">
             <div className="quiz-question-column">
+              <div className="quiz-progress-block">
+                <p className="quiz-progress">
+                  Question {step + 1} of {questions.length}
+                </p>
+                <div
+                  aria-label="Quiz progress"
+                  aria-valuemax={questions.length}
+                  aria-valuemin={1}
+                  aria-valuenow={step + 1}
+                  className="quiz-progress-track"
+                  role="progressbar"
+                >
+                  {questions.map((item, index) => (
+                    <span
+                      className={index <= step ? "is-done" : undefined}
+                      key={item.id}
+                    />
+                  ))}
+                </div>
+              </div>
               <h2
                 className="quiz-question-heading"
                 ref={viewHeadingRef}
@@ -449,7 +449,7 @@ export function QuizPage() {
                       Name anime you like instead
                     </button>
                     <button
-                      className="text-button quiz-import-link"
+                      className="secondary-action quiz-import-link"
                       onClick={() =>
                         user ? navigate("/import") : setShowImportPrompt(true)
                       }
@@ -488,6 +488,7 @@ export function QuizPage() {
                     onClick={goBack}
                     type="button"
                   >
+                    <ChevronLeft aria-hidden="true" size={18} strokeWidth={2} />
                     Back
                   </button>
                 )}
@@ -555,20 +556,17 @@ function QuizAnswerChips({ answers }: { answers: Record<string, string> }) {
       .filter((label): label is string => Boolean(label));
     if (picked.length) labels.push(picked.join(", "));
   }
+  if (!labels.length) return null;
   return (
-    <div className="answer-chips">
-      {labels.length > 0 && (
-        <ul aria-label="Your answers" className="answer-chip-list">
-          {labels.map((label) => (
-            <li className="chip" key={label}>
-              {label}
-            </li>
-          ))}
-        </ul>
-      )}
-      <Link className="text-button answer-retake" to="/quiz">
-        Retake the quiz
-      </Link>
+    <div className="results-answers">
+      <p className="results-answers-label">From your answers</p>
+      <ul aria-label="Your answers" className="answer-chip-list">
+        {labels.map((label) => (
+          <li className="chip" key={label}>
+            {label}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -619,7 +617,7 @@ function QuizResultsPage() {
     return (
       <section className="browse-page results-page">
         <header className="page-header">
-          <PageTitle lead="Recommendations" />
+          <PageTitle lead="Your matches" />
         </header>
         <div className="status-box status-error" role="alert">
           <CircleAlert aria-hidden="true" />
@@ -637,10 +635,15 @@ function QuizResultsPage() {
     );
   return (
     <section className="browse-page results-page">
-      <header className="page-header">
-        <PageTitle lead="Recommendations Based on" accent="Your Answers" />
+      <header className="page-header results-heading">
+        <div>
+          <PageTitle lead="Your matches" />
+          <QuizAnswerChips answers={saved.answers} />
+        </div>
+        <Link className="secondary-action results-retake" to="/quiz">
+          Retake quiz
+        </Link>
       </header>
-      <QuizAnswerChips answers={saved.answers} />
       {refreshing ? (
         <>
           <p aria-live="polite">Updating recommendations…</p>

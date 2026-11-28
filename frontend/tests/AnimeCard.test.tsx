@@ -7,7 +7,7 @@ vi.mock("../src/auth/useAuth", () => ({
   useAuth: () => ({ mature: false, user: null }),
 }));
 describe("AnimeCard", () => {
-  it("shows similarity and a five-star rating separately with metadata", () => {
+  it("shows the match, its bar and the score out of five under the poster", () => {
     const queryClient = new QueryClient();
     render(
       <QueryClientProvider client={queryClient}>
@@ -36,11 +36,16 @@ describe("AnimeCard", () => {
       "72% match"
     );
     expect(screen.getByLabelText("Rating: 4.2 out of 5")).toHaveTextContent(
-      "4.2/5"
+      "4.2"
     );
-    const posterBadges = document.querySelector(".poster-badges");
-    expect(posterBadges?.children[0]).toHaveTextContent("72% match");
-    expect(posterBadges?.children[1]).toHaveTextContent("4.2/5");
+    // Match and score sit under the poster, above a bar filled to the match.
+    const matchRow = document.querySelector(".card-match-row");
+    expect(matchRow?.children[0]).toHaveTextContent("72% match");
+    expect(matchRow?.children[1]).toHaveTextContent("4.2");
+    expect(
+      document.querySelector<HTMLElement>(".card-match-track > span")?.style
+        .width
+    ).toBe("72%");
     expect(
       screen
         .getByRole("button", { name: "Add Example to My list" })

@@ -10,6 +10,7 @@ export const queryKeys = {
   filters: (mature: boolean) => ["filters", mature] as const,
   detail: (id: number, mature: boolean) => ["detail", id, mature] as const,
   similar: (id: number, mature: boolean) => ["similar", id, mature] as const,
+  seasons: (id: number, mature: boolean) => ["seasons", id, mature] as const,
   me: ["me"] as const,
   providers: ["providers"] as const,
   list: (params: ListParams) => ["list", params] as const,
@@ -38,6 +39,12 @@ export const useSimilar = (id: number, mature: boolean) =>
   useQuery({
     queryKey: queryKeys.similar(id, mature),
     queryFn: () => api.similar(id, mature),
+  });
+export const useSeasons = (id: number, mature: boolean) =>
+  useQuery({
+    queryKey: queryKeys.seasons(id, mature),
+    queryFn: () => api.seasons(id, mature),
+    retry: false,
   });
 export const useMe = () =>
   useQuery({ queryKey: queryKeys.me, queryFn: () => api.me(), retry: false });

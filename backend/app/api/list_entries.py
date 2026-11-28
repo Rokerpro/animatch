@@ -108,6 +108,7 @@ def serialize_list_entry(entry: ListEntry) -> ListEntryResponse:
         anime=serialize_anime_card(entry.anime),
         status=entry.status,
         rating=entry.rating,
+        progress=entry.progress,
         source=entry.source,
         added_at=entry.added_at,
         updated_at=entry.updated_at,
@@ -288,7 +289,13 @@ async def export_list(
 
     if export_format == "xml":
         rows = [
-            (entry.anime.id_mal, title_of(entry), entry.status, entry.rating)
+            (
+                entry.anime.id_mal,
+                title_of(entry),
+                entry.status,
+                entry.rating,
+                entry.progress,
+            )
             for entry in entries
             if entry.anime.id_mal
         ]
@@ -306,6 +313,7 @@ async def export_list(
                 "title": title_of(entry),
                 "status": entry.status,
                 "rating": entry.rating,
+                "progress": entry.progress,
                 "added_at": entry.added_at.isoformat(),
                 "updated_at": entry.updated_at.isoformat(),
             }
@@ -473,6 +481,16 @@ async def import_mal_list(
                     anime_id=anime.id,
                     status=item.status,
                     rating=item.rating,
+                    # Same cap and completed rule the list PUT applies.
+                    progress=(
+                        item.progress
+                        if anime.episodes is None
+                        else (
+                            anime.episodes
+                            if item.status == "completed"
+                            else min(item.progress, anime.episodes)
+                        )
+                    ),
                     source="mal_import",
                 )
             )
@@ -531,6 +549,15 @@ async def put_list_entry(
         )
 
     provided = payload.model_fields_set
+    if (
+        "progress" in provided
+        and anime.episodes is not None
+        and payload.progress > anime.episodes
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"progress cannot exceed {anime.episodes} episodes",
+        )
     new_status = payload.status if "status" in provided else None
     new_rating = payload.rating if "rating" in provided else None
     result = await db.execute(
@@ -546,6 +573,7 @@ async def put_list_entry(
             anime_id=anime_id,
             status=(new_status.value if new_status is not None else "planning"),
             rating=new_rating,
+            progress=payload.progress if "progress" in provided else 0,
             source="manual",
         )
         db.add(entry)
@@ -554,6 +582,17 @@ async def put_list_entry(
             entry.status = new_status.value
         if "rating" in provided:
             entry.rating = new_rating
+        if "progress" in provided:
+            entry.progress = payload.progress
+
+    # Completing a title means every episode is watched.
+    if (
+        new_status is not None
+        and new_status.value == "completed"
+        and "progress" not in provided
+        and anime.episodes is not None
+    ):
+        entry.progress = anime.episodes
 
     await db.commit()
     await db.refresh(entry)

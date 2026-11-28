@@ -60,4 +60,21 @@ describe("RecommendationCard", () => {
       "true"
     );
   });
+  it("shows up to three shared tags and genres instead of the reason", () => {
+    renderRecommendation({
+      id: 9,
+      title: "Similar",
+      coverImage: "https://img.test/9.jpg",
+      reason: "Long free-text reason",
+      explanation: {
+        sharedTags: ["Military", "Tragedy"],
+        sharedGenres: ["Action", "Drama"],
+      },
+    });
+    const chips = screen.getByRole("list", { name: "Shared genres and tags" });
+    expect(
+      Array.from(chips.querySelectorAll("li")).map((li) => li.textContent)
+    ).toEqual(["Military", "Tragedy", "Action"]);
+    expect(screen.queryByText("Long free-text reason")).not.toBeInTheDocument();
+  });
 });

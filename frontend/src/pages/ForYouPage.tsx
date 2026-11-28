@@ -1,7 +1,9 @@
 import { useEffect } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { ApiError, api } from "../api/client";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ApiError, api, getErrorMessage } from "../api/client";
+import type { Recommendation } from "../api/types";
+import { useOptionalToast } from "../components/useToast";
 import { safeNextPath } from "../auth/nextPath";
 import { useAuth } from "../auth/useAuth";
 import { RecommendationCard } from "../components/RecommendationCard";
@@ -25,6 +27,27 @@ export function ForYouPage() {
     enabled: Boolean(user),
     retry: false,
   });
+  const queryClient = useQueryClient();
+  const { showToast } = useOptionalToast();
+  const recsKey = ["my-recommendations", mature];
+  const dismiss = useMutation({
+    mutationFn: (animeId: number) => api.hideRecommendation(animeId),
+    onMutate: async (animeId) => {
+      await queryClient.cancelQueries({ queryKey: recsKey });
+      const previous = queryClient.getQueryData<Recommendation[]>(recsKey);
+      queryClient.setQueryData<Recommendation[]>(recsKey, (old) =>
+        old?.filter((item) => item.id !== animeId)
+      );
+      return previous;
+    },
+    onError: (error, _animeId, previous) => {
+      queryClient.setQueryData(recsKey, previous);
+      showToast(getErrorMessage(error, "Could not hide this title."), "error");
+    },
+    onSuccess: () => showToast("We will stop suggesting this one", "success"),
+    onSettled: () =>
+      queryClient.invalidateQueries({ queryKey: ["my-recommendations"] }),
+  });
   const features = useFeatures();
   const stats = useListStats(mature, Boolean(user));
   const total = stats.data?.total ?? 0;
@@ -34,8 +57,8 @@ export function ForYouPage() {
         <PageTitle lead="For" accent="You" />
         <p className="page-subtitle">
           {total > 0
-            ? `Picked from your quiz answers and the ${total} ${total === 1 ? "title" : "titles"} on your list.`
-            : "Picked from your quiz answers and your list."}
+            ? `Picked from your quiz answers and the ${total} ${total === 1 ? "title" : "titles"} on your list`
+            : "Picked from your quiz answers and your list"}
         </p>
       </div>
       <div className="page-header-aside for-you-heading-actions">
@@ -102,7 +125,11 @@ export function ForYouPage() {
           wide
         >
           {results.map((result) => (
-            <RecommendationCard key={result.id} recommendation={result} />
+            <RecommendationCard
+              key={result.id}
+              onDismiss={() => dismiss.mutate(result.id)}
+              recommendation={result}
+            />
           ))}
         </PosterGrid>
       ) : (

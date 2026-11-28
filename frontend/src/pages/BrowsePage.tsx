@@ -12,6 +12,13 @@ import {
 import { useAuth } from "../auth/useAuth";
 import { ApiError } from "../api/client";
 import { PageTitle } from "../components/PageTitle";
+const SORT_LABELS: Record<string, string> = {
+  popularity: "popularity",
+  score: "score",
+  year: "year",
+  title: "title",
+};
+
 export function BrowsePage() {
   const [params] = useSearchParams();
   const { mature } = useAuth();
@@ -36,16 +43,19 @@ export function BrowsePage() {
   return (
     <section className="browse-page">
       <header className="page-header">
-        {query.q ? (
-          <PageTitle lead="Results for" accent={`“${query.q}”`} />
-        ) : (
-          <PageTitle lead="Browse" accent="Anime" />
-        )}
-        {results.data && results.data.items.length > 0 && (
-          <p className="page-header-aside result-total">
-            {results.data.pageInfo.total.toLocaleString()} anime
-          </p>
-        )}
+        <div>
+          {query.q ? (
+            <PageTitle lead="Results for" accent={`“${query.q}”`} />
+          ) : (
+            <PageTitle lead="Browse Anime" />
+          )}
+          {results.data && results.data.items.length > 0 && (
+            <p className="page-subtitle result-total">
+              {results.data.pageInfo.total.toLocaleString()} anime, sorted by{" "}
+              {SORT_LABELS[query.sort] ?? query.sort}
+            </p>
+          )}
+        </div>
       </header>
       <FilterBar options={filters.data} />
       {results.isLoading ? (

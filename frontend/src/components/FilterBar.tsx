@@ -3,7 +3,7 @@ import type { FiltersResponse } from "../api/types";
 import { MultiSelectFilter } from "./MultiSelectFilter";
 import { useFilterParams } from "../hooks/useFilterParams";
 import { SearchInput } from "./SearchInput";
-import { SlidersHorizontal, X } from "lucide-react";
+import { ListFilter, SlidersHorizontal, X } from "lucide-react";
 import { formatLabel } from "./formatMeta";
 
 const FORMATS = ["TV", "MOVIE", "OVA", "ONA", "SPECIAL", "MUSIC"];
@@ -99,9 +99,7 @@ export function FilterBar({ options }: { options?: FiltersResponse }) {
     <>
       <div className="filter-primary-controls">
         <div className="filter-field filter-search">
-          <span className="filter-label" aria-hidden="true">
-            Search
-          </span>
+          <span className="sr-only">Search</span>
           <SearchInput />
         </div>
         <label className="filter-field">
@@ -151,6 +149,7 @@ export function FilterBar({ options }: { options?: FiltersResponse }) {
           onClick={() => setMore(!more)}
           type="button"
         >
+          <ListFilter aria-hidden="true" size={18} strokeWidth={1.5} />
           More filters
           {activeMoreFilterCount > 0 && (
             <span className="filter-count"> {activeMoreFilterCount}</span>

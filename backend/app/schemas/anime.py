@@ -40,6 +40,30 @@ class AnimeCard(BaseSchema):
     genres: list[str] = Field(default_factory=list)
 
 
+class SeasonItem(BaseSchema):
+    id: int
+    title: str
+    cover_image: str | None = None
+    cover_color: str | None = None
+    format: str | None = None
+    year: int | None = None
+    episodes: int | None = None
+
+
+class MainStoryItem(SeasonItem):
+    position: int
+    is_current: bool
+
+
+class ExtraItem(SeasonItem):
+    relation: str
+
+
+class SeasonsResponse(BaseSchema):
+    main: list[MainStoryItem] = Field(default_factory=list)
+    extras: list[ExtraItem] = Field(default_factory=list)
+
+
 class TagDetail(BaseSchema):
     name: str
     rank: int = 0

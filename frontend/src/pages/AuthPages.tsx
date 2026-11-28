@@ -7,7 +7,7 @@ import { queryKeys, useProviders } from "../api/hooks";
 import { useAuth } from "../auth/useAuth";
 import { useToast } from "../components/useToast";
 import { safeNextPath } from "../auth/nextPath";
-import { CircleAlert } from "lucide-react";
+import { CircleAlert, LogOut } from "lucide-react";
 import { PageTitle } from "../components/PageTitle";
 import { PosterStack } from "../components/PosterStack";
 import {
@@ -110,15 +110,23 @@ function AuthForm({ mode }: { mode: "login" | "register" }) {
   return (
     <section className="auth-page">
       <div className="auth-main">
-        <PageTitle
-          lead={isLogin ? "Sign" : "Create an"}
-          accent={isLogin ? "In" : "Account"}
-        />
+        <PageTitle lead={isLogin ? "Sign in" : "Create an account"} />
         <p className="page-subtitle">
           {isLogin
             ? "Pick up your list and recommendations where you left off."
             : "Save your list and get picks that learn from it."}
         </p>
+        {providers.data?.google && (
+          <>
+            <a className="google-button" href={api.googleLogin()}>
+              <GoogleMark />
+              {isLogin ? "Sign in with Google" : "Sign up with Google"}
+            </a>
+            <div aria-hidden="true" className="auth-or">
+              or
+            </div>
+          </>
+        )}
         <form className="auth-form" onSubmit={submit}>
           {!isLogin && (
             <label className="field">
@@ -178,12 +186,6 @@ function AuthForm({ mode }: { mode: "login" | "register" }) {
                 : "Create account"}
           </button>
         </form>
-        {providers.data?.google && (
-          <a className="google-button" href={api.googleLogin()}>
-            <GoogleMark />
-            {isLogin ? "Sign in with Google" : "Sign up with Google"}
-          </a>
-        )}
         <p className="auth-switch">
           {isLogin ? (
             <>
@@ -196,7 +198,7 @@ function AuthForm({ mode }: { mode: "login" | "register" }) {
           )}
         </p>
       </div>
-      <aside className="auth-aside panel">
+      <aside className="auth-aside">
         <PosterStack />
         <div className="auth-aside-copy">
           <h2>Your list follows you.</h2>
@@ -240,7 +242,8 @@ export function RegisterPage() {
 const SETTINGS_SECTIONS = [
   { id: "profile", label: "Profile" },
   { id: "preferences", label: "Preferences" },
-  { id: "delete-account", label: "Delete account" },
+  { id: "your-data", label: "Your data" },
+  { id: "delete-account", label: "Account" },
 ];
 export function SettingsPage() {
   const { user, authLoading, mature, setMature, signOut, refresh } = useAuth();
@@ -302,12 +305,11 @@ export function SettingsPage() {
   }
   if (authLoading) return <section className="browse-page page-top" />;
   if (!user) return <Navigate to="/login?next=%2Fsettings" replace />;
-  const initial = (user.display_name || user.email).trim().charAt(0);
   return (
     <section className="settings-page">
       <header className="page-header">
         <div>
-          <PageTitle lead="Account" accent="Settings" />
+          <PageTitle lead="Settings" />
           <p className="page-subtitle">
             Manage your profile, preferences and account.
           </p>
@@ -332,6 +334,7 @@ export function SettingsPage() {
             onClick={() => void handleSignOut()}
             type="button"
           >
+            <LogOut aria-hidden="true" size={18} />
             Sign out
           </button>
         </nav>
@@ -341,26 +344,13 @@ export function SettingsPage() {
               Profile
             </h2>
             <div className="settings-panel">
-              <div className="settings-row settings-identity">
-                <span aria-hidden="true" className="settings-avatar">
-                  {initial.toUpperCase()}
-                </span>
-                <div>
-                  <p className="settings-name">
-                    {user.display_name || "No display name"}
-                  </p>
-                  <p className="muted">{user.email}</p>
-                </div>
-              </div>
               <form
                 className="settings-row"
                 onSubmit={(event) => void saveName(event)}
               >
                 <div className="settings-row-copy">
                   <label htmlFor="settings-display-name">Display name</label>
-                  <p className="muted">
-                    Shown on your list and in your recommendations.
-                  </p>
+                  <p className="muted">Shown on your list and exports.</p>
                   {nameError && (
                     <p className="settings-error" role="alert">
                       {nameError}
@@ -403,7 +393,8 @@ export function SettingsPage() {
                 <div className="settings-row-copy">
                   <label htmlFor="settings-mature">Mature (18+)</label>
                   <p className="muted" id="settings-mature-hint">
-                    Adult titles stay hidden everywhere until you turn this on.
+                    Hidden everywhere by default. Turning this on shows adult
+                    titles in Browse and recommendations.
                   </p>
                 </div>
                 <input
@@ -429,9 +420,32 @@ export function SettingsPage() {
               </div>
             </div>
           </section>
+          <section aria-labelledby="your-data-title" id="your-data">
+            <h2 className="settings-heading" id="your-data-title">
+              Your data
+            </h2>
+            <div className="settings-panel">
+              <div className="settings-row">
+                <div className="settings-row-copy">
+                  <p className="settings-label">Download your data</p>
+                  <p className="muted">
+                    Your account, quiz answers, list and hidden picks as a JSON
+                    file.
+                  </p>
+                </div>
+                <a
+                  className="secondary-action"
+                  download
+                  href={api.accountExportUrl()}
+                >
+                  Download
+                </a>
+              </div>
+            </div>
+          </section>
           <section aria-labelledby="delete-account-title" id="delete-account">
             <h2 className="settings-heading" id="delete-account-title">
-              Delete account
+              Account
             </h2>
             <div className="settings-panel danger-panel">
               <div className="settings-row">

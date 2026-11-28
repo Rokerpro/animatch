@@ -343,9 +343,17 @@ describe("Phase 5 quiz flow", () => {
     renderRoutes("/", <p>Elsewhere</p>);
     expect(
       await screen.findByRole("heading", {
-        name: "Recommendations Based on Your Answers",
+        name: "Your matches",
       })
     ).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Retake quiz" })).toHaveAttribute(
+      "href",
+      "/quiz"
+    );
+    expect(
+      await screen.findByRole("list", { name: "Your answers" })
+    ).toHaveTextContent("Cozy");
+    expect(screen.getByText("From your answers")).toBeTruthy();
     clearSavedQuiz();
     renderRoutes("/results", <p>Quiz route</p>);
     expect(
