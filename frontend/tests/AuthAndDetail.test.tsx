@@ -58,10 +58,7 @@ describe("auth and detail states", () => {
       isLoading: false,
     });
     render(
-      <MemoryRouter
-        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
-        initialEntries={["/anime/4"]}
-      >
+      <MemoryRouter initialEntries={["/anime/4"]}>
         <Routes>
           <Route path="/anime/:id" element={<AnimeDetailPage />} />
         </Routes>
@@ -93,10 +90,7 @@ describe("auth and detail states", () => {
       isLoading: false,
     });
     render(
-      <MemoryRouter
-        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
-        initialEntries={["/anime/4"]}
-      >
+      <MemoryRouter initialEntries={["/anime/4"]}>
         <Routes>
           <Route path="/anime/:id" element={<AnimeDetailPage />} />
         </Routes>
@@ -171,17 +165,14 @@ describe("auth and detail states", () => {
       ],
     });
     render(
-      <MemoryRouter
-        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
-        initialEntries={["/similar/4"]}
-      >
+      <MemoryRouter initialEntries={["/similar/4"]}>
         <Routes>
           <Route path="/similar/:id" element={<SimilarAnimePage />} />
         </Routes>
       </MemoryRouter>
     );
     expect(
-      screen.getByRole("heading", { name: "Anime similar to Seed Anime" })
+      screen.getByRole("heading", { name: "Anime Similar to Seed Anime" })
     ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Seed Anime" })).toHaveAttribute(
       "href",
@@ -194,10 +185,7 @@ describe("auth and detail states", () => {
   });
   it("shows the similar-anime search on similar and anime detail pages", () => {
     render(
-      <MemoryRouter
-        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
-        initialEntries={["/similar/4"]}
-      >
+      <MemoryRouter initialEntries={["/similar/4"]}>
         <Navbar />
       </MemoryRouter>
     );
@@ -206,10 +194,7 @@ describe("auth and detail states", () => {
     ).toBeInTheDocument();
     cleanup();
     render(
-      <MemoryRouter
-        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
-        initialEntries={["/anime/4"]}
-      >
+      <MemoryRouter initialEntries={["/anime/4"]}>
         <Navbar />
       </MemoryRouter>
     );
@@ -226,10 +211,7 @@ describe("auth and detail states", () => {
       refresh: vi.fn(),
     });
     render(
-      <MemoryRouter
-        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
-        initialEntries={["/quiz"]}
-      >
+      <MemoryRouter initialEntries={["/quiz"]}>
         <Navbar />
       </MemoryRouter>
     );
@@ -249,10 +231,7 @@ describe("auth and detail states", () => {
       refresh: vi.fn(),
     });
     render(
-      <MemoryRouter
-        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
-        initialEntries={["/quiz"]}
-      >
+      <MemoryRouter initialEntries={["/quiz"]}>
         <Navbar />
       </MemoryRouter>
     );
@@ -306,9 +285,7 @@ describe("auth and detail states", () => {
     render(
       <QueryClientProvider client={queryClient}>
         <ToastProvider>
-          <MemoryRouter
-            future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
-          >
+          <MemoryRouter>
             <Routes>
               <Route path="*" element={<LoginPage />} />
             </Routes>
@@ -330,7 +307,7 @@ describe("auth and detail states", () => {
       })
     );
     expect(
-      screen.queryByRole("link", { name: "Continue with Google" })
+      screen.queryByRole("link", { name: "Sign in with Google" })
     ).not.toBeInTheDocument();
   });
 });

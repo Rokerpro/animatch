@@ -7,6 +7,9 @@ import { useAuth } from "../auth/useAuth";
 import { RecommendationCard } from "../components/RecommendationCard";
 import { PosterGrid } from "../components/PosterGrid";
 import { useFeatures } from "../api/useFeatures";
+import { useListStats } from "../api/hooks";
+import { PageTitle } from "../components/PageTitle";
+import { PosterSkeleton } from "../components/RequestStates";
 
 export function ForYouPage() {
   const { user, authLoading, mature } = useAuth();
@@ -23,18 +26,27 @@ export function ForYouPage() {
     retry: false,
   });
   const features = useFeatures();
+  const stats = useListStats(mature, Boolean(user));
+  const total = stats.data?.total ?? 0;
   const heading = (
-    <header className="for-you-heading">
-      <h1 className="page-title">For you</h1>
-      <div className="for-you-heading-actions">
-        <Link className="primary-action" to="/new">
-          Find something new
-        </Link>
+    <header className="page-header for-you-heading">
+      <div>
+        <PageTitle lead="For" accent="You" />
+        <p className="page-subtitle">
+          {total > 0
+            ? `Picked from your quiz answers and the ${total} ${total === 1 ? "title" : "titles"} on your list.`
+            : "Picked from your quiz answers and your list."}
+        </p>
+      </div>
+      <div className="page-header-aside for-you-heading-actions">
         {features.data?.natural_language && (
           <Link className="secondary-action" to="/ask">
             Describe what you want
           </Link>
         )}
+        <Link className="primary-action" to="/new">
+          Find something new
+        </Link>
       </div>
     </header>
   );
@@ -56,7 +68,7 @@ export function ForYouPage() {
     return (
       <section className="browse-page for-you-page">
         {heading}
-        <p>Finding recommendations…</p>
+        <PosterSkeleton count={5} wide />
       </section>
     );
   if (recs.error instanceof ApiError && recs.error.status === 401)
@@ -87,6 +99,7 @@ export function ForYouPage() {
         <PosterGrid
           animeIds={results.map((result) => result.id)}
           label="Recommendations for you"
+          wide
         >
           {results.map((result) => (
             <RecommendationCard key={result.id} recommendation={result} />

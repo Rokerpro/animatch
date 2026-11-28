@@ -145,11 +145,18 @@ describe("Phase 5 quiz flow", () => {
     });
     vi.mocked(api.startRecommendations).mockResolvedValue([rec]);
   });
-  it("places the home CTA above the steps and sends new visitors to the quiz", async () => {
+  it("shows the title search hero and sends new visitors to the quiz", async () => {
     const view = renderRoutes("/", <QuizPage />);
-    expect(screen.getByRole("link", { name: "Find my anime" })).toBeTruthy();
+    expect(
+      screen.getByRole("heading", { name: "Name one anime you love." })
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("combobox", { name: "Anime you love" })
+    ).toBeTruthy();
     expect(view.container.querySelector(".recommendation-card")).toBeNull();
-    fireEvent.click(screen.getByRole("link", { name: "Find my anime" }));
+    fireEvent.click(
+      screen.getByRole("link", { name: "Take the quiz instead." })
+    );
     expect(
       await screen.findByRole("heading", { name: "What mood?" })
     ).toBeTruthy();
@@ -163,7 +170,8 @@ describe("Phase 5 quiz flow", () => {
       screen.getByRole("separator", {
         name: "Or choose another way to get recommendations",
       })
-    ).toHaveTextContent("or");
+    ).toBeInTheDocument();
+    expect(screen.getByText("Rather start from shows you like?")).toBeTruthy();
     expect(
       screen.getByRole("button", { name: "Name anime you like instead" })
     ).toBeTruthy();
@@ -189,7 +197,7 @@ describe("Phase 5 quiz flow", () => {
       "/quiz?mode=titles"
     );
     const pickerHeading = screen.getByRole("heading", {
-      name: "Name anime you like",
+      name: "Name Anime You Like",
     });
     expect(screen.queryByRole("heading", { name: "Quiz" })).toBeNull();
     expect(document.activeElement).toBe(pickerHeading);
@@ -237,7 +245,7 @@ describe("Phase 5 quiz flow", () => {
       </MemoryRouter>
     );
     expect(
-      await screen.findByRole("heading", { name: "Name anime you like" })
+      await screen.findByRole("heading", { name: "Name Anime You Like" })
     ).toBeTruthy();
     expect(screen.getByText("Picked Anime")).toBeTruthy();
     expect(screen.getByTestId("current-location")).toHaveTextContent(
@@ -246,7 +254,7 @@ describe("Phase 5 quiz flow", () => {
     expect(readQuizDraft()?.answers).toEqual({ mood: "epic" });
     fireEvent.click(screen.getByRole("button", { name: "History back" }));
     expect(
-      await screen.findByRole("link", { name: "Find my anime" })
+      await screen.findByRole("heading", { name: "Name one anime you love." })
     ).toBeTruthy();
   });
   it("submits selected answers and advances; Back returns to prior answer", async () => {
@@ -334,7 +342,9 @@ describe("Phase 5 quiz flow", () => {
     });
     renderRoutes("/", <p>Elsewhere</p>);
     expect(
-      await screen.findByText("Recommendations based on your answers")
+      await screen.findByRole("heading", {
+        name: "Recommendations Based on Your Answers",
+      })
     ).toBeTruthy();
     clearSavedQuiz();
     renderRoutes("/results", <p>Quiz route</p>);
@@ -350,7 +360,9 @@ describe("Phase 5 quiz flow", () => {
     });
     renderRoutes("/results", <p>Elsewhere</p>);
     fireEvent.click(screen.getByRole("link", { name: "AniMatch home" }));
-    expect(screen.getByRole("link", { name: "Find my anime" })).toBeTruthy();
+    expect(
+      screen.getByRole("heading", { name: "Name one anime you love." })
+    ).toBeTruthy();
   });
   it("shows the similar-anime search in the results header and opens similar results for the selected anime", async () => {
     saveQuiz({
@@ -362,7 +374,7 @@ describe("Phase 5 quiz flow", () => {
     const input = screen.getByRole("combobox", {
       name: "Search anime similar to",
     });
-    expect(input).toHaveAttribute("placeholder", "Search anime similar to…");
+    expect(input).toHaveAttribute("placeholder", "Find anime similar to…");
     fireEvent.focus(input);
     fireEvent.change(input, { target: { value: "Picked" } });
     expect(

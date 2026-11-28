@@ -6,6 +6,7 @@ export interface AnimeCardData {
   titleEnglish?: string | null;
   titleNative?: string | null;
   coverImage?: string | null;
+  coverColor?: string | null;
   bannerImage?: string | null;
   format?: string | null;
   status?: string | null;
@@ -152,6 +153,13 @@ export interface ListResponse {
   items: ListEntryResponse[];
   pageInfo: PageInfo;
 }
+export interface ListStatsResponse {
+  total: number;
+  byStatus: Record<ListStatus, number>;
+  ratedCount: number;
+  meanRating: number | null;
+}
+
 export interface ListAnimeStatus {
   animeId: number;
   status: ListStatus;

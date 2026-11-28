@@ -7,10 +7,12 @@ export function PosterGrid({
   children,
   label = "Anime results",
   animeIds = [],
+  wide = false,
 }: {
   children: ReactNode;
   label?: string;
   animeIds: number[];
+  wide?: boolean;
 }) {
   const { user, mature } = useAuth();
   const ids = useMemo(() => [...new Set(animeIds)], [animeIds]);
@@ -29,7 +31,10 @@ export function PosterGrid({
     <ListStatusContext.Provider
       value={{ entries, loading: Boolean(user) && statuses.isLoading }}
     >
-      <div className="poster-grid" aria-label={label}>
+      <div
+        className={`poster-grid${wide ? " is-wide" : ""}`}
+        aria-label={label}
+      >
         {children}
       </div>
     </ListStatusContext.Provider>

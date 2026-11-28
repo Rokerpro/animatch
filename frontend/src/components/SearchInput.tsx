@@ -51,18 +51,18 @@ export function SearchInput() {
 
   return (
     <form
-      className="header-search"
+      className="title-search input-with-icon"
       role="search"
       onSubmit={handleSubmit}
       aria-label="Search anime"
     >
-      <Search aria-hidden="true" size={16} />
+      <Search aria-hidden="true" size={20} strokeWidth={1.8} />
       <input
         aria-label="Search titles"
         autoComplete="off"
         name="q"
         onChange={(event) => setValue(event.currentTarget.value)}
-        placeholder="Search anime"
+        placeholder="Search by title"
         type="search"
         value={value}
       />

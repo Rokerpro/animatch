@@ -19,10 +19,7 @@ describe("SearchInput", () => {
 
   it("debounces navigation to the browse query URL", async () => {
     render(
-      <MemoryRouter
-        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
-        initialEntries={["/"]}
-      >
+      <MemoryRouter initialEntries={["/"]}>
         <SearchInput />
         <LocationProbe />
       </MemoryRouter>

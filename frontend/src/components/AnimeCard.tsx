@@ -6,6 +6,7 @@ import { useAnimeDetail } from "../api/hooks";
 import { useAuth } from "../auth/useAuth";
 import { ListControl } from "./ListControls";
 import { useCardListStatus } from "./listStatus";
+import { cardMeta } from "./formatMeta";
 export function AnimeCard({
   anime,
 }: {
@@ -17,18 +18,16 @@ export function AnimeCard({
   // poster from the canonical anime detail response, which is query-cached.
   const detail = useAnimeDetail(anime.id, mature, !anime.coverImage);
   const coverImage = anime.coverImage || detail.data?.coverImage;
-  const metadata = [
-    anime.format,
-    anime.year,
-    anime.episodes ? `${anime.episodes} eps` : null,
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  const metadata = cardMeta(anime);
   return (
     <article className="anime-card">
       <div className="anime-poster">
         <Link to={`/anime/${anime.id}`} aria-label={anime.title}>
-          <PosterImage src={coverImage} alt={anime.title} />
+          <PosterImage
+            src={coverImage}
+            alt={anime.title}
+            color={anime.coverColor ?? detail.data?.coverColor}
+          />
         </Link>
         <div className="poster-badges">
           {anime.similarity !== undefined && anime.similarity !== null && (
@@ -51,11 +50,9 @@ export function AnimeCard({
         </div>
       </div>
       <div className="anime-card-copy">
-        <div className="anime-card-top">
-          <Link to={`/anime/${anime.id}`}>
-            <h2>{anime.title}</h2>
-          </Link>
-        </div>
+        <Link to={`/anime/${anime.id}`}>
+          <h2>{anime.title}</h2>
+        </Link>
         {metadata && <p className="anime-meta">{metadata}</p>}
       </div>
     </article>

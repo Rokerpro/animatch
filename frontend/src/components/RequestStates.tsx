@@ -1,9 +1,19 @@
 import type { ReactNode } from "react";
 import { CircleAlert } from "lucide-react";
 
-export function PosterSkeleton({ count = 12 }: { count?: number }) {
+export function PosterSkeleton({
+  count = 12,
+  wide = false,
+}: {
+  count?: number;
+  wide?: boolean;
+}) {
   return (
-    <div aria-busy="true" aria-label="Loading anime" className="poster-grid">
+    <div
+      aria-busy="true"
+      aria-label="Loading anime"
+      className={`poster-grid${wide ? " is-wide" : ""}`}
+    >
       {Array.from({ length: count }, (_, index) => (
         <div aria-hidden="true" className="poster-skeleton" key={index}>
           <div className="poster-skeleton-image" />

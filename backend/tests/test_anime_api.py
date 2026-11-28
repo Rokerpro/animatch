@@ -328,6 +328,7 @@ async def test_anime_detail_full_and_404(client: AsyncClient, seeded_catalog: No
     assert data["title"] == "Frieren: Beyond Journey's End"
     assert data["studio"] == "MADHOUSE"
     assert data["synopsis"] is not None
+    assert data["coverColor"] == "#e4a15d"
     assert "<p>" not in data["synopsis"]
     assert "Magic" in data["tags"]
     assert "Fantasy" in data["genres"]

@@ -25,8 +25,10 @@ export function MultiSelectFilter({
   return (
     <details className="multi-filter" onKeyDown={handleKeyDown} ref={root}>
       <summary aria-label={`${label} filters`}>
-        {label}
-        {selected.length > 0 ? ` · ${selected.length}` : ""}
+        <span>{label}</span>
+        {selected.length > 0 && (
+          <span className="filter-count">{selected.length}</span>
+        )}
       </summary>
       <div aria-label={label} className="multi-filter-options" role="group">
         {options.map((option) => (

@@ -1,0 +1,359 @@
+/* Landing page (/) */
+
+.landing-page {
+  display: grid;
+}
+
+/* Hero ------------------------------------------------------------- */
+
+.landing-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 590px) minmax(0, 1fr);
+  align-items: center;
+  gap: 40px;
+  padding: 40px 0 112px;
+}
+
+.landing-title {
+  font-size: var(--text-88);
+  line-height: 0.92;
+}
+
+.landing-lede {
+  max-width: 470px;
+  margin-top: 36px;
+  color: var(--muted);
+  font-size: var(--text-21);
+  line-height: 1.55;
+}
+
+.landing-search {
+  max-width: 540px;
+  margin-top: 44px;
+}
+
+.landing-search-field {
+  display: flex;
+  height: 64px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px 0 0;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  transition:
+    border-color var(--ease),
+    box-shadow var(--ease);
+}
+
+.landing-search-field:focus-within {
+  border-color: var(--lavender);
+  box-shadow: var(--ring);
+}
+
+.landing-search-field .title-autocomplete {
+  flex: 1;
+  min-width: 0;
+}
+
+.landing-search .title-autocomplete input {
+  height: 62px;
+  padding: 0 0 0 22px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  box-shadow: none;
+  font-size: var(--text-21);
+}
+
+.landing-search .title-autocomplete input:focus {
+  border: 0;
+  box-shadow: none;
+}
+
+.landing-search .autocomplete-popover {
+  top: calc(100% + 12px);
+  left: 0;
+}
+
+.landing-search-field .primary-action {
+  flex: none;
+}
+
+.landing-search-message {
+  margin-top: 12px;
+  color: var(--danger);
+}
+
+.landing-alt {
+  margin-top: 28px;
+}
+
+/* Showcase pair ---------------------------------------------------- */
+
+.landing-showcase {
+  display: grid;
+  gap: 48px;
+  margin: 0;
+}
+
+.showcase-pair {
+  display: grid;
+  grid-template-columns: 220fr 300fr;
+  align-items: end;
+  gap: 80px;
+}
+
+.showcase-item {
+  display: grid;
+  min-width: 0;
+}
+
+.showcase-label {
+  font-size: var(--text-16);
+}
+
+.showcase-title {
+  margin-top: 6px;
+  font-size: var(--text-21);
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.showcase-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 14px;
+  margin: 4px 0 20px;
+}
+
+/* Static cover-colored offset block, as in the design. Hover adds the
+   usual soft lift shadow on top of it. */
+.landing-cover {
+  --cover-tint: var(--line);
+
+  display: block;
+  aspect-ratio: 220 / 312;
+  margin-right: 10px;
+  margin-bottom: 10px;
+  border-radius: var(--radius-card);
+  box-shadow: 10px 10px 0 0 var(--cover-tint);
+  transition: box-shadow var(--ease);
+}
+
+.showcase-next .landing-cover {
+  aspect-ratio: 300 / 431;
+  margin-right: 14px;
+  margin-bottom: 14px;
+  box-shadow: 14px 14px 0 0 var(--cover-tint);
+}
+
+.landing-cover:hover {
+  box-shadow:
+    10px 10px 0 0 var(--cover-tint),
+    var(--shadow-lift);
+}
+
+.showcase-next .landing-cover:hover {
+  box-shadow:
+    14px 14px 0 0 var(--cover-tint),
+    var(--shadow-lift);
+}
+
+.landing-cover:focus-visible {
+  outline: 2px solid var(--lavender);
+  outline-offset: 4px;
+}
+
+.showcase-reason {
+  color: var(--paper);
+  font-size: var(--text-28);
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: center;
+  text-wrap: balance;
+}
+
+/* More pairs ------------------------------------------------------- */
+
+.landing-pairs {
+  padding: 56px 0 72px;
+  border-top: 1px solid var(--line);
+}
+
+.pair-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 48px;
+  margin: 32px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pair-card {
+  display: grid;
+  align-content: start;
+}
+
+.pair-covers {
+  position: relative;
+  width: 216px;
+  max-width: 100%;
+  height: 202px;
+  margin-bottom: 24px;
+}
+
+.pair-cover {
+  --cover-tint: var(--line);
+
+  position: absolute;
+  border-radius: var(--radius-card);
+  box-shadow: 8px 8px 0 0 var(--cover-tint);
+}
+
+.pair-cover-back {
+  top: 40px;
+  left: 0;
+  width: 112px;
+  height: 152px;
+}
+
+.pair-cover-front {
+  top: 0;
+  left: 72px;
+  width: 136px;
+  height: 194px;
+}
+
+.pair-title {
+  font-size: var(--text-16);
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.pair-title a {
+  color: var(--paper);
+  text-decoration: none;
+  transition: color var(--ease);
+}
+
+.pair-title a:hover {
+  color: var(--lavender);
+}
+
+.pair-reason {
+  margin-top: 12px;
+  line-height: 1.55;
+}
+
+/* Bottom strip ----------------------------------------------------- */
+
+.landing-strip {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 44px 0 0;
+  border-top: 1px solid var(--line);
+}
+
+.strip-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.strip-item + .strip-item {
+  padding-left: 40px;
+  margin-left: 40px;
+  border-left: 1px solid var(--line);
+}
+
+.strip-item .muted {
+  max-width: 320px;
+  margin-top: 6px;
+  line-height: 1.55;
+}
+
+.strip-title {
+  font-size: var(--text-21);
+  font-weight: 700;
+}
+
+.strip-item .secondary-action {
+  flex: none;
+}
+
+/* Responsive ------------------------------------------------------- */
+
+@media (max-width: 1100px) {
+  .landing-hero {
+    grid-template-columns: 1fr;
+    gap: 64px;
+    padding-bottom: 80px;
+  }
+
+  .landing-showcase {
+    max-width: 640px;
+  }
+
+  .pair-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .landing-strip {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  .strip-item + .strip-item {
+    padding: 32px 0 0;
+    margin: 0;
+    border-top: 1px solid var(--line);
+    border-left: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .landing-hero {
+    padding-top: 24px;
+  }
+
+  .landing-title {
+    font-size: 50px;
+  }
+
+  .landing-lede {
+    font-size: var(--text-16);
+  }
+
+  .landing-search-field {
+    height: 56px;
+  }
+
+  .landing-search .title-autocomplete input {
+    height: 54px;
+    font-size: var(--text-16);
+  }
+
+  .landing-search-field .primary-action {
+    height: 40px;
+    padding: 0 16px;
+  }
+
+  .showcase-pair {
+    gap: 24px;
+  }
+
+  .showcase-reason {
+    font-size: var(--text-21);
+  }
+
+  .pair-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .strip-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

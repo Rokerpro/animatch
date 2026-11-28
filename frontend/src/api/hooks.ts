@@ -51,6 +51,21 @@ export const useList = (params: ListParams, enabled = true) =>
     enabled,
     placeholderData: (previous) => previous,
   });
+export const useListStats = (mature: boolean, enabled = true) =>
+  useQuery({
+    queryKey: ["list-stats", mature] as const,
+    queryFn: () => api.listStats(mature),
+    enabled,
+    retry: false,
+  });
+export const useQuizQuestions = (enabled = true) =>
+  useQuery({
+    queryKey: ["quiz-questions"] as const,
+    queryFn: ({ signal }) => api.quiz(signal),
+    enabled,
+    staleTime: Infinity,
+    retry: false,
+  });
 export const useListStatuses = (
   ids: number[],
   mature: boolean,

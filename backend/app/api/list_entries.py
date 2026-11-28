@@ -86,6 +86,7 @@ def serialize_anime_card(anime: Anime) -> AnimeCard:
         title_english=anime.title_english,
         title_native=anime.title_native,
         cover_image=anime.cover_image_url,
+        cover_color=anime.cover_color,
         banner_image=anime.banner_image_url,
         format=anime.format,
         status=anime.status,

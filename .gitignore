@@ -67,4 +67,8 @@ Thumbs.db
 
 .claude/worktrees/
 
-.claude/worktrees/
+# Playwright MCP screenshots and logs
+.playwright-mcp/
+
+# graphify knowledge graph output
+graphify-out/

@@ -1,0 +1,413 @@
+/* ------------------------------------------------------------------ */
+/* My list                                                             */
+/* ------------------------------------------------------------------ */
+
+.list-heading-actions {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.list-total {
+  color: var(--muted);
+}
+
+.list-controls-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 24px;
+  margin-bottom: 32px;
+}
+
+.list-status-tabs {
+  display: flex;
+  max-width: 100%;
+  gap: 2px;
+  padding: 3px;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  scrollbar-width: none;
+}
+
+.list-status-tabs:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}
+
+.list-status-tab {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-weight: 500;
+  transition:
+    background-color var(--ease),
+    color var(--ease);
+}
+
+.list-status-tab:hover {
+  color: var(--paper);
+}
+
+.list-status-tab:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}
+
+.list-status-tab[aria-selected="true"] {
+  background: var(--lavender);
+  color: var(--graphite);
+}
+
+.list-tab-count {
+  font-size: 13px;
+  opacity: 0.8;
+}
+
+.list-sort-control {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--muted);
+}
+
+.list-sort-control select {
+  width: 200px;
+}
+
+.list-showing {
+  margin: 0 0 24px;
+  color: var(--muted);
+}
+
+.my-list-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(176px, 1fr));
+  gap: 48px 24px;
+}
+
+.my-list-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.my-list-card .anime-poster {
+  border: 1px solid var(--line);
+}
+
+.my-list-card-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 16px;
+}
+
+.my-list-card-title {
+  color: var(--paper);
+  font-weight: 700;
+  line-height: 1.35;
+  transition: color var(--ease);
+}
+
+.my-list-card:hover .my-list-card-title,
+.my-list-card-title:focus-visible {
+  color: var(--lavender);
+}
+
+.my-list-status-label {
+  margin: 0;
+  color: var(--muted);
+}
+
+.my-list-card .list-rating-control {
+  margin-top: auto;
+  padding-top: 16px;
+}
+
+.my-list-card .list-rating-control > span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+.my-list-card .list-rating-control select {
+  height: 36px;
+  padding-left: 14px;
+  background-color: transparent;
+}
+
+.empty-list-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+@media (max-width: 720px) {
+  .list-controls-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .list-sort-control select {
+    flex: 1;
+    width: auto;
+  }
+
+  .my-list-grid {
+    grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+    gap: 32px 16px;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* MyAnimeList import                                                  */
+/* ------------------------------------------------------------------ */
+
+.mal-import-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 760px) minmax(0, 1fr);
+  gap: 80px;
+  align-items: start;
+}
+
+.mal-import-main {
+  display: grid;
+  gap: 24px;
+}
+
+.mal-drop-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 56px 24px;
+  border: 1.5px dashed var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  text-align: center;
+  transition:
+    border-color var(--ease),
+    background-color var(--ease);
+}
+
+.mal-drop-zone.is-dragging {
+  border-color: var(--lavender);
+  background: var(--lavender-tint);
+}
+
+.mal-drop-icon {
+  display: grid;
+  width: 56px;
+  height: 56px;
+  place-items: center;
+  margin-bottom: 20px;
+  border-radius: 999px;
+  background: var(--lavender-tint);
+  color: var(--lavender);
+}
+
+.mal-drop-title {
+  margin: 0 0 6px;
+  font-size: var(--text-21);
+  font-weight: 700;
+}
+
+.mal-drop-description {
+  margin: 0 0 24px;
+  color: var(--muted);
+}
+
+.mal-file-button {
+  cursor: pointer;
+}
+
+.mal-drop-zone:has(input:focus-visible) .mal-file-button {
+  box-shadow: var(--ring);
+}
+
+.mal-selected-file {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 64px;
+  padding: 0 16px 0 24px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+}
+
+.mal-selected-file > svg {
+  flex: none;
+  color: var(--lavender);
+}
+
+.mal-selected-name {
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mal-selected-size {
+  flex: none;
+  color: var(--muted);
+}
+
+.mal-selected-remove {
+  margin-left: auto;
+  border-color: transparent;
+}
+
+.mal-selected-remove:hover {
+  border-color: var(--line);
+}
+
+.mal-import-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px 20px;
+}
+
+.mal-import-actions p {
+  margin: 0;
+}
+
+.mal-import-summary {
+  padding: 28px 32px;
+}
+
+.mal-import-summary .mal-import-actions {
+  margin-top: 24px;
+}
+
+.mal-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0;
+}
+
+.mal-summary-grid div {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 4px;
+}
+
+.mal-summary-grid dt {
+  color: var(--muted);
+}
+
+.mal-summary-grid dd {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-28);
+}
+
+.mal-unmatched {
+  margin-top: 24px;
+  color: var(--muted);
+}
+
+.mal-unmatched summary {
+  color: var(--paper);
+  cursor: pointer;
+}
+
+.mal-unmatched ul {
+  max-height: 240px;
+  margin: 12px 0 0;
+  padding-left: 20px;
+  overflow-y: auto;
+}
+
+.mal-import-guide {
+  padding-top: 8px;
+}
+
+.mal-steps {
+  display: grid;
+  margin: 24px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mal-steps li {
+  position: relative;
+  display: flex;
+  gap: 20px;
+  padding-bottom: 40px;
+}
+
+.mal-steps li:not(:last-child)::before {
+  position: absolute;
+  top: 44px;
+  bottom: 8px;
+  left: 17px;
+  width: 1px;
+  background: var(--line);
+  content: "";
+}
+
+.mal-step-marker {
+  display: grid;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--lavender);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.mal-steps p {
+  margin: 0;
+}
+
+.mal-steps .mal-step-title {
+  padding-top: 6px;
+  margin-bottom: 4px;
+  font-weight: 700;
+}
+
+.mal-mature-note {
+  margin: 0;
+  padding-top: 32px;
+  border-top: 1px solid var(--line);
+}
+
+@media (max-width: 1000px) {
+  .mal-import-layout {
+    grid-template-columns: 1fr;
+    gap: 56px;
+  }
+}
+
+@media (max-width: 640px) {
+  .mal-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mal-drop-zone {
+    padding: 40px 20px;
+  }
+}

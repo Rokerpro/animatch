@@ -13,17 +13,24 @@ import { ListPage } from "./pages/ListPage";
 import { MALImportPage } from "./pages/MALImportPage";
 import { NewPage } from "./pages/NewPage";
 import { AskPage } from "./pages/AskPage";
+import { NotFoundPage } from "./pages/NotFoundPage";
 
 function AniListFooter() {
   return (
     <footer className="app-footer">
-      <p>
-        Anime data provided by{" "}
-        <a href="https://anilist.co" rel="noreferrer">
-          AniList
-        </a>
-        .
-      </p>
+      <div className="app-footer-inner">
+        <p>
+          Anime data and cover art from{" "}
+          <a href="https://anilist.co" rel="noreferrer">
+            AniList
+          </a>
+          .
+        </p>
+        <span aria-hidden="true" className="wordmark">
+          <span>Ani</span>
+          <span className="wordmark-accent">Match</span>
+        </span>
+      </div>
     </footer>
   );
 }
@@ -63,10 +70,7 @@ export function App() {
             <Route path="/import" element={<MALImportPage />} />
             <Route path="/new" element={<NewPage />} />
             <Route path="/ask" element={<AskPage />} />
-            <Route
-              path="*"
-              element={<p className="browse-page">Page not found</p>}
-            />
+            <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </PageShell>
       </AuthProvider>

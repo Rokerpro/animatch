@@ -166,19 +166,19 @@ describe("natural language recommendations", () => {
     const input = await screen.findByRole("textbox", {
       name: "What are you in the mood to watch?",
     });
-    const submit = screen.getByRole("button", { name: "Get recommendations" });
-    expect(screen.getByText("0 / 300 characters")).toBeInTheDocument();
+    const submit = screen.getByRole("button", { name: "Find recommendations" });
+    expect(screen.getByText("0 / 300")).toBeInTheDocument();
     expect(submit).toBeDisabled();
     fireEvent.click(screen.getByRole("button", { name: /cozy fantasy/ }));
     expect(input).toHaveValue("I want a cozy fantasy with a hopeful ending.");
     expect(api.askRecommendations).not.toHaveBeenCalled();
     fireEvent.change(input, { target: { value: "x".repeat(301) } });
-    expect(screen.getByText("301 / 300 characters")).toBeInTheDocument();
+    expect(screen.getByText("301 / 300")).toBeInTheDocument();
     expect(submit).toBeDisabled();
     fireEvent.change(input, { target: { value: "  a thoughtful mystery  " } });
     fireEvent.keyDown(input, { key: "Enter", ctrlKey: true });
     expect(
-      await screen.findByRole("heading", { name: "Here’s what I found" })
+      await screen.findByRole("heading", { name: "Here’s What I Found" })
     ).toBeInTheDocument();
     expect(api.askRecommendations).toHaveBeenCalledWith(
       { text: "a thoughtful mystery" },
@@ -193,7 +193,7 @@ describe("natural language recommendations", () => {
     });
     fireEvent.change(input, { target: { value: "  cozy adventure  " } });
     fireEvent.click(
-      screen.getByRole("button", { name: "Get recommendations" })
+      screen.getByRole("button", { name: "Find recommendations" })
     );
     expect(await screen.findByText("Because of mystery.")).toBeInTheDocument();
     expect(screen.getByText("Mood: Cozy")).toBeInTheDocument();
@@ -227,7 +227,7 @@ describe("natural language recommendations", () => {
       target: { value: "quiet mood" },
     });
     fireEvent.click(
-      screen.getByRole("button", { name: "Get recommendations" })
+      screen.getByRole("button", { name: "Find recommendations" })
     );
     expect(
       await screen.findByText("No matches this time.")
@@ -277,7 +277,7 @@ describe("natural language recommendations", () => {
         target: { value: "some request" },
       });
       fireEvent.click(
-        screen.getByRole("button", { name: "Get recommendations" })
+        screen.getByRole("button", { name: "Find recommendations" })
       );
       expect(await screen.findByRole("alert")).toHaveTextContent(
         message as string
@@ -302,7 +302,7 @@ describe("natural language recommendations", () => {
       target: { value: "a" },
     });
     fireEvent.click(
-      screen.getByRole("button", { name: "Get recommendations" })
+      screen.getByRole("button", { name: "Find recommendations" })
     );
     expect(await screen.findByRole("alert")).toHaveTextContent("not enabled");
     expect(
@@ -332,7 +332,7 @@ describe("natural language recommendations", () => {
       target: { value: text },
     });
     fireEvent.click(
-      screen.getByRole("button", { name: "Get recommendations" })
+      screen.getByRole("button", { name: "Find recommendations" })
     );
     await screen.findByText("Because of mystery.");
     await waitFor(() =>

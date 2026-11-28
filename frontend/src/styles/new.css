@@ -1,0 +1,136 @@
+/* Find something new (/new). Scoped so the main quiz styles stay separate. */
+
+.new-page,
+.new-results-page {
+  padding-top: 56px;
+}
+
+.new-page .page-title {
+  margin-bottom: 12px;
+}
+
+.new-page .page-title:focus {
+  outline: none;
+}
+
+.new-page .quiz-card {
+  max-width: 880px;
+}
+
+.new-page-intro {
+  margin: 0 0 32px;
+  color: var(--muted);
+}
+
+.new-quiz-form {
+  display: grid;
+  gap: 28px;
+}
+
+.new-quiz-form > .primary-action {
+  justify-self: start;
+  margin-top: 4px;
+}
+
+.new-quiz-question {
+  margin: 0;
+  padding: 0 0 28px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.new-quiz-question legend {
+  margin-bottom: 14px;
+  padding: 0;
+  color: var(--paper);
+  font-size: var(--text-21);
+  font-weight: 700;
+}
+
+.new-page .quiz-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.new-page .quiz-option {
+  position: relative;
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  padding: 0 18px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--paper);
+  cursor: pointer;
+  transition:
+    border-color var(--ease),
+    background-color var(--ease),
+    color var(--ease);
+}
+
+.new-page .quiz-option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.new-page .quiz-option:hover {
+  border-color: var(--muted);
+}
+
+.new-page .quiz-option:has(input:checked) {
+  border-color: var(--lavender);
+  background: var(--lavender-tint);
+  color: var(--lavender);
+}
+
+.new-page .quiz-option:has(input:focus-visible) {
+  box-shadow: var(--ring);
+}
+
+.new-quiz-error {
+  margin: 0;
+  color: var(--danger);
+}
+
+/* Results */
+
+.new-page-heading {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+  margin-bottom: 40px;
+}
+
+.new-page-heading .page-title:focus {
+  outline: none;
+}
+
+.new-page-heading .eyebrow {
+  margin: 0;
+  color: var(--muted);
+}
+
+.new-mode-message {
+  margin: 0;
+  color: var(--muted);
+}
+
+.new-fallback-notice {
+  display: grid;
+  gap: 4px;
+  padding: 16px 20px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.new-fallback-notice p {
+  margin: 0;
+}
+
+.new-fallback-notice a {
+  color: var(--lavender);
+}

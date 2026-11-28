@@ -1,4 +1,5 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
+import "../styles/account.css";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { api, getErrorMessage } from "../api/client";
@@ -7,6 +8,8 @@ import { useAuth } from "../auth/useAuth";
 import { useToast } from "../components/useToast";
 import { safeNextPath } from "../auth/nextPath";
 import { CircleAlert } from "lucide-react";
+import { PageTitle } from "../components/PageTitle";
+import { PosterStack } from "../components/PosterStack";
 import {
   clearSavedQuiz,
   markQuizProfileSaved,
@@ -103,76 +106,129 @@ function AuthForm({ mode }: { mode: "login" | "register" }) {
       setSubmitting(false);
     }
   }
+  const isLogin = mode === "login";
   return (
     <section className="auth-page">
-      <h1>{mode === "login" ? "Sign in" : "Create an account"}</h1>
-      <form className="auth-form" onSubmit={submit}>
-        {mode === "register" && (
-          <label>
-            Display name
+      <div className="auth-main">
+        <PageTitle
+          lead={isLogin ? "Sign" : "Create an"}
+          accent={isLogin ? "In" : "Account"}
+        />
+        <p className="page-subtitle">
+          {isLogin
+            ? "Pick up your list and recommendations where you left off."
+            : "Save your list and get picks that learn from it."}
+        </p>
+        <form className="auth-form" onSubmit={submit}>
+          {!isLogin && (
+            <label className="field">
+              <span>Display name</span>
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                autoComplete="nickname"
+                placeholder="What should we call you?"
+              />
+            </label>
+          )}
+          <label className="field">
+            <span>Email</span>
             <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              autoComplete="nickname"
+              type="email"
+              required
+              autoComplete="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
             />
           </label>
-        )}
-        <label>
-          Email
-          <input
-            type="email"
-            required
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </label>
-        <label>
-          Password
-          <input
-            type="password"
-            required
-            minLength={mode === "register" ? 10 : 1}
-            autoComplete={
-              mode === "login" ? "current-password" : "new-password"
-            }
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </label>
-        {error && (
-          <div className="status-box status-error auth-error" role="alert">
-            <CircleAlert aria-hidden="true" />
-            <p>{error}</p>
+          <div className="field">
+            <label className="field" htmlFor="auth-password">
+              <span>Password</span>
+              <input
+                id="auth-password"
+                type="password"
+                required
+                minLength={isLogin ? 1 : 10}
+                autoComplete={isLogin ? "current-password" : "new-password"}
+                aria-describedby={isLogin ? undefined : "password-hint"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </label>
+            {!isLogin && (
+              <p className="field-hint" id="password-hint">
+                At least 10 characters.
+              </p>
+            )}
           </div>
+          {error && (
+            <div className="status-box status-error auth-error" role="alert">
+              <CircleAlert aria-hidden="true" />
+              <p>{error}</p>
+            </div>
+          )}
+          <button disabled={submitting} type="submit">
+            {submitting
+              ? isLogin
+                ? "Signing in…"
+                : "Creating account…"
+              : isLogin
+                ? "Sign in"
+                : "Create account"}
+          </button>
+        </form>
+        {providers.data?.google && (
+          <a className="google-button" href={api.googleLogin()}>
+            <GoogleMark />
+            {isLogin ? "Sign in with Google" : "Sign up with Google"}
+          </a>
         )}
-        <button disabled={submitting} type="submit">
-          {submitting
-            ? mode === "login"
-              ? "Signing in…"
-              : "Creating account…"
-            : mode === "login"
-              ? "Sign in"
-              : "Register"}
-        </button>
-      </form>
-      {providers.data?.google && (
-        <a className="google-button" href={api.googleLogin()}>
-          Continue with Google
-        </a>
-      )}
-      <p>
-        {mode === "login" ? (
-          <>
-            New here? <Link to="/register">Create an account</Link>
-          </>
-        ) : (
-          <>
-            Already registered? <Link to="/login">Sign in</Link>
-          </>
-        )}
-      </p>
+        <p className="auth-switch">
+          {isLogin ? (
+            <>
+              New here? <Link to="/register">Create an account</Link>
+            </>
+          ) : (
+            <>
+              Already registered? <Link to="/login">Sign in</Link>
+            </>
+          )}
+        </p>
+      </div>
+      <aside className="auth-aside panel">
+        <PosterStack />
+        <div className="auth-aside-copy">
+          <h2>Your list follows you.</h2>
+          <p>
+            Saved titles, For You picks and quiz results stay with your account,
+            on any device.
+          </p>
+        </div>
+      </aside>
     </section>
+  );
+}
+function GoogleMark() {
+  return (
+    <svg aria-hidden="true" height="18" viewBox="0 0 48 48" width="18">
+      <path
+        d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"
+        fill="#FFC107"
+      />
+      <path
+        d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"
+        fill="#FF3D00"
+      />
+      <path
+        d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"
+        fill="#4CAF50"
+      />
+      <path
+        d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"
+        fill="#1976D2"
+      />
+    </svg>
   );
 }
 export function LoginPage() {
@@ -181,16 +237,25 @@ export function LoginPage() {
 export function RegisterPage() {
   return <AuthForm mode="register" />;
 }
+const SETTINGS_SECTIONS = [
+  { id: "profile", label: "Profile" },
+  { id: "preferences", label: "Preferences" },
+  { id: "delete-account", label: "Delete account" },
+];
 export function SettingsPage() {
-  const { user, mature, setMature, signOut, refresh } = useAuth();
+  const { user, authLoading, mature, setMature, signOut, refresh } = useAuth();
   const nav = useNavigate();
   const { showToast } = useToast();
   const [displayName, setDisplayName] = useState(user?.display_name ?? "");
+  const loadedName = user?.display_name ?? "";
+  // The user may still be loading on first render; fill the field once known.
+  useEffect(() => setDisplayName(loadedName), [loadedName]);
   const [nameError, setNameError] = useState("");
   const [savingName, setSavingName] = useState(false);
   const [confirmation, setConfirmation] = useState("");
   const [deleteError, setDeleteError] = useState("");
   const [deleting, setDeleting] = useState(false);
+  const [activeSection, setActiveSection] = useState("profile");
   async function saveName(event: FormEvent) {
     event.preventDefault();
     setNameError("");
@@ -226,84 +291,190 @@ export function SettingsPage() {
       setDeleting(false);
     }
   }
-  if (!user) return <Navigate to="/login" replace />;
+  async function handleSignOut() {
+    try {
+      await signOut();
+    } catch {
+      /* Local state is cleared even if the server session expired. */
+    }
+    nav("/", { replace: true, state: { showHome: true } });
+    showToast("You’re signed out", "success");
+  }
+  if (authLoading) return <section className="browse-page page-top" />;
+  if (!user) return <Navigate to="/login?next=%2Fsettings" replace />;
+  const initial = (user.display_name || user.email).trim().charAt(0);
   return (
     <section className="settings-page">
-      <h1>Settings</h1>
-      <p className="settings-email">{user.email}</p>
-      <form
-        className="settings-section"
-        onSubmit={(event) => void saveName(event)}
-      >
-        <h2>Account</h2>
-        <label>
-          Display name
-          <input
-            autoComplete="nickname"
-            maxLength={100}
-            value={displayName}
-            onChange={(event) => setDisplayName(event.target.value)}
-          />
-        </label>
-        {nameError && (
-          <p className="settings-error" role="alert">
-            {nameError}
+      <header className="page-header">
+        <div>
+          <PageTitle lead="Account" accent="Settings" />
+          <p className="page-subtitle">
+            Manage your profile, preferences and account.
           </p>
-        )}
-        <button
-          className="primary-action"
-          disabled={savingName || !displayName.trim()}
-          type="submit"
-        >
-          {savingName ? "Saving…" : "Save display name"}
-        </button>
-        <label className="setting-toggle">
-          <input
-            type="checkbox"
-            checked={mature}
-            onChange={(event) => void setMature(event.target.checked)}
-          />{" "}
-          Include mature anime (18+)
-        </label>
-        <Link className="settings-link" to="/quiz">
-          Retake quiz
-        </Link>
-      </form>
-      <section
-        aria-labelledby="delete-account-title"
-        className="settings-section danger-section"
-      >
-        <h2 id="delete-account-title">Delete account</h2>
-        <p id="delete-account-warning">
-          This permanently deletes your account and its list. Type DELETE to
-          confirm. This action cannot be undone.
-        </p>
-        <label>
-          Type DELETE to confirm
-          <input
-            aria-describedby="delete-account-warning"
-            autoComplete="off"
-            onChange={(event) => {
-              setConfirmation(event.target.value);
-              setDeleteError("");
-            }}
-            value={confirmation}
-          />
-        </label>
-        {deleteError && (
-          <p className="settings-error" role="alert">
-            {deleteError}
-          </p>
-        )}
-        <button
-          className="delete-account-button"
-          disabled={confirmation !== "DELETE" || deleting}
-          onClick={() => void deleteAccount()}
-          type="button"
-        >
-          {deleting ? "Deleting account…" : "Delete account"}
-        </button>
-      </section>
+        </div>
+      </header>
+      <div className="settings-layout">
+        <nav aria-label="Settings sections" className="settings-nav">
+          {SETTINGS_SECTIONS.map((section) => (
+            <a
+              aria-current={activeSection === section.id ? "true" : undefined}
+              className={activeSection === section.id ? "active" : undefined}
+              href={`#${section.id}`}
+              key={section.id}
+              onClick={() => setActiveSection(section.id)}
+            >
+              {section.label}
+            </a>
+          ))}
+          <hr />
+          <button
+            className="settings-signout"
+            onClick={() => void handleSignOut()}
+            type="button"
+          >
+            Sign out
+          </button>
+        </nav>
+        <div className="settings-content">
+          <section aria-labelledby="profile-title" id="profile">
+            <h2 className="settings-heading" id="profile-title">
+              Profile
+            </h2>
+            <div className="settings-panel">
+              <div className="settings-row settings-identity">
+                <span aria-hidden="true" className="settings-avatar">
+                  {initial.toUpperCase()}
+                </span>
+                <div>
+                  <p className="settings-name">
+                    {user.display_name || "No display name"}
+                  </p>
+                  <p className="muted">{user.email}</p>
+                </div>
+              </div>
+              <form
+                className="settings-row"
+                onSubmit={(event) => void saveName(event)}
+              >
+                <div className="settings-row-copy">
+                  <label htmlFor="settings-display-name">Display name</label>
+                  <p className="muted">
+                    Shown on your list and in your recommendations.
+                  </p>
+                  {nameError && (
+                    <p className="settings-error" role="alert">
+                      {nameError}
+                    </p>
+                  )}
+                </div>
+                <div className="settings-row-control">
+                  <input
+                    autoComplete="nickname"
+                    id="settings-display-name"
+                    maxLength={100}
+                    value={displayName}
+                    onChange={(event) => setDisplayName(event.target.value)}
+                  />
+                  <button
+                    aria-label="Save display name"
+                    className="primary-action"
+                    disabled={savingName || !displayName.trim()}
+                    type="submit"
+                  >
+                    {savingName ? "Saving…" : "Save"}
+                  </button>
+                </div>
+              </form>
+              <div className="settings-row">
+                <div className="settings-row-copy">
+                  <p className="settings-label">Email</p>
+                  <p className="muted">The address you sign in with.</p>
+                </div>
+                <p className="settings-value">{user.email}</p>
+              </div>
+            </div>
+          </section>
+          <section aria-labelledby="preferences-title" id="preferences">
+            <h2 className="settings-heading" id="preferences-title">
+              Preferences
+            </h2>
+            <div className="settings-panel">
+              <div className="settings-row">
+                <div className="settings-row-copy">
+                  <label htmlFor="settings-mature">Mature (18+)</label>
+                  <p className="muted" id="settings-mature-hint">
+                    Adult titles stay hidden everywhere until you turn this on.
+                  </p>
+                </div>
+                <input
+                  aria-describedby="settings-mature-hint"
+                  checked={mature}
+                  className="switch"
+                  id="settings-mature"
+                  onChange={(event) => void setMature(event.target.checked)}
+                  role="switch"
+                  type="checkbox"
+                />
+              </div>
+              <div className="settings-row">
+                <div className="settings-row-copy">
+                  <p className="settings-label">Quiz answers</p>
+                  <p className="muted">
+                    Retake the quiz to refresh your For You picks.
+                  </p>
+                </div>
+                <Link className="secondary-action" to="/quiz">
+                  Retake quiz
+                </Link>
+              </div>
+            </div>
+          </section>
+          <section aria-labelledby="delete-account-title" id="delete-account">
+            <h2 className="settings-heading" id="delete-account-title">
+              Delete account
+            </h2>
+            <div className="settings-panel danger-panel">
+              <div className="settings-row">
+                <div className="settings-row-copy">
+                  <label htmlFor="settings-delete-confirm">
+                    Type DELETE to confirm
+                  </label>
+                  <p className="muted" id="delete-account-warning">
+                    Permanently removes your account and your list. This cannot
+                    be undone.
+                  </p>
+                  {deleteError && (
+                    <p className="settings-error" role="alert">
+                      {deleteError}
+                    </p>
+                  )}
+                </div>
+                <div className="settings-row-control">
+                  <input
+                    aria-describedby="delete-account-warning"
+                    autoComplete="off"
+                    id="settings-delete-confirm"
+                    onChange={(event) => {
+                      setConfirmation(event.target.value);
+                      setDeleteError("");
+                    }}
+                    placeholder="DELETE"
+                    value={confirmation}
+                  />
+                  <button
+                    className="delete-account-button"
+                    disabled={confirmation !== "DELETE" || deleting}
+                    onClick={() => void deleteAccount()}
+                    type="button"
+                  >
+                    {deleting ? "Deleting account…" : "Delete account"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
     </section>
   );
 }

@@ -1,31 +1,17 @@
-type ScoreBadgeProps = { score: number | null };
+type ScoreBadgeProps = { score: number | null; className?: string };
 
-export function ScoreBadge({ score }: ScoreBadgeProps) {
+export function ScoreBadge({
+  score,
+  className = "score-text",
+}: ScoreBadgeProps) {
   const rating = score === null ? null : (score / 20).toFixed(1);
   const label =
     rating === null ? "Rating unavailable" : `Rating: ${rating} out of 5`;
 
+  if (rating === null) return null;
   return (
-    <span aria-label={label} className="score-text">
-      {rating === null ? (
-        "—"
-      ) : (
-        <>
-          <a
-            aria-label="AniList, Public domain, via Wikimedia Commons"
-            className="anilist-source"
-            href="https://commons.wikimedia.org/wiki/File:AniList_logo.svg"
-            rel="noreferrer"
-            target="_blank"
-          >
-            <img
-              alt="AniList"
-              src="https://upload.wikimedia.org/wikipedia/commons/6/61/AniList_logo.svg"
-            />
-          </a>{" "}
-          {rating}/5
-        </>
-      )}
+    <span aria-label={label} className={className}>
+      {rating}/5
     </span>
   );
 }
